@@ -1,0 +1,16 @@
+---
+description: Testing strategy for domain math
+globs:
+  - "src/lib/domain/**"
+  - "**/*.spec.ts"
+---
+
+# Testing Rules
+
+- Core math must be covered by unit tests (Vitest if present).
+- Focus on deterministic cases:
+  - underpay fixed share -> increases debt
+  - overpay fixed share -> reduces debt
+  - split modes: income/me/partner/half
+  - edge cases: income=0, transfer=0, negative balances allowed
+- Do not over-test UI. Test domain functions primarily.

@@ -1,0 +1,69 @@
+---
+description: Core project rules (SvelteKit + Tailwind, Supabase server-only, mobile-first)
+globs:
+  - "**/*"
+---
+
+# Core Rules for this repo
+
+## Source of truth: existing repo structure
+- NEVER introduce a new global CSS entrypoint. Use the existing global CSS file:
+  - `src/routes/layout.css` (do NOT create `src/app.css`).
+- Root layout is `src/routes/+layout.svelte`. If global styles are needed, import them there.
+- Keep and reuse existing tests and e2e setup:
+  - Unit/spec files already exist (e.g. `src/routes/page.svelte.spec.ts`, `src/routes/demo.spec.ts`)
+  - Playwright exists under `e2e/` with `playwright.config.ts`
+- Prefer modifying existing files over creating duplicates.
+
+## Architecture (simple, modular, not fancy)
+- Put all business math into **pure TypeScript** modules under:
+  - `src/lib/domain/`
+  - No Svelte imports in domain modules.
+- DB access lives under:
+  - `src/lib/server/`
+  - No Supabase keys or direct DB calls from the browser.
+- UI components live under:
+  - `src/lib/ui/` (small, reusable, optional)
+- Pages and server actions live in:
+  - `src/routes/**`
+
+## SvelteKit best practices
+- Use `+page.server.ts` for server-side data loading and form actions.
+- Use server actions for mutations instead of ad-hoc fetch calls when possible.
+- Use progressive enhancement where it stays simple.
+- Keep types explicit, prefer `type`/`interface` in domain layer.
+
+## Auth rules (simple password login)
+- App has a minimal password gate:
+  - `/login` route
+  - HttpOnly cookie
+  - `hooks.server.ts` blocks all routes except `/login` without cookie
+- Keep auth simple: no signup, no user accounts.
+
+## UX / UI rules
+- Mobile-first. Must be great on iPhone and still nice on Mac.
+- Avoid tables on mobile; use cards/lists.
+- Big touch targets, clean spacing, minimal UI chrome.
+- Prefer clarity over cleverness.
+
+## Cost splitting logic (domain rules)
+Each fixed-cost item must support a split mode:
+- `income` (default): split proportional by net income
+- `me`: Christian pays 100%
+- `partner`: Steffi pays 100%
+- `half`: 50/50
+
+Monthly calculations:
+- Compute `myFixedShare` as sum of per-item shares (based on split mode).
+- Debt account rules:
+  - `missingFixed = max(0, myFixedShare - totalTransferThisMonth)`
+  - `surplusForPrivates = max(0, totalTransferThisMonth - myFixedShare)`
+  - `privateTotalDueBeforePayment = privateBalanceStart + privateAddedThisMonth + missingFixed`
+  - `privateBalanceEnd = privateTotalDueBeforePayment - surplusForPrivates`
+
+## Development workflow rules
+- Before big edits: briefly scan existing files to match style and conventions.
+- After changes:
+  - run tests if present
+  - avoid breaking existing specs/e2e
+- If something is uncertain (file names, imports), inspect the repo instead of guessing.

@@ -1,0 +1,15 @@
+---
+description: Supabase server-only patterns and helpers
+globs:
+  - "src/lib/server/**"
+  - "src/routes/**/+page.server.ts"
+  - "src/routes/**/+server.ts"
+---
+
+# Supabase Server-only Rules
+
+- Use a single server client factory in `src/lib/server/supabase.ts` (or similar).
+- Service Role Key is server-only.
+- Prefer small DB helper functions (e.g. `getOrCreateCurrentMonth`, `listFixedCategoriesForMonth`).
+- Use transactions (or ordered operations) for "close month" flows to keep data consistent.
+- Never call Supabase from `+page.svelte` directly.
