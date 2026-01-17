@@ -194,6 +194,40 @@ export function calculateMyFixedShare(categories: FixedCategory[], shareMe: numb
 	return roundMoney(total);
 }
 
+/**
+ * Calculates my share of transfer-relevant fixed costs (excludes splitMode='me').
+ *
+ * Items with splitMode='me' are personal costs paid directly from my account
+ * and should not contribute to the transfer balance with the partner.
+ *
+ * @param categories - Array of fixed cost categories
+ * @param shareMe - My income share (0..1)
+ * @returns My transfer-relevant fixed cost share (rounded)
+ *
+ * @example
+ * calculateMyTransferFixedShare(
+ *   [{ items: [{ amount: 1000, splitMode: 'income', ... }, { amount: 100, splitMode: 'me', ... }] }],
+ *   0.4
+ * ) // 400 (only the 'income' item, 'me' is excluded)
+ */
+export function calculateMyTransferFixedShare(
+	categories: FixedCategory[],
+	shareMe: number
+): number {
+	const total = categories.reduce((sum, category) => {
+		const categorySum = category.items.reduce((itemSum, item) => {
+			// Skip personal costs (splitMode='me') as they don't contribute to partner balance
+			if (item.splitMode === 'me') {
+				return itemSum;
+			}
+			return itemSum + calculateMyShareForFixedItem(item, shareMe);
+		}, 0);
+		return sum + categorySum;
+	}, 0);
+
+	return roundMoney(total);
+}
+
 // ============================================================================
 // Month Calculation
 // ============================================================================
@@ -230,12 +264,19 @@ export function calculateMonth(inputs: MonthInputs): MonthComputed {
 	// c) Calculate my fixed share
 	const myFixedShare = calculateMyFixedShare(inputs.fixedCategories, shareMe);
 
+	// c2) Calculate transfer-relevant fixed share (excludes splitMode='me')
+	const myTransferFixedShare = calculateMyTransferFixedShare(inputs.fixedCategories, shareMe);
+
 	// d) Calculate private expenses added this month
 	const privateAddedThisMonth = sumPrivateExpenses(inputs.privateExpenses);
 
 	// e) Calculate missing fixed costs and surplus for privates
-	const missingFixed = roundMoney(Math.max(0, myFixedShare - inputs.totalTransferThisMonth));
-	const surplusForPrivates = roundMoney(Math.max(0, inputs.totalTransferThisMonth - myFixedShare));
+	const missingFixed = roundMoney(
+		Math.max(0, myTransferFixedShare - inputs.totalTransferThisMonth)
+	);
+	const surplusForPrivates = roundMoney(
+		Math.max(0, inputs.totalTransferThisMonth - myTransferFixedShare)
+	);
 
 	// f) Round and preserve private balance start
 	const privateBalanceStart = roundMoney(inputs.privateBalanceStart);

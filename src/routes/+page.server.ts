@@ -1,6 +1,14 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { getSupabaseServerClient } from '$lib/server/supabase.js';
-import { getOrCreateCurrentMonth, ensureMonthIncomes, updateMonthIncomes, closeMonth, listClosedMonths, resetOpenMonthForDev, deleteClosedMonth } from '$lib/server/months.js';
+import {
+	getOrCreateCurrentMonth,
+	ensureMonthIncomes,
+	updateMonthIncomes,
+	closeMonth,
+	listClosedMonths,
+	resetOpenMonthForDev,
+	deleteClosedMonth
+} from '$lib/server/months.js';
 import { env } from '$env/dynamic/private';
 import {
 	listFixedCategoriesWithItems,
@@ -21,7 +29,7 @@ import type { Actions, PageServerLoad } from './$types.js';
 
 /**
  * Server-side load function for the home page.
- * 
+ *
  * Gets or creates current month and ensures month_incomes exist.
  */
 export const load: PageServerLoad = async () => {
@@ -53,7 +61,7 @@ export const load: PageServerLoad = async () => {
 		const privateExpenses = await listPrivateExpenses(month.id);
 
 		// 6. Map DB data to Domain types and calculate
-		
+
 		// Find profiles
 		const meProfile = profiles?.find((p) => p.role === 'me');
 		const partnerProfile = profiles?.find((p) => p.role === 'partner');
@@ -91,7 +99,7 @@ export const load: PageServerLoad = async () => {
 				amount: Number(exp.amount)
 			})),
 			privateBalanceStart: Number(month.private_balance_start || 0),
-			totalTransferThisMonth: Number(month.total_transfer_this_month || 0)
+			totalTransferThisMonth: Number(month.total_transfer_this_month) || 0
 		};
 
 		// Calculate month
@@ -120,12 +128,12 @@ export const load: PageServerLoad = async () => {
 	} catch (err) {
 		// Handle unexpected errors
 		console.error('Unexpected error in load function:', err);
-		
+
 		// Re-throw SvelteKit errors
 		if (err && typeof err === 'object' && 'status' in err) {
 			throw err;
 		}
-		
+
 		// Wrap other errors
 		throw error(500, 'Failed to load month data');
 	}
@@ -141,7 +149,7 @@ export const actions: Actions = {
 	saveIncomes: async ({ request }) => {
 		try {
 			const formData = await request.formData();
-			
+
 			// Get monthId
 			const monthId = formData.get('monthId')?.toString();
 			if (!monthId) {
@@ -150,7 +158,7 @@ export const actions: Actions = {
 
 			// Get all income fields (income_<profileId>)
 			const updates: Array<{ profileId: string; netIncome: number }> = [];
-			
+
 			for (const [key, value] of formData.entries()) {
 				if (key.startsWith('income_')) {
 					const profileId = key.replace('income_', '');
@@ -158,14 +166,14 @@ export const actions: Actions = {
 
 					// Validate
 					if (isNaN(netIncome)) {
-						return fail(400, { 
-							error: `Invalid income value for profile ${profileId}` 
+						return fail(400, {
+							error: `Invalid income value for profile ${profileId}`
 						});
 					}
 
 					if (netIncome < 0) {
-						return fail(400, { 
-							error: 'Income must be >= 0' 
+						return fail(400, {
+							error: 'Income must be >= 0'
 						});
 					}
 
@@ -183,7 +191,6 @@ export const actions: Actions = {
 
 			// Redirect to reload data
 			throw redirect(303, '/');
-
 		} catch (err) {
 			// Handle redirect
 			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
@@ -192,8 +199,8 @@ export const actions: Actions = {
 
 			// Handle other errors
 			console.error('Error saving incomes:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to save incomes' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to save incomes'
 			});
 		}
 	},
@@ -218,8 +225,8 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error adding category:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to add category' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to add category'
 			});
 		}
 	},
@@ -243,8 +250,8 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error deleting category:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to delete category' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to delete category'
 			});
 		}
 	},
@@ -258,7 +265,11 @@ export const actions: Actions = {
 			const categoryId = formData.get('categoryId')?.toString();
 			const label = formData.get('label')?.toString();
 			const amount = parseFloat(formData.get('amount')?.toString() || '0');
-			const splitMode = formData.get('splitMode')?.toString() as 'income' | 'me' | 'partner' | 'half';
+			const splitMode = formData.get('splitMode')?.toString() as
+				| 'income'
+				| 'me'
+				| 'partner'
+				| 'half';
 
 			if (!categoryId || !label) {
 				return fail(400, { error: 'Category ID and label are required' });
@@ -275,8 +286,8 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error adding item:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to add item' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to add item'
 			});
 		}
 	},
@@ -288,7 +299,7 @@ export const actions: Actions = {
 		try {
 			const formData = await request.formData();
 			const itemId = formData.get('itemId')?.toString();
-			
+
 			if (!itemId) {
 				return fail(400, { error: 'Item ID is required' });
 			}
@@ -324,8 +335,8 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error updating item:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to update item' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to update item'
 			});
 		}
 	},
@@ -349,8 +360,8 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error deleting item:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to delete item' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to delete item'
 			});
 		}
 	},
@@ -381,8 +392,8 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error adding expense:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to add expense' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to add expense'
 			});
 		}
 	},
@@ -406,8 +417,8 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error deleting expense:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to delete expense' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to delete expense'
 			});
 		}
 	},
@@ -436,8 +447,8 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error saving transfer:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to save transfer' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to save transfer'
 			});
 		}
 	},
@@ -467,8 +478,8 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error closing month:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to close month' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to close month'
 			});
 		}
 	},
@@ -497,8 +508,8 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error resetting month:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to reset month' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to reset month'
 			});
 		}
 	},
@@ -527,10 +538,9 @@ export const actions: Actions = {
 				throw err;
 			}
 			console.error('Error deleting archived month:', err);
-			return fail(500, { 
-				error: err instanceof Error ? err.message : 'Failed to delete archived month' 
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to delete archived month'
 			});
 		}
 	}
 };
-

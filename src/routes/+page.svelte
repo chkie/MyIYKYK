@@ -60,6 +60,11 @@
 		}
 	}
 
+	// UI Toggle States
+	let editingIncomes = $state(false);
+	let editingItemId = $state<string | null>(null);
+	let addingCategoryId = $state<string | null>(null);
+
 	// Close month confirmation state
 	let showCloseConfirm = $state(false);
 	let closeConfirmText = $state('');
@@ -109,29 +114,33 @@
 
 <!-- DEV Tools (only visible in development) -->
 {#if import.meta.env.DEV}
-	<div class="my-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
-		<h3 class="text-sm font-semibold text-red-800 mb-2">🛠️ DEV TOOLS (nicht in Production)</h3>
-		
+	<div class="my-6 rounded-lg border-2 border-red-300 bg-red-50 p-4">
+		<h3 class="mb-2 text-sm font-semibold text-red-800">🛠️ DEV TOOLS (nicht in Production)</h3>
+
 		{#if !showDevResetConfirm}
 			<button
 				type="button"
-				onclick={() => { showDevResetConfirm = true; }}
-				class="w-full px-4 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors text-sm font-medium"
+				onclick={() => {
+					showDevResetConfirm = true;
+				}}
+				class="w-full rounded bg-red-100 px-4 py-2 text-sm font-medium text-red-800 transition-colors hover:bg-red-200"
 			>
 				Reset current month (löscht alle Daten)
 			</button>
 		{:else}
 			<div class="space-y-3">
-				<div class="p-3 bg-white border border-red-400 rounded">
-					<p class="text-sm text-red-700 font-medium mb-2">⚠️ Alle Daten des aktuellen Monats werden gelöscht!</p>
-					<p class="text-xs text-gray-600 mb-3">
+				<div class="rounded border border-red-400 bg-white p-3">
+					<p class="mb-2 text-sm font-medium text-red-700">
+						⚠️ Alle Daten des aktuellen Monats werden gelöscht!
+					</p>
+					<p class="mb-3 text-xs text-gray-600">
 						Fixkosten, Private Ausgaben, Einkommen werden zurückgesetzt. Der Monat bleibt 'open'.
 					</p>
-					<label class="flex items-center space-x-2 cursor-pointer">
+					<label class="flex cursor-pointer items-center space-x-2">
 						<input
 							type="checkbox"
 							bind:checked={devResetConfirmed}
-							class="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+							class="h-4 w-4 rounded text-red-600 focus:ring-red-500"
 						/>
 						<span class="text-sm text-gray-800">Ich verstehe, dass alle Daten gelöscht werden</span>
 					</label>
@@ -142,14 +151,16 @@
 					<button
 						type="button"
 						onclick={cancelDevReset}
-						class="flex-1 px-3 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors text-sm"
+						class="flex-1 rounded bg-gray-200 px-3 py-2 text-sm text-gray-800 transition-colors hover:bg-gray-300"
 					>
 						Abbrechen
 					</button>
 					<button
 						type="submit"
 						disabled={!devResetConfirmed}
-						class="flex-1 px-3 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed {devResetConfirmed ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-300 text-gray-500'}"
+						class="flex-1 rounded px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 {devResetConfirmed
+							? 'bg-red-600 text-white hover:bg-red-700'
+							: 'bg-gray-300 text-gray-500'}"
 					>
 						Jetzt zurücksetzen
 					</button>
@@ -161,12 +172,12 @@
 
 <!-- Results Section -->
 <div class="my-8">
-	<h2 class="text-2xl font-semibold mb-4">Monatsübersicht</h2>
+	<h2 class="mb-4 text-2xl font-semibold">Monatsübersicht</h2>
 
 	<div class="space-y-4">
 		<!-- Card 1: Fixkosten -->
-		<div class="p-4 bg-white border-2 border-blue-300 rounded-lg shadow-sm">
-			<h3 class="text-lg font-semibold mb-3 text-blue-900">Fixkosten</h3>
+		<div class="rounded-lg border-2 border-blue-300 bg-white p-4 shadow-sm">
+			<h3 class="mb-3 text-lg font-semibold text-blue-900">Fixkosten</h3>
 			<div class="space-y-2">
 				<div class="flex justify-between">
 					<span class="text-gray-700">Gesamt Fixkosten:</span>
@@ -176,19 +187,21 @@
 					<span class="text-gray-700">Dein Anteil:</span>
 					<span class="font-semibold text-blue-600">{formatEuro(data.computed.myFixedShare)}</span>
 				</div>
-				<div class="pt-2 mt-2 border-t border-blue-200">
-					<span class="text-xs text-gray-600">Dein Einkommensanteil: {formatPct(data.computed.shareMe)}</span>
+				<div class="mt-2 border-t border-blue-200 pt-2">
+					<span class="text-xs text-gray-600"
+						>Dein Einkommensanteil: {formatPct(data.computed.shareMe)}</span
+					>
 				</div>
 			</div>
 		</div>
 
 		<!-- Card 2: Transfer & Ausgleich -->
-		<div class="p-4 bg-white border-2 border-purple-300 rounded-lg shadow-sm">
-			<h3 class="text-lg font-semibold mb-3 text-purple-900">Transfer & Ausgleich</h3>
+		<div class="rounded-lg border-2 border-purple-300 bg-white p-4 shadow-sm">
+			<h3 class="mb-3 text-lg font-semibold text-purple-900">Transfer & Ausgleich</h3>
 			<div class="space-y-2">
 				<div class="flex justify-between">
 					<span class="text-gray-700">Überweisung (diesen Monat):</span>
-					<span class="font-semibold">{formatEuro(data.computed.totalTransferThisMonth)}</span>
+					<span class="font-semibold">{formatEuro(data.month.total_transfer_this_month || 0)}</span>
 				</div>
 				<div class="flex justify-between">
 					<span class="text-gray-700">Fehlbetrag Fixkosten:</span>
@@ -196,42 +209,96 @@
 				</div>
 				<div class="flex justify-between">
 					<span class="text-gray-700">Überschuss für Privates:</span>
-					<span class="font-semibold text-green-600">{formatEuro(data.computed.surplusForPrivates)}</span>
+					<span class="font-semibold text-green-600"
+						>{formatEuro(data.computed.surplusForPrivates)}</span
+					>
 				</div>
 			</div>
 		</div>
 
-		<!-- Card 3: Privatkonto -->
-		<div class="p-4 bg-white border-2 border-orange-300 rounded-lg shadow-sm">
-			<h3 class="text-lg font-semibold mb-3 text-orange-900">Privatkonto</h3>
+		<!-- Card 3: Schulden an Steffi -->
+		<div class="rounded-lg border-2 border-orange-300 bg-white p-4 shadow-sm">
+			<h3 class="mb-3 text-lg font-semibold text-orange-900">Schulden an Steffi</h3>
 			<div class="space-y-2">
-				<div class="flex justify-between">
-					<span class="text-gray-700">Startguthaben:</span>
-					<span class="font-semibold">{formatEuro(data.computed.privateBalanceStart)}</span>
+				<div class="flex justify-between text-sm">
+					<span class="text-gray-600">Schulden vom Vormonat:</span>
+					<span class="font-medium">{formatEuro(data.computed.privateBalanceStart)}</span>
 				</div>
-				<div class="flex justify-between">
-					<span class="text-gray-700">Private Ausgaben (Summe):</span>
-					<span class="font-semibold">{formatEuro(data.computed.privateAddedThisMonth)}</span>
+				<div class="flex justify-between text-sm">
+					<span class="text-gray-600">+ Private Ausgaben (von Steffis Konto):</span>
+					<span class="font-medium">{formatEuro(data.computed.privateAddedThisMonth)}</span>
 				</div>
-				<div class="flex justify-between">
-					<span class="text-gray-700">Endsaldo:</span>
-					<span class="font-semibold text-orange-600">{formatEuro(data.computed.privateBalanceEnd)}</span>
+				<div class="flex justify-between text-sm">
+					<span class="text-gray-600">+ Fehlbetrag Fixkosten:</span>
+					<span class="font-medium">{formatEuro(data.computed.missingFixed)}</span>
+				</div>
+				<div class="flex justify-between text-sm">
+					<span class="text-gray-600">- Überzahlung:</span>
+					<span class="font-medium">-{formatEuro(data.computed.surplusForPrivates)}</span>
+				</div>
+				<div class="mt-3 border-t border-orange-200 pt-2">
+					<div class="flex justify-between">
+						<span class="font-semibold text-gray-800">Aktuelle Schulden:</span>
+						<span class="text-xl font-bold text-orange-600"
+							>{formatEuro(data.computed.privateBalanceEnd)}</span
+						>
+					</div>
 				</div>
 			</div>
 		</div>
 
 		<!-- Card 4: Empfehlung -->
-		<div class="p-4 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-400 rounded-lg shadow-md">
-			<h3 class="text-lg font-semibold mb-3 text-green-900">💡 Empfehlung</h3>
-			<div class="text-center py-2">
+		<div
+			class="rounded-lg border-2 border-green-400 bg-gradient-to-r from-green-50 to-blue-50 p-4 shadow-md"
+		>
+			<h3 class="mb-3 text-lg font-semibold text-green-900">💡 Empfehlung für Überweisung</h3>
+			<div class="space-y-3">
 				{#if data.computed.privateBalanceEnd > 0}
-					<p class="text-gray-700 mb-2">Du schuldest insgesamt:</p>
-					<p class="text-3xl font-bold text-red-600">{formatEuro(data.computed.privateBalanceEnd)}</p>
+					<!-- Christian schuldet Steffi Geld -->
+					<div class="rounded bg-white p-3">
+						<p class="mb-2 text-sm text-gray-700">
+							Überweise an Steffi, um alle Schulden auszugleichen:
+						</p>
+						<p class="text-center text-3xl font-bold text-red-600">
+							{formatEuro(data.computed.privateBalanceEnd)}
+						</p>
+					</div>
+					<div class="rounded bg-blue-50 p-3 text-sm text-gray-700">
+						<p class="mb-1 font-medium">Das deckt ab:</p>
+						<ul class="ml-4 list-disc space-y-1">
+							{#if data.computed.privateBalanceStart > 0}
+								<li>Schulden vom Vormonat: {formatEuro(data.computed.privateBalanceStart)}</li>
+							{/if}
+							{#if data.computed.privateAddedThisMonth > 0}
+								<li>
+									Private Ausgaben (von Steffis Konto): {formatEuro(
+										data.computed.privateAddedThisMonth
+									)}
+								</li>
+							{/if}
+							{#if data.computed.missingFixed > 0}
+								<li>Dein Anteil an Fixkosten: {formatEuro(data.computed.missingFixed)}</li>
+							{/if}
+						</ul>
+					</div>
 				{:else if data.computed.privateBalanceEnd < 0}
-					<p class="text-gray-700 mb-2">Du hast vorausgezahlt:</p>
-					<p class="text-3xl font-bold text-green-600">{formatEuro(Math.abs(data.computed.privateBalanceEnd))}</p>
+					<!-- Christian hat vorausgezahlt -->
+					<div class="rounded bg-white p-3">
+						<p class="mb-2 text-sm text-gray-700">Du hast mehr gezahlt als nötig:</p>
+						<p class="text-center text-3xl font-bold text-green-600">
+							+{formatEuro(Math.abs(data.computed.privateBalanceEnd))}
+						</p>
+					</div>
+					<p class="rounded bg-green-50 p-3 text-sm text-gray-700">
+						Dieses Guthaben wird automatisch im nächsten Monat verrechnet. Du musst aktuell nichts
+						überweisen.
+					</p>
 				{:else}
-					<p class="text-2xl font-bold text-green-600">✓ Alles ausgeglichen</p>
+					<!-- Alles ausgeglichen -->
+					<div class="rounded bg-white p-3 text-center">
+						<p class="text-2xl font-bold text-green-600">✓ Alles ausgeglichen</p>
+						<p class="mt-2 text-sm text-gray-600">Du hast keine offenen Schulden bei Steffi.</p>
+					</div>
 				{/if}
 			</div>
 		</div>
@@ -239,73 +306,112 @@
 </div>
 
 <!-- Edit Incomes -->
-<div class="my-6 p-4 bg-green-50 border border-green-200 rounded">
-	<h2 class="font-semibold mb-3">Einkommen für aktuellen Monat</h2>
+<div class="my-6 rounded border border-green-200 bg-green-50 p-4">
+	<div class="mb-3 flex items-center justify-between">
+		<h2 class="font-semibold">Einkommen</h2>
+		{#if !editingIncomes}
+			<button
+				type="button"
+				onclick={() => {
+					editingIncomes = true;
+				}}
+				class="rounded bg-green-600 px-3 py-1 text-sm text-white transition-colors hover:bg-green-700"
+			>
+				Bearbeiten
+			</button>
+		{/if}
+	</div>
 
 	{#if form?.error}
-		<div class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+		<div class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
 			{form.error}
 		</div>
 	{/if}
 
-	<form method="POST" action="?/saveIncomes" class="space-y-3">
-		<input type="hidden" name="monthId" value={data.month.id} />
+	{#if editingIncomes}
+		<!-- Edit Mode -->
+		<form method="POST" action="?/saveIncomes" class="space-y-3">
+			<input type="hidden" name="monthId" value={data.month.id} />
 
-		{#each data.profiles as profile}
-			<div class="flex flex-col">
-				<label for="income_{profile.id}" class="text-sm font-medium mb-1">
-					{profile.name || profile.role}
-				</label>
-				<input
-					type="number"
-					id="income_{profile.id}"
-					name="income_{profile.id}"
-					value={getIncomeForProfile(profile.id)}
-					step="0.01"
-					min="0"
-					required
-					class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-				/>
+			{#each data.profiles as profile}
+				<div class="flex flex-col">
+					<label for="income_{profile.id}" class="mb-1 text-sm font-medium">
+						{profile.name || profile.role}
+					</label>
+					<input
+						type="number"
+						id="income_{profile.id}"
+						name="income_{profile.id}"
+						value={getIncomeForProfile(profile.id)}
+						step="0.01"
+						min="0"
+						required
+						class="rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+					/>
+				</div>
+			{/each}
+
+			<div class="flex gap-2">
+				<button
+					type="submit"
+					class="flex-1 rounded bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
+				>
+					Speichern
+				</button>
+				<button
+					type="button"
+					onclick={() => {
+						editingIncomes = false;
+					}}
+					class="rounded bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300"
+				>
+					Abbrechen
+				</button>
 			</div>
-		{/each}
-
-		<button
-			type="submit"
-			class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
-		>
-			Einkommen speichern
-		</button>
-	</form>
-
-	<!-- Income Shares Display -->
-	<div class="mt-4 pt-3 border-t border-green-300">
-		<p class="text-xs font-medium text-gray-700 mb-1">Berechnete Einkommensanteile:</p>
-		<div class="flex gap-4 text-sm text-gray-600">
-			<span><strong>Christian:</strong> {formatPct(data.computed.shareMe)}</span>
-			<span><strong>Steffi:</strong> {formatPct(data.computed.sharePartner)}</span>
+		</form>
+	{:else}
+		<!-- Display Mode -->
+		<div class="space-y-2">
+			{#each data.profiles as profile}
+				<div class="flex items-center justify-between rounded bg-white p-3">
+					<span class="font-medium text-gray-700">{profile.name || profile.role}</span>
+					<span class="text-lg font-semibold text-green-600"
+						>{formatEuro(getIncomeForProfile(profile.id))}</span
+					>
+				</div>
+			{/each}
 		</div>
-	</div>
+
+		<!-- Income Shares Display -->
+		<div class="mt-4 border-t border-green-300 pt-3">
+			<p class="mb-1 text-xs font-medium text-gray-700">Berechnete Einkommensanteile:</p>
+			<div class="flex gap-4 text-sm text-gray-600">
+				<span><strong>Christian:</strong> {formatPct(data.computed.shareMe)}</span>
+				<span><strong>Steffi:</strong> {formatPct(data.computed.sharePartner)}</span>
+			</div>
+		</div>
+	{/if}
 </div>
 
 <!-- Fixed Costs Section -->
 <div class="my-8">
-	<h2 class="text-2xl font-semibold mb-4">Fixkosten</h2>
+	<h2 class="mb-4 text-2xl font-semibold">Fixkosten</h2>
 
 	<!-- Add Category Form -->
-	<div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
-		<h3 class="font-semibold mb-3">Neue Kategorie</h3>
-		<form method="POST" action="?/addCategory" class="flex flex-col sm:flex-row gap-2">
+	<div class="mb-6 rounded border border-blue-200 bg-blue-50 p-4">
+		<h3 class="mb-3 font-semibold">Neue Kategorie</h3>
+		<form method="POST" action="?/addCategory" class="flex flex-col gap-2 sm:flex-row">
 			<input type="hidden" name="monthId" value={data.month.id} />
 			<input
 				type="text"
 				name="label"
 				placeholder="z.B. Wohnung, Versicherungen..."
 				required
-				class="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+				class="flex-1 rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 			/>
 			<button
 				type="submit"
-				class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors whitespace-nowrap"
+				class="rounded bg-blue-600 px-4 py-2 whitespace-nowrap text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 			>
 				Kategorie hinzufügen
 			</button>
@@ -314,13 +420,13 @@
 
 	<!-- Categories List -->
 	{#if data.fixedCategories.length === 0}
-		<p class="text-gray-500 text-center py-8">Noch keine Fixkosten-Kategorien vorhanden.</p>
+		<p class="py-8 text-center text-gray-500">Noch keine Fixkosten-Kategorien vorhanden.</p>
 	{:else}
 		<div class="space-y-6">
 			{#each data.fixedCategories as category}
-				<div class="border border-gray-300 rounded-lg overflow-hidden">
+				<div class="overflow-hidden rounded-lg border border-gray-300">
 					<!-- Category Header -->
-					<div class="bg-gray-100 p-4 flex justify-between items-center">
+					<div class="flex items-center justify-between bg-gray-100 p-4">
 						<h3 class="text-lg font-semibold">{category.label}</h3>
 						<form
 							method="POST"
@@ -334,7 +440,7 @@
 							<input type="hidden" name="categoryId" value={category.id} />
 							<button
 								type="submit"
-								class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+								class="rounded bg-red-100 px-3 py-1 text-sm text-red-700 transition-colors hover:bg-red-200"
 							>
 								Kategorie löschen
 							</button>
@@ -342,160 +448,234 @@
 					</div>
 
 					<!-- Items List -->
-					<div class="p-4 space-y-3">
+					<div class="space-y-3 p-4">
 						{#if category.items.length === 0}
-							<p class="text-gray-500 text-sm">Keine Items in dieser Kategorie</p>
+							<p class="text-sm text-gray-500">Keine Items in dieser Kategorie</p>
 						{:else}
 							{#each category.items as item}
-								<div class="border border-gray-200 rounded p-3 bg-white">
-									<form method="POST" action="?/updateItem" class="space-y-3">
-										<input type="hidden" name="itemId" value={item.id} />
+								<div class="rounded border border-gray-200 bg-white p-3">
+									{#if editingItemId === item.id}
+										<!-- Edit Mode -->
+										<form method="POST" action="?/updateItem" class="space-y-3">
+											<input type="hidden" name="itemId" value={item.id} />
 
-										<!-- Item Label -->
-										<div>
-											<label class="block text-sm font-medium mb-1">Bezeichnung</label>
-											<input
-												type="text"
-												name="label"
-												value={item.label}
-												required
-												class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-											/>
-										</div>
-
-										<!-- Amount -->
-										<div>
-											<label class="block text-sm font-medium mb-1">Betrag (€)</label>
-											<input
-												type="number"
-												name="amount"
-												value={item.amount}
-												step="0.01"
-												min="0"
-												required
-												class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-											/>
-										</div>
-
-										<!-- Split Mode -->
-										<div>
-											<label class="block text-sm font-medium mb-2">Aufteilung</label>
-											<div class="grid grid-cols-3 gap-2">
-												<label class="flex items-center space-x-2 cursor-pointer">
-													<input
-														type="radio"
-														name="splitMode"
-														value="income"
-														checked={item.splitMode === 'income' || item.splitMode === 'half'}
-														class="w-4 h-4 text-green-600 focus:ring-green-500"
-													/>
-													<span class="text-sm">Gemeinsam</span>
-												</label>
-												<label class="flex items-center space-x-2 cursor-pointer">
-													<input
-														type="radio"
-														name="splitMode"
-														value="me"
-														checked={item.splitMode === 'me'}
-														class="w-4 h-4 text-green-600 focus:ring-green-500"
-													/>
-													<span class="text-sm">Nur Christian</span>
-												</label>
-												<label class="flex items-center space-x-2 cursor-pointer">
-													<input
-														type="radio"
-														name="splitMode"
-														value="partner"
-														checked={item.splitMode === 'partner'}
-														class="w-4 h-4 text-green-600 focus:ring-green-500"
-													/>
-													<span class="text-sm">Nur Steffi</span>
-												</label>
+											<!-- Item Label -->
+											<div>
+												<label class="mb-1 block text-sm font-medium">Bezeichnung</label>
+												<input
+													type="text"
+													name="label"
+													value={item.label}
+													required
+													class="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
+												/>
 											</div>
 
-											<!-- Share Preview -->
-											<div class="mt-2 p-2 bg-blue-50 rounded text-xs text-gray-700">
-												<span class="font-medium">Du zahlst:</span>
-												<span class="font-semibold text-blue-700">{formatEuro(calculateMyItemShare(item.amount, item.splitMode))}</span>
-												<span class="text-gray-500 ml-1">{getSplitModeLabel(item.splitMode, item.amount)}</span>
+											<!-- Amount -->
+											<div>
+												<label class="mb-1 block text-sm font-medium">Betrag (€)</label>
+												<input
+													type="number"
+													name="amount"
+													value={item.amount}
+													step="0.01"
+													min="0"
+													required
+													class="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
+												/>
+											</div>
+
+											<!-- Split Mode -->
+											<div>
+												<label class="mb-2 block text-sm font-medium">Aufteilung</label>
+												<div class="grid grid-cols-3 gap-2">
+													<label class="flex cursor-pointer items-center space-x-2">
+														<input
+															type="radio"
+															name="splitMode"
+															value="income"
+															checked={item.splitMode === 'income' || item.splitMode === 'half'}
+															class="h-4 w-4 text-green-600 focus:ring-green-500"
+														/>
+														<span class="text-sm">Gemeinsam</span>
+													</label>
+													<label class="flex cursor-pointer items-center space-x-2">
+														<input
+															type="radio"
+															name="splitMode"
+															value="me"
+															checked={item.splitMode === 'me'}
+															class="h-4 w-4 text-green-600 focus:ring-green-500"
+														/>
+														<span class="text-sm">Nur Christian</span>
+													</label>
+													<label class="flex cursor-pointer items-center space-x-2">
+														<input
+															type="radio"
+															name="splitMode"
+															value="partner"
+															checked={item.splitMode === 'partner'}
+															class="h-4 w-4 text-green-600 focus:ring-green-500"
+														/>
+														<span class="text-sm">Nur Steffi</span>
+													</label>
+												</div>
+
+												<!-- Share Preview -->
+												<div class="mt-2 rounded bg-blue-50 p-2 text-xs text-gray-700">
+													<span class="font-medium">Du zahlst:</span>
+													<span class="font-semibold text-blue-700"
+														>{formatEuro(calculateMyItemShare(item.amount, item.splitMode))}</span
+													>
+													<span class="ml-1 text-gray-500"
+														>{getSplitModeLabel(item.splitMode, item.amount)}</span
+													>
+												</div>
+											</div>
+
+											<!-- Action Buttons -->
+											<div class="flex gap-2">
+												<button
+													type="submit"
+													class="flex-1 rounded bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
+												>
+													Speichern
+												</button>
+												<button
+													type="button"
+													onclick={() => {
+														editingItemId = null;
+													}}
+													class="rounded bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300"
+												>
+													Abbrechen
+												</button>
+											</div>
+										</form>
+									{:else}
+										<!-- Display Mode -->
+										<div class="flex items-center justify-between">
+											<div class="flex-1">
+												<div class="flex items-baseline gap-3">
+													<span class="font-medium text-gray-900">{item.label}</span>
+													<span class="text-lg font-semibold text-blue-600"
+														>{formatEuro(item.amount)}</span
+													>
+												</div>
+												<div class="mt-1 flex items-center gap-2 text-sm text-gray-600">
+													<span class="font-medium"
+														>Du zahlst: {formatEuro(
+															calculateMyItemShare(item.amount, item.splitMode)
+														)}</span
+													>
+													<span class="text-xs text-gray-500"
+														>{getSplitModeLabel(item.splitMode, item.amount)}</span
+													>
+												</div>
+											</div>
+											<div class="flex gap-2">
+												<button
+													type="button"
+													onclick={() => {
+														editingItemId = item.id;
+													}}
+													class="rounded bg-blue-50 px-3 py-1 text-sm text-blue-700 transition-colors hover:bg-blue-100"
+												>
+													Bearbeiten
+												</button>
+												<form method="POST" action="?/deleteItem">
+													<input type="hidden" name="itemId" value={item.id} />
+													<button
+														type="submit"
+														class="rounded bg-red-50 px-3 py-1 text-sm text-red-700 transition-colors hover:bg-red-100"
+														onclick={(e) => {
+															if (!confirm('Item löschen?')) {
+																e.preventDefault();
+															}
+														}}
+													>
+														Löschen
+													</button>
+												</form>
 											</div>
 										</div>
-
-										<!-- Action Buttons -->
-										<div class="flex gap-2">
-											<button
-												type="submit"
-												class="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
-											>
-												Speichern
-											</button>
-											<button
-												type="submit"
-												formaction="?/deleteItem"
-												class="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-												onclick={(e) => {
-													if (!confirm('Item löschen?')) {
-														e.preventDefault();
-													}
-												}}
-											>
-												Löschen
-											</button>
-										</div>
-									</form>
+									{/if}
 								</div>
 							{/each}
 						{/if}
 
 						<!-- Add Item Form -->
-						<div class="mt-4 pt-4 border-t border-gray-200">
-							<h4 class="font-medium mb-3 text-sm">Neues Item hinzufügen</h4>
-							<form method="POST" action="?/addItem" class="space-y-3">
-								<input type="hidden" name="categoryId" value={category.id} />
+						{#if addingCategoryId === category.id}
+							<div class="mt-4 rounded border-2 border-blue-200 bg-blue-50 p-4">
+								<h4 class="mb-3 text-sm font-semibold text-blue-900">Neues Item hinzufügen</h4>
+								<form method="POST" action="?/addItem" class="space-y-3">
+									<input type="hidden" name="categoryId" value={category.id} />
 
-								<div>
-									<input
-										type="text"
-										name="label"
-										placeholder="Bezeichnung (z.B. Miete)"
-										required
-										class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-									/>
-								</div>
+									<div>
+										<input
+											type="text"
+											name="label"
+											placeholder="Bezeichnung (z.B. Miete)"
+											required
+											class="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+										/>
+									</div>
 
-								<div>
-									<input
-										type="number"
-										name="amount"
-										placeholder="Betrag"
-										step="0.01"
-										min="0"
-										required
-										class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-									/>
-								</div>
+									<div>
+										<input
+											type="number"
+											name="amount"
+											placeholder="Betrag"
+											step="0.01"
+											min="0"
+											required
+											class="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+										/>
+									</div>
 
-								<div>
-									<label class="block text-sm font-medium mb-2">Aufteilung</label>
-									<select
-										name="splitMode"
-										required
-										class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-									>
-										<option value="income">Gemeinsam (einkommensbasiert)</option>
-										<option value="me">Nur Christian</option>
-										<option value="partner">Nur Steffi</option>
-									</select>
-								</div>
+									<div>
+										<label class="mb-2 block text-sm font-medium">Aufteilung</label>
+										<select
+											name="splitMode"
+											required
+											class="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+										>
+											<option value="income">Gemeinsam (einkommensbasiert)</option>
+											<option value="me">Nur Christian</option>
+											<option value="partner">Nur Steffi</option>
+										</select>
+									</div>
 
-								<button
-									type="submit"
-									class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-								>
-									Item hinzufügen
-								</button>
-							</form>
-						</div>
+									<div class="flex gap-2">
+										<button
+											type="submit"
+											class="flex-1 rounded bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+										>
+											Item hinzufügen
+										</button>
+										<button
+											type="button"
+											onclick={() => {
+												addingCategoryId = null;
+											}}
+											class="rounded bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300"
+										>
+											Abbrechen
+										</button>
+									</div>
+								</form>
+							</div>
+						{:else}
+							<button
+								type="button"
+								onclick={() => {
+									addingCategoryId = category.id;
+								}}
+								class="mt-4 w-full rounded border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-600 transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
+							>
+								+ Neues Item hinzufügen
+							</button>
+						{/if}
 					</div>
 				</div>
 			{/each}
@@ -504,24 +684,24 @@
 </div>
 
 <!-- Month Transfer Section -->
-<div class="my-8 p-4 bg-purple-50 border border-purple-200 rounded">
-	<h2 class="text-xl font-semibold mb-3">Überweisung (diesen Monat)</h2>
-	<form method="POST" action="?/saveTransfer" class="flex flex-col sm:flex-row gap-2">
+<div class="my-8 rounded border border-purple-200 bg-purple-50 p-4">
+	<h2 class="mb-3 text-xl font-semibold">Überweisung (diesen Monat)</h2>
+	<form method="POST" action="?/saveTransfer" class="flex flex-col gap-2 sm:flex-row">
 		<input type="hidden" name="monthId" value={data.month.id} />
 		<div class="flex-1">
 			<input
 				type="number"
 				name="totalTransfer"
-				value={data.month.total_transfer_this_month}
+				value={data.month.total_transfer_this_month || 0}
 				step="0.01"
 				min="0"
 				required
-				class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+				class="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:outline-none"
 			/>
 		</div>
 		<button
 			type="submit"
-			class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors whitespace-nowrap"
+			class="rounded bg-purple-600 px-4 py-2 whitespace-nowrap text-white transition-colors hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:outline-none"
 		>
 			Speichern
 		</button>
@@ -530,27 +710,27 @@
 
 <!-- Private Expenses Section -->
 <div class="my-8">
-	<h2 class="text-2xl font-semibold mb-4">Private Ausgaben (Christian)</h2>
+	<h2 class="mb-4 text-2xl font-semibold">Private Ausgaben (Christian)</h2>
 
 	<!-- Add Expense Form -->
-	<div class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded">
-		<h3 class="font-semibold mb-3">Neue Ausgabe</h3>
+	<div class="mb-6 rounded border border-orange-200 bg-orange-50 p-4">
+		<h3 class="mb-3 font-semibold">Neue Ausgabe</h3>
 		<form method="POST" action="?/addPrivateExpense" class="space-y-3">
 			<input type="hidden" name="monthId" value={data.month.id} />
 
 			<div>
-				<label for="expense-date" class="block text-sm font-medium mb-1">Datum</label>
+				<label for="expense-date" class="mb-1 block text-sm font-medium">Datum</label>
 				<input
 					type="date"
 					id="expense-date"
 					name="dateISO"
 					required
-					class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+					class="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-none"
 				/>
 			</div>
 
 			<div>
-				<label for="expense-description" class="block text-sm font-medium mb-1">
+				<label for="expense-description" class="mb-1 block text-sm font-medium">
 					Beschreibung
 				</label>
 				<input
@@ -559,12 +739,12 @@
 					name="description"
 					placeholder="z.B. Einkauf, Tankstelle..."
 					required
-					class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+					class="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-none"
 				/>
 			</div>
 
 			<div>
-				<label for="expense-amount" class="block text-sm font-medium mb-1">Betrag (€)</label>
+				<label for="expense-amount" class="mb-1 block text-sm font-medium">Betrag (€)</label>
 				<input
 					type="number"
 					id="expense-amount"
@@ -572,13 +752,13 @@
 					step="0.01"
 					min="0"
 					required
-					class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+					class="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-none"
 				/>
 			</div>
 
 			<button
 				type="submit"
-				class="w-full px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+				class="w-full rounded bg-orange-600 px-4 py-2 text-white transition-colors hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 focus:outline-none"
 			>
 				Ausgabe hinzufügen
 			</button>
@@ -587,21 +767,21 @@
 
 	<!-- Expenses List -->
 	{#if data.privateExpenses.length === 0}
-		<p class="text-gray-500 text-center py-8">Noch keine privaten Ausgaben erfasst.</p>
+		<p class="py-8 text-center text-gray-500">Noch keine privaten Ausgaben erfasst.</p>
 	{:else}
 		<div class="space-y-3">
 			{#each data.privateExpenses as expense}
-				<div class="border border-gray-300 rounded p-4 bg-white flex justify-between items-start">
+				<div class="flex items-start justify-between rounded border border-gray-300 bg-white p-4">
 					<div class="flex-1">
-						<div class="text-sm text-gray-600 mb-1">{expense.date}</div>
-						<div class="font-medium mb-1">{expense.description}</div>
+						<div class="mb-1 text-sm text-gray-600">{expense.date}</div>
+						<div class="mb-1 font-medium">{expense.description}</div>
 						<div class="text-lg font-semibold text-orange-600">{expense.amount.toFixed(2)} €</div>
 					</div>
 					<form method="POST" action="?/deletePrivateExpense">
 						<input type="hidden" name="expenseId" value={expense.id} />
 						<button
 							type="submit"
-							class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+							class="rounded bg-red-100 px-3 py-1 text-sm text-red-700 transition-colors hover:bg-red-200"
 							onclick={(e) => {
 								if (!confirm('Ausgabe löschen?')) {
 									e.preventDefault();
@@ -619,28 +799,38 @@
 
 <!-- Close Month Section -->
 {#if data.month.status === 'open'}
-	<div class="my-8 p-6 bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-400 rounded-lg">
-		<h2 class="text-xl font-semibold mb-3 text-yellow-900">📊 Monat abschließen</h2>
-		
+	<div
+		class="my-8 rounded-lg border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-amber-50 p-6"
+	>
+		<h2 class="mb-3 text-xl font-semibold text-yellow-900">📊 Monat abschließen</h2>
+
 		{#if !showCloseConfirm}
 			<!-- Step 1: Initial button -->
-			<p class="text-sm text-gray-700 mb-4">
-				Schließt den aktuellen Monat und übernimmt den Endsaldo ({formatEuro(data.computed.privateBalanceEnd)}) in den nächsten Monat.
+			<p class="mb-4 text-sm text-gray-700">
+				Schließt den aktuellen Monat und übernimmt den Endsaldo ({formatEuro(
+					data.computed.privateBalanceEnd
+				)}) in den nächsten Monat.
 			</p>
 			<button
 				type="button"
-				onclick={() => { showCloseConfirm = true; }}
-				class="w-full px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors font-semibold"
+				onclick={() => {
+					showCloseConfirm = true;
+				}}
+				class="w-full rounded-lg bg-yellow-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:outline-none"
 			>
 				Monat abschließen
 			</button>
 		{:else}
 			<!-- Step 2: Confirmation area -->
 			<div class="space-y-4">
-				<div class="p-4 bg-white border-2 border-red-400 rounded-lg">
-					<p class="text-sm font-semibold text-red-700 mb-2">⚠️ Achtung: Diese Aktion kann nicht rückgängig gemacht werden!</p>
-					<p class="text-sm text-gray-700 mb-3">
-						Der Monat wird geschlossen und der Endsaldo von <strong>{formatEuro(data.computed.privateBalanceEnd)}</strong> wird als Startguthaben in den nächsten Monat übernommen.
+				<div class="rounded-lg border-2 border-red-400 bg-white p-4">
+					<p class="mb-2 text-sm font-semibold text-red-700">
+						⚠️ Achtung: Diese Aktion kann nicht rückgängig gemacht werden!
+					</p>
+					<p class="mb-3 text-sm text-gray-700">
+						Der Monat wird geschlossen und der Endsaldo von <strong
+							>{formatEuro(data.computed.privateBalanceEnd)}</strong
+						> wird als Startguthaben in den nächsten Monat übernommen.
 					</p>
 					<div class="space-y-2">
 						<label for="close-confirm" class="block text-sm font-medium text-gray-800">
@@ -652,27 +842,29 @@
 							bind:value={closeConfirmText}
 							placeholder="CLOSE"
 							autofocus
-							class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono"
+							class="w-full rounded border-2 border-gray-300 px-3 py-2 font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none"
 						/>
 					</div>
 				</div>
 
-				<form method="POST" action="?/closeMonth" class="flex flex-col sm:flex-row gap-2">
+				<form method="POST" action="?/closeMonth" class="flex flex-col gap-2 sm:flex-row">
 					<input type="hidden" name="monthId" value={data.month.id} />
 					<input type="hidden" name="privateBalanceEnd" value={data.computed.privateBalanceEnd} />
-					
+
 					<button
 						type="button"
 						onclick={cancelCloseMonth}
-						class="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors font-medium"
+						class="flex-1 rounded-lg bg-gray-200 px-4 py-3 font-medium text-gray-800 transition-colors hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 focus:outline-none"
 					>
 						Abbrechen
 					</button>
-					
+
 					<button
 						type="submit"
 						disabled={!isCloseConfirmed}
-						class="flex-1 px-4 py-3 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed {isCloseConfirmed ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-300 text-gray-500'}"
+						class="flex-1 rounded-lg px-4 py-3 font-semibold transition-colors focus:ring-2 focus:ring-red-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 {isCloseConfirmed
+							? 'bg-red-600 text-white hover:bg-red-700'
+							: 'bg-gray-300 text-gray-500'}"
 					>
 						Monat endgültig abschließen
 					</button>
@@ -685,25 +877,30 @@
 <!-- Archive Section -->
 {#if data.closedMonths && data.closedMonths.length > 0}
 	<div class="my-8">
-		<h2 class="text-2xl font-semibold mb-4">📦 Archiv</h2>
+		<h2 class="mb-4 text-2xl font-semibold">📦 Archiv</h2>
 		<div class="space-y-3">
 			{#each data.closedMonths as closedMonth}
-				<div class="p-4 bg-gray-50 border border-gray-300 rounded-lg">
+				<div class="rounded-lg border border-gray-300 bg-gray-50 p-4">
 					{#if deleteArchiveMonthId === closedMonth.id}
 						<!-- Delete Confirmation -->
 						<div class="space-y-3">
-							<div class="p-3 bg-white border border-red-400 rounded">
-								<p class="text-sm font-semibold text-red-700 mb-2">⚠️ Monat {closedMonth.year}-{String(closedMonth.month).padStart(2, '0')} wirklich löschen?</p>
-								<p class="text-xs text-gray-600 mb-3">
-									Alle Daten dieses Monats werden permanent gelöscht. Diese Aktion kann nicht rückgängig gemacht werden!
+							<div class="rounded border border-red-400 bg-white p-3">
+								<p class="mb-2 text-sm font-semibold text-red-700">
+									⚠️ Monat {closedMonth.year}-{String(closedMonth.month).padStart(2, '0')} wirklich löschen?
 								</p>
-								<label class="flex items-center space-x-2 cursor-pointer">
+								<p class="mb-3 text-xs text-gray-600">
+									Alle Daten dieses Monats werden permanent gelöscht. Diese Aktion kann nicht
+									rückgängig gemacht werden!
+								</p>
+								<label class="flex cursor-pointer items-center space-x-2">
 									<input
 										type="checkbox"
 										bind:checked={deleteArchiveConfirmed}
-										class="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+										class="h-4 w-4 rounded text-red-600 focus:ring-red-500"
 									/>
-									<span class="text-sm text-gray-800">Ich verstehe, dass alle Daten permanent gelöscht werden</span>
+									<span class="text-sm text-gray-800"
+										>Ich verstehe, dass alle Daten permanent gelöscht werden</span
+									>
 								</label>
 							</div>
 
@@ -712,14 +909,16 @@
 								<button
 									type="button"
 									onclick={cancelDeleteArchive}
-									class="flex-1 px-3 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors text-sm"
+									class="flex-1 rounded bg-gray-200 px-3 py-2 text-sm text-gray-800 transition-colors hover:bg-gray-300"
 								>
 									Abbrechen
 								</button>
 								<button
 									type="submit"
 									disabled={!deleteArchiveConfirmed}
-									class="flex-1 px-3 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed {deleteArchiveConfirmed ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-300 text-gray-500'}"
+									class="flex-1 rounded px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 {deleteArchiveConfirmed
+										? 'bg-red-600 text-white hover:bg-red-700'
+										: 'bg-gray-300 text-gray-500'}"
 								>
 									Endgültig löschen
 								</button>
@@ -727,7 +926,7 @@
 						</div>
 					{:else}
 						<!-- Normal Display -->
-						<div class="flex justify-between items-start mb-3">
+						<div class="mb-3 flex items-start justify-between">
 							<h3 class="text-lg font-semibold text-gray-800">
 								{closedMonth.year}-{String(closedMonth.month).padStart(2, '0')}
 							</h3>
@@ -741,7 +940,7 @@
 									<button
 										type="button"
 										onclick={() => showDeleteArchive(closedMonth.id)}
-										class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+										class="rounded bg-red-100 px-2 py-1 text-xs text-red-700 transition-colors hover:bg-red-200"
 										title="Monat löschen (DEV)"
 									>
 										🗑️ Löschen
@@ -752,15 +951,21 @@
 						<div class="grid grid-cols-2 gap-3 text-sm">
 							<div>
 								<span class="text-gray-600">Startsaldo:</span>
-								<span class="font-semibold ml-2">{formatEuro(closedMonth.private_balance_start)}</span>
+								<span class="ml-2 font-semibold"
+									>{formatEuro(closedMonth.private_balance_start)}</span
+								>
 							</div>
 							<div>
 								<span class="text-gray-600">Endsaldo:</span>
-								<span class="font-semibold ml-2">{formatEuro(closedMonth.private_balance_end || 0)}</span>
+								<span class="ml-2 font-semibold"
+									>{formatEuro(closedMonth.private_balance_end || 0)}</span
+								>
 							</div>
 							<div>
 								<span class="text-gray-600">Transfer:</span>
-								<span class="font-semibold ml-2">{formatEuro(closedMonth.total_transfer_this_month)}</span>
+								<span class="ml-2 font-semibold"
+									>{formatEuro(closedMonth.total_transfer_this_month)}</span
+								>
 							</div>
 						</div>
 					{/if}
@@ -770,4 +975,6 @@
 	</div>
 {/if}
 
-<p class="text-sm text-gray-600 mt-8">Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<p class="mt-8 text-sm text-gray-600">
+	Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation
+</p>

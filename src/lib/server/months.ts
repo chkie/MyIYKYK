@@ -7,19 +7,19 @@ import { getSupabaseServerClient } from './supabase.js';
 
 /**
  * Gets or creates the current month entry.
- * 
+ *
  * Logic:
  * 1. Find existing month for current year/month
  * 2. If not found, create new month:
  *    - Find last closed month to get private_balance_end
  *    - Create new month with private_balance_start = last month's end (or 0)
- * 
+ *
  * @returns Current month row
  * @throws {Error} If database operation fails
  */
 export async function getOrCreateCurrentMonth() {
 	const supabase = getSupabaseServerClient();
-	
+
 	// Get current year and month (server timezone)
 	const now = new Date();
 	const currentYear = now.getFullYear();
@@ -44,7 +44,7 @@ export async function getOrCreateCurrentMonth() {
 	}
 
 	// Month doesn't exist - create it
-	
+
 	// 1. Find last closed month to get private_balance_end
 	const { data: lastClosedMonth, error: lastMonthError } = await supabase
 		.from('months')
@@ -84,13 +84,13 @@ export async function getOrCreateCurrentMonth() {
 
 /**
  * Ensures that month_incomes entries exist for all profiles.
- * 
+ *
  * Logic:
  * 1. Get all profiles (me + partner)
  * 2. For each profile, check if month_income exists
  * 3. If missing, create with net_income=0
  * 4. Return all month_incomes for this month
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @returns Array of month_incomes rows for this month
  * @throws {Error} If database operation fails
@@ -122,23 +122,32 @@ export async function ensureMonthIncomes(monthId: string) {
 		throw new Error(`Failed to fetch month_incomes: ${incomesError.message}`);
 	}
 
-	const existingProfileIds = new Set(
-		(existingIncomes || []).map((income) => income.profile_id)
-	);
+	const existingProfileIds = new Set((existingIncomes || []).map((income) => income.profile_id));
 
 	// 3. Create missing month_incomes
 	const missingProfiles = profiles.filter((profile) => !existingProfileIds.has(profile.id));
 
 	if (missingProfiles.length > 0) {
+		// Get last month's incomes to copy values
+		const { data: lastMonthIncomes } = await supabase
+			.from('month_incomes')
+			.select('profile_id, net_income')
+			.neq('month_id', monthId)
+			.order('created_at', { ascending: false })
+			.limit(profiles.length);
+
+		// Map last incomes by profile_id
+		const lastIncomesMap = new Map(
+			(lastMonthIncomes || []).map((income) => [income.profile_id, income.net_income])
+		);
+
 		const incomesToInsert = missingProfiles.map((profile) => ({
 			month_id: monthId,
 			profile_id: profile.id,
-			net_income: 0
+			net_income: lastIncomesMap.get(profile.id) ?? 0
 		}));
 
-		const { error: insertError } = await supabase
-			.from('month_incomes')
-			.insert(incomesToInsert);
+		const { error: insertError } = await supabase.from('month_incomes').insert(incomesToInsert);
 
 		if (insertError) {
 			throw new Error(`Failed to create month_incomes: ${insertError.message}`);
@@ -160,7 +169,7 @@ export async function ensureMonthIncomes(monthId: string) {
 
 /**
  * Updates net income values for month_incomes.
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @param updates - Array of { profileId, netIncome } to update
  * @throws {Error} If validation fails or database operation fails
@@ -192,14 +201,16 @@ export async function updateMonthIncomes(
 			.eq('profile_id', update.profileId);
 
 		if (updateError) {
-			throw new Error(`Failed to update income for profile ${update.profileId}: ${updateError.message}`);
+			throw new Error(
+				`Failed to update income for profile ${update.profileId}: ${updateError.message}`
+			);
 		}
 	}
 }
 
 /**
  * Closes a month by setting status to 'closed' and recording the final balance.
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @param privateBalanceEnd - The final private balance (can be negative)
  * @throws {Error} If validation fails or database operation fails
@@ -233,7 +244,7 @@ export async function closeMonth(monthId: string, privateBalanceEnd: number) {
 
 /**
  * Lists closed months for archive display.
- * 
+ *
  * @param limit - Maximum number of months to return (default: 12)
  * @returns Array of closed month records
  * @throws {Error} If database operation fails
@@ -243,7 +254,9 @@ export async function listClosedMonths(limit: number = 12) {
 
 	const { data: closedMonths, error } = await supabase
 		.from('months')
-		.select('id, year, month, private_balance_start, private_balance_end, total_transfer_this_month, closed_at')
+		.select(
+			'id, year, month, private_balance_start, private_balance_end, total_transfer_this_month, closed_at'
+		)
 		.eq('status', 'closed')
 		.order('year', { ascending: false })
 		.order('month', { ascending: false })
@@ -258,13 +271,13 @@ export async function listClosedMonths(limit: number = 12) {
 
 /**
  * Resets an open month to clean state for testing (DEV ONLY).
- * 
+ *
  * WARNING: This deletes all data for the given month!
  * - Deletes all fixed categories and items
  * - Deletes all private expenses
  * - Resets month_incomes to 0
  * - Resets month fields to initial values
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @throws {Error} If database operation fails
  */
@@ -343,13 +356,13 @@ export async function resetOpenMonthForDev(monthId: string): Promise<void> {
 
 /**
  * Deletes a closed month completely (DEV/TESTING).
- * 
+ *
  * WARNING: This permanently deletes the month and all associated data!
  * - Deletes all fixed categories and items
  * - Deletes all private expenses
  * - Deletes all month_incomes
  * - Deletes the month record itself
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @throws {Error} If database operation fails or month is not closed
  */
@@ -436,4 +449,3 @@ export async function deleteClosedMonth(monthId: string): Promise<void> {
 		throw new Error(`Failed to delete month: ${deleteMonthError.message}`);
 	}
 }
-

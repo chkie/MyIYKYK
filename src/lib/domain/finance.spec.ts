@@ -320,6 +320,61 @@ describe('calculateMonth', () => {
 		// privateBalanceStart must be in the computed result and match the input
 		expect(result.privateBalanceStart).toBe(-50);
 	});
+
+	it('splitMode="me" does not create debt towards partner', () => {
+		const inputs: MonthInputs = {
+			me: createPerson('me', 2000),
+			partner: createPerson('partner', 2000),
+			fixedCategories: [
+				createFixedCategory([
+					createFixedItem(100, 'me') // Christian's personal cost
+				])
+			],
+			privateExpenses: [],
+			privateBalanceStart: 0,
+			totalTransferThisMonth: 0
+		};
+
+		const result = calculateMonth(inputs);
+
+		// Total and myFixedShare still include 'me' items for tracking
+		expect(result.totalFixedCosts).toBe(100);
+		expect(result.myFixedShare).toBe(100);
+		// But transfer logic excludes 'me' items - no debt towards partner
+		expect(result.missingFixed).toBe(0);
+		expect(result.surplusForPrivates).toBe(0);
+		expect(result.privateBalanceEnd).toBe(0);
+	});
+
+	it('splitMode="me" does not contribute to missingFixed in mixed scenario', () => {
+		const inputs: MonthInputs = {
+			me: createPerson('me', 2000),
+			partner: createPerson('partner', 2000),
+			fixedCategories: [
+				createFixedCategory([
+					createFixedItem(1000, 'income'), // Shared: 50% each = 500€ for me
+					createFixedItem(100, 'me') // Personal: 100% me
+				])
+			],
+			privateExpenses: [],
+			privateBalanceStart: 0,
+			totalTransferThisMonth: 400 // Underpayment of 100€ for shared costs only
+		};
+
+		const result = calculateMonth(inputs);
+
+		// Total includes all items
+		expect(result.totalFixedCosts).toBe(1100); // 1000 + 100
+		// myFixedShare includes personal costs for display
+		expect(result.myFixedShare).toBe(600); // 500 (income) + 100 (me)
+		// Transfer logic only considers shared costs (500)
+		// Missing: 500 - 400 = 100 (not 600 - 400 = 200)
+		expect(result.missingFixed).toBe(100);
+		expect(result.surplusForPrivates).toBe(0);
+		// Debt accumulates only from shared underpayment
+		expect(result.privateTotalDueBeforePayment).toBe(100);
+		expect(result.privateBalanceEnd).toBe(100);
+	});
 });
 
 // ============================================================================
@@ -352,4 +407,3 @@ describe('roundMoney', () => {
 		expect(roundMoney(-Infinity)).toBe(0);
 	});
 });
-
