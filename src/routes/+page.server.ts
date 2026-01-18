@@ -56,6 +56,17 @@ export const load: PageServerLoad = async () => {
 
 		// 4. Get fixed categories with items
 		const fixedCategories = await listFixedCategoriesWithItems(month.id);
+		
+		// DEBUG: Log what we got
+		console.log('🔍 DEBUG - Fixed Categories loaded:', {
+			monthId: month.id,
+			categoriesCount: fixedCategories.length,
+			categories: fixedCategories.map(c => ({
+				label: c.label,
+				itemsCount: c.items.length,
+				items: c.items.map(i => i.label)
+			}))
+		});
 
 		// 5. Get private expenses
 		const privateExpenses = await listPrivateExpenses(month.id);
@@ -189,14 +200,9 @@ export const actions: Actions = {
 			// Update incomes
 			await updateMonthIncomes(monthId, updates);
 
-			// Redirect to reload data
-			throw redirect(303, '/');
+			// Success - no redirect needed, SvelteKit will invalidate and reload data
+			return { success: true };
 		} catch (err) {
-			// Handle redirect
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
-
 			// Handle other errors
 			console.error('Error saving incomes:', err);
 			return fail(500, {
@@ -219,11 +225,8 @@ export const actions: Actions = {
 			}
 
 			await createFixedCategory(monthId, label);
-			throw redirect(303, '/');
+			return { success: true };
 		} catch (err) {
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
 			console.error('Error adding category:', err);
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Failed to add category'
@@ -244,11 +247,8 @@ export const actions: Actions = {
 			}
 
 			await deleteFixedCategory(categoryId);
-			throw redirect(303, '/');
+			return { success: true };
 		} catch (err) {
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
 			console.error('Error deleting category:', err);
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Failed to delete category'
@@ -280,11 +280,8 @@ export const actions: Actions = {
 			}
 
 			await createFixedItem(categoryId, { label, amount, splitMode });
-			throw redirect(303, '/');
+			return { success: true };
 		} catch (err) {
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
 			console.error('Error adding item:', err);
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Failed to add item'
@@ -329,11 +326,8 @@ export const actions: Actions = {
 			}
 
 			await updateFixedItem(itemId, patch);
-			throw redirect(303, '/');
+			return { success: true };
 		} catch (err) {
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
 			console.error('Error updating item:', err);
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Failed to update item'
@@ -354,11 +348,8 @@ export const actions: Actions = {
 			}
 
 			await deleteFixedItem(itemId);
-			throw redirect(303, '/');
+			return { success: true };
 		} catch (err) {
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
 			console.error('Error deleting item:', err);
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Failed to delete item'
@@ -386,11 +377,8 @@ export const actions: Actions = {
 			}
 
 			await createPrivateExpense(monthId, { dateISO, description, amount });
-			throw redirect(303, '/');
+			return { success: true };
 		} catch (err) {
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
 			console.error('Error adding expense:', err);
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Failed to add expense'
@@ -411,11 +399,8 @@ export const actions: Actions = {
 			}
 
 			await deletePrivateExpense(expenseId);
-			throw redirect(303, '/');
+			return { success: true };
 		} catch (err) {
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
 			console.error('Error deleting expense:', err);
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Failed to delete expense'
@@ -441,11 +426,8 @@ export const actions: Actions = {
 			}
 
 			await updateMonthTransfer(monthId, totalTransfer);
-			throw redirect(303, '/');
+			return { success: true };
 		} catch (err) {
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
 			console.error('Error saving transfer:', err);
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Failed to save transfer'
@@ -470,18 +452,15 @@ export const actions: Actions = {
 				return fail(400, { error: 'Invalid balance end value' });
 			}
 
-			await closeMonth(monthId, privateBalanceEnd);
-			// Redirect to home - will create new month automatically
-			throw redirect(303, '/');
-		} catch (err) {
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
-			console.error('Error closing month:', err);
-			return fail(500, {
-				error: err instanceof Error ? err.message : 'Failed to close month'
-			});
-		}
+		await closeMonth(monthId, privateBalanceEnd);
+		// Return success - user can manually reload to see next month
+		return { success: true, monthClosed: true };
+	} catch (err) {
+		console.error('Error closing month:', err);
+		return fail(500, {
+			error: err instanceof Error ? err.message : 'Failed to close month'
+		});
+	}
 	},
 
 	/**
