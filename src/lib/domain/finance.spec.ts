@@ -99,103 +99,89 @@ describe('calculateIncomeShares', () => {
 describe('calculateMyShareForFixedItem', () => {
 	it('TEST B: splitMode wirkt - mode "me"', () => {
 		const item = createFixedItem(100, 'me');
-		const myShare = calculateMyShareForFixedItem(item, 0.25);
+		const shareMe = 0.6; // I earn 60% of total income
 
-		expect(myShare).toBe(100);
+		const result = calculateMyShareForFixedItem(item, shareMe);
+
+		expect(result).toBe(100); // I pay 100% when mode is "me"
 	});
 
 	it('TEST B: splitMode wirkt - mode "partner"', () => {
 		const item = createFixedItem(100, 'partner');
-		const myShare = calculateMyShareForFixedItem(item, 0.25);
+		const shareMe = 0.6;
 
-		expect(myShare).toBe(0);
+		const result = calculateMyShareForFixedItem(item, shareMe);
+
+		expect(result).toBe(0); // I pay 0% when mode is "partner"
 	});
 
-	it('TEST B: splitMode wirkt - mode "half" (legacy, now treated as income)', () => {
-		const item = createFixedItem(100, 'half');
-		const myShare = calculateMyShareForFixedItem(item, 0.25);
-
-		// Now treated as income-based: 100 * 0.25 = 25
-		expect(myShare).toBe(25);
-	});
-
-	it('TEST B: splitMode wirkt - mode "income" with shareMe=0.25', () => {
+	it('TEST B: splitMode wirkt - mode "income"', () => {
 		const item = createFixedItem(100, 'income');
-		const myShare = calculateMyShareForFixedItem(item, 0.25);
+		const shareMe = 0.6;
 
-		expect(myShare).toBe(25);
+		const result = calculateMyShareForFixedItem(item, shareMe);
+
+		expect(result).toBe(60); // I pay 60% when mode is "income"
 	});
 
-	it('TEST G: Rundung auf 2 Dezimalstellen - income with 50% share', () => {
-		const item = createFixedItem(10.01, 'income');
-		const myShare = calculateMyShareForFixedItem(item, 0.5);
+	it('handles legacy "half" mode as income-based', () => {
+		const item = createFixedItem(100, 'half');
+		const shareMe = 0.6;
 
-		// 50% of 10.01 = 5.005, should round to 5.01 (not 5.00)
-		expect(myShare).toBe(5.01);
-	});
+		const result = calculateMyShareForFixedItem(item, shareMe);
 
-	it('TEST G: Rundung auf 2 Dezimalstellen - income split with decimals', () => {
-		const item = createFixedItem(33.33, 'income');
-		const myShare = calculateMyShareForFixedItem(item, 0.333);
-
-		// 33.33 * 0.333 = 11.09889, should round to 11.10
-		expect(myShare).toBe(11.1);
+		expect(result).toBe(60); // Legacy "half" treated as "income"
 	});
 });
+
+// ============================================================================
+// Tests: Fixed Costs Summation
+// ============================================================================
 
 describe('calculateMyFixedShare', () => {
-	it('calculates total fixed share across multiple items and categories', () => {
-		const categories = [
-			createFixedCategory([createFixedItem(100, 'me'), createFixedItem(200, 'income')]),
-			createFixedCategory([createFixedItem(100, 'income')])
+	it('TEST C: Mit mehreren Items & Kategorien', () => {
+		const categories: FixedCategory[] = [
+			createFixedCategory([createFixedItem(100, 'income'), createFixedItem(200, 'me')]),
+			createFixedCategory([createFixedItem(300, 'partner'), createFixedItem(400, 'income')])
+		];
+		const shareMe = 0.6; // 60% income share
+
+		const result = calculateMyFixedShare(categories, shareMe);
+
+		// (100 * 0.6) + 200 + 0 + (400 * 0.6) = 60 + 200 + 0 + 240 = 500
+		expect(result).toBe(500);
+	});
+
+	it('handles empty categories', () => {
+		const result = calculateMyFixedShare([], 0.5);
+		expect(result).toBe(0);
+	});
+
+	it('handles single category with multiple items', () => {
+		const categories: FixedCategory[] = [
+			createFixedCategory([createFixedItem(100, 'income'), createFixedItem(50, 'income')])
 		];
 
-		const myShare = calculateMyFixedShare(categories, 0.4);
+		const result = calculateMyFixedShare(categories, 0.4);
 
-		// 100 (me) + 80 (40% of 200) + 40 (40% of 100) = 220
-		expect(myShare).toBe(220);
+		// (100 * 0.4) + (50 * 0.4) = 40 + 20 = 60
+		expect(result).toBe(60);
 	});
 });
 
 // ============================================================================
-// Tests: Month Calculation - Core Scenarios
+// Tests: Month Calculation (Prepayment Model)
 // ============================================================================
 
-describe('calculateMonth', () => {
-	it('TEST C: Unterzahlung wandert in Schulden', () => {
-		// Setup: myFixedShare will be 1100, but only 1000 transferred
+describe('calculateMonth - Prepayment Model', () => {
+	it('TEST D: Integration test with prepayment covering all costs', () => {
 		const inputs: MonthInputs = {
-			me: createPerson('me', 2000),
-			partner: createPerson('partner', 2000),
+			me: createPerson('me', 3000),
+			partner: createPerson('partner', 2000), // My share: 60%
 			fixedCategories: [
 				createFixedCategory([
-					createFixedItem(2200, 'half') // My share: 1100
-				])
-			],
-			privateExpenses: [],
-			privateBalanceStart: 0,
-			totalTransferThisMonth: 1000
-		};
-
-		const result = calculateMonth(inputs);
-
-		// Assertions
-		expect(result.myFixedShare).toBe(1100);
-		expect(result.missingFixed).toBe(100); // 1100 - 1000
-		expect(result.surplusForPrivates).toBe(0); // No surplus
-		expect(result.privateAddedThisMonth).toBe(0); // No private expenses
-		expect(result.privateTotalDueBeforePayment).toBe(100); // 0 + 0 + 100
-		expect(result.privateBalanceEnd).toBe(100); // 100 - 0
-	});
-
-	it('TEST D: Überzahlung tilgt Schulden', () => {
-		// Setup: myFixedShare=1100, overpayment of 400 goes to privates
-		const inputs: MonthInputs = {
-			me: createPerson('me', 2000),
-			partner: createPerson('partner', 2000),
-			fixedCategories: [
-				createFixedCategory([
-					createFixedItem(2200, 'half') // My share: 1100
+					createFixedItem(500, 'income'), // My share: 300
+					createFixedItem(1000, 'income') // My share: 600
 				])
 			],
 			privateExpenses: [
@@ -208,26 +194,32 @@ describe('calculateMonth', () => {
 				{
 					id: 'exp2',
 					dateISO: '2024-01-20',
-					description: 'Pharmacy',
+					description: 'Gas',
 					amount: 100
 				}
 			],
-			privateBalanceStart: 300,
-			totalTransferThisMonth: 1500
+			privateBalanceStart: 300, // Old debt
+			prepaymentThisMonth: 1100 // Prepaid 1100€ (covers my 900€ fixed costs + 200€ extra)
 		};
 
 		const result = calculateMonth(inputs);
 
 		// Assertions
-		expect(result.myFixedShare).toBe(1100);
+		expect(result.shareMe).toBeCloseTo(0.6, 5);
+		expect(result.myFixedShare).toBe(900); // Total: 300 + 600
+		expect(result.fixedCostDue).toBe(900); // What I owe for shared costs
+		expect(result.prepaymentThisMonth).toBe(1100);
 		expect(result.privateAddedThisMonth).toBe(200); // 100 + 100
-		expect(result.missingFixed).toBe(0); // No missing fixed costs
-		expect(result.surplusForPrivates).toBe(400); // 1500 - 1100
-		expect(result.privateTotalDueBeforePayment).toBe(500); // 300 + 200 + 0
-		expect(result.privateBalanceEnd).toBe(100); // 500 - 400
+		expect(result.fixedCostShortfall).toBe(0); // No underpayment (1100 >= 900)
+		expect(result.fixedCostOverpayment).toBe(200); // Overpaid by 200
+		
+		// Debt calculation: oldDebt + privateExpenses + fixedCosts - prepayment
+		// = 300 + 200 + 900 - 1100 = 300
+		expect(result.privateTotalDueBeforePrepayment).toBe(1400); // 300 + 200 + 900
+		expect(result.privateBalanceEnd).toBe(300); // 1400 - 1100
 	});
 
-	it('handles zero transfers with existing debt', () => {
+	it('handles zero prepayment with existing debt', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 3000),
 			partner: createPerson('partner', 2000),
@@ -245,64 +237,73 @@ describe('calculateMonth', () => {
 				}
 			],
 			privateBalanceStart: 200,
-			totalTransferThisMonth: 0
+			prepaymentThisMonth: 0 // No prepayment
 		};
 
 		const result = calculateMonth(inputs);
 
 		expect(result.shareMe).toBeCloseTo(0.6, 5);
 		expect(result.myFixedShare).toBe(600);
+		expect(result.fixedCostDue).toBe(600);
 		expect(result.privateAddedThisMonth).toBe(50);
-		expect(result.missingFixed).toBe(600); // All fixed costs missing
-		expect(result.surplusForPrivates).toBe(0);
-		expect(result.privateTotalDueBeforePayment).toBe(850); // 200 + 50 + 600
-		expect(result.privateBalanceEnd).toBe(850); // 850 - 0
+		expect(result.fixedCostShortfall).toBe(600); // All fixed costs unpaid
+		expect(result.fixedCostOverpayment).toBe(0);
+		
+		// Debt: 200 + 50 + 600 - 0 = 850
+		expect(result.privateTotalDueBeforePrepayment).toBe(850);
+		expect(result.privateBalanceEnd).toBe(850);
 	});
 
-	it('handles exact payment (no surplus, no missing)', () => {
+	it('handles exact prepayment (no shortfall, no overpayment)', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 2000),
 			fixedCategories: [
 				createFixedCategory([
-					createFixedItem(1000, 'half') // My share: 500
+					createFixedItem(1000, 'income') // My share: 500 (50%)
 				])
 			],
 			privateExpenses: [],
 			privateBalanceStart: 0,
-			totalTransferThisMonth: 500
+			prepaymentThisMonth: 500 // Exactly covers fixed costs
 		};
 
 		const result = calculateMonth(inputs);
 
 		expect(result.myFixedShare).toBe(500);
-		expect(result.missingFixed).toBe(0);
-		expect(result.surplusForPrivates).toBe(0);
-		expect(result.privateTotalDueBeforePayment).toBe(0);
+		expect(result.fixedCostDue).toBe(500);
+		expect(result.fixedCostShortfall).toBe(0);
+		expect(result.fixedCostOverpayment).toBe(0);
+		
+		// Debt: 0 + 0 + 500 - 500 = 0
+		expect(result.privateTotalDueBeforePrepayment).toBe(500);
 		expect(result.privateBalanceEnd).toBe(0);
 	});
 
-	it('TEST F: Negative privateBalanceStart ist erlaubt', () => {
+	it('TEST F: Negative privateBalanceStart ist erlaubt (partner owes me)', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 2000),
 			fixedCategories: [
 				createFixedCategory([
-					createFixedItem(200, 'half') // My share: 100
+					createFixedItem(200, 'income') // My share: 100
 				])
 			],
 			privateExpenses: [],
-			privateBalanceStart: -50, // Negative start balance (partner owes me)
-			totalTransferThisMonth: 100
+			privateBalanceStart: -50, // Partner owes me 50€
+			prepaymentThisMonth: 100 // Cover fixed costs
 		};
 
 		const result = calculateMonth(inputs);
 
 		expect(result.myFixedShare).toBe(100);
-		expect(result.missingFixed).toBe(0); // Paid exactly what's needed
-		expect(result.surplusForPrivates).toBe(0); // No surplus
-		expect(result.privateTotalDueBeforePayment).toBe(-50); // -50 + 0 + 0
-		expect(result.privateBalanceEnd).toBe(-50); // -50 - 0
+		expect(result.fixedCostDue).toBe(100);
+		expect(result.fixedCostShortfall).toBe(0);
+		expect(result.fixedCostOverpayment).toBe(0);
+		
+		// Debt: -50 + 0 + 100 - 100 = -50 (still in my favor)
+		expect(result.privateTotalDueBeforePrepayment).toBe(50); // -50 + 0 + 100
+		expect(result.privateBalanceEnd).toBe(-50); // 50 - 100
 	});
 
 	it('privateBalanceStart is preserved in computed result', () => {
@@ -311,13 +312,12 @@ describe('calculateMonth', () => {
 			partner: createPerson('partner', 2000),
 			fixedCategories: [],
 			privateExpenses: [],
-			privateBalanceStart: -50, // Negative balance
-			totalTransferThisMonth: 0
+			privateBalanceStart: -50,
+			prepaymentThisMonth: 0
 		};
 
 		const result = calculateMonth(inputs);
 
-		// privateBalanceStart must be in the computed result and match the input
 		expect(result.privateBalanceStart).toBe(-50);
 	});
 
@@ -327,53 +327,100 @@ describe('calculateMonth', () => {
 			partner: createPerson('partner', 2000),
 			fixedCategories: [
 				createFixedCategory([
-					createFixedItem(100, 'me') // Christian's personal cost
+					createFixedItem(100, 'me') // Personal cost, not shared
 				])
 			],
 			privateExpenses: [],
 			privateBalanceStart: 0,
-			totalTransferThisMonth: 0
+			prepaymentThisMonth: 0
 		};
 
 		const result = calculateMonth(inputs);
 
-		// Total and myFixedShare still include 'me' items for tracking
+		// myFixedShare includes 'me' items for display
 		expect(result.totalFixedCosts).toBe(100);
 		expect(result.myFixedShare).toBe(100);
+		
 		// But transfer logic excludes 'me' items - no debt towards partner
-		expect(result.missingFixed).toBe(0);
-		expect(result.surplusForPrivates).toBe(0);
+		expect(result.fixedCostDue).toBe(0); // No shared costs
+		expect(result.fixedCostShortfall).toBe(0);
+		expect(result.fixedCostOverpayment).toBe(0);
 		expect(result.privateBalanceEnd).toBe(0);
 	});
 
-	it('splitMode="me" does not contribute to missingFixed in mixed scenario', () => {
+	it('splitMode="me" does not contribute to fixedCostDue in mixed scenario', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 2000),
 			fixedCategories: [
 				createFixedCategory([
-					createFixedItem(1000, 'income'), // Shared: 50% each = 500€ for me
-					createFixedItem(100, 'me') // Personal: 100% me
+					createFixedItem(1000, 'income'), // Shared: 50% = 500€ for me
+					createFixedItem(100, 'me') // Personal: doesn't count for debt
 				])
 			],
 			privateExpenses: [],
 			privateBalanceStart: 0,
-			totalTransferThisMonth: 400 // Underpayment of 100€ for shared costs only
+			prepaymentThisMonth: 400 // Underpaid by 100€
 		};
 
 		const result = calculateMonth(inputs);
 
-		// Total includes all items
-		expect(result.totalFixedCosts).toBe(1100); // 1000 + 100
-		// myFixedShare includes personal costs for display
-		expect(result.myFixedShare).toBe(600); // 500 (income) + 100 (me)
-		// Transfer logic only considers shared costs (500)
-		// Missing: 500 - 400 = 100 (not 600 - 400 = 200)
-		expect(result.missingFixed).toBe(100);
-		expect(result.surplusForPrivates).toBe(0);
-		// Debt accumulates only from shared underpayment
-		expect(result.privateTotalDueBeforePayment).toBe(100);
+		expect(result.totalFixedCosts).toBe(1100);
+		expect(result.myFixedShare).toBe(600); // 500 (shared) + 100 (personal)
+		expect(result.fixedCostDue).toBe(500); // Only shared costs count
+		expect(result.fixedCostShortfall).toBe(100); // 500 - 400
+		expect(result.fixedCostOverpayment).toBe(0);
+		
+		// Debt: 0 + 0 + 500 - 400 = 100
+		expect(result.privateTotalDueBeforePrepayment).toBe(500);
 		expect(result.privateBalanceEnd).toBe(100);
+	});
+
+	it('overpayment scenario reduces debt', () => {
+		const inputs: MonthInputs = {
+			me: createPerson('me', 2000),
+			partner: createPerson('partner', 2000),
+			fixedCategories: [
+				createFixedCategory([createFixedItem(1000, 'income')]) // My share: 500
+			],
+			privateExpenses: [
+				{ id: 'exp1', dateISO: '2024-01-15', description: 'Test', amount: 100 }
+			],
+			privateBalanceStart: 200,
+			prepaymentThisMonth: 800 // Overpaid by 300€
+		};
+
+		const result = calculateMonth(inputs);
+
+		expect(result.fixedCostDue).toBe(500);
+		expect(result.fixedCostShortfall).toBe(0);
+		expect(result.fixedCostOverpayment).toBe(300); // 800 - 500
+		expect(result.privateAddedThisMonth).toBe(100);
+		
+		// Debt: 200 + 100 + 500 - 800 = 0
+		expect(result.privateTotalDueBeforePrepayment).toBe(800);
+		expect(result.privateBalanceEnd).toBe(0);
+	});
+
+	it('recommendedPrepayment reflects transfer-relevant fixed costs', () => {
+		const inputs: MonthInputs = {
+			me: createPerson('me', 3000),
+			partner: createPerson('partner', 2000),
+			fixedCategories: [
+				createFixedCategory([
+					createFixedItem(1000, 'income'), // My share: 600
+					createFixedItem(200, 'me') // Personal, excluded
+				])
+			],
+			privateExpenses: [],
+			privateBalanceStart: 0,
+			prepaymentThisMonth: 0
+		};
+
+		const result = calculateMonth(inputs);
+
+		// Recommended prepayment should only include shared costs
+		expect(result.recommendedPrepayment).toBe(600); // Not 720 (which would include 'me' item)
 	});
 });
 
@@ -395,14 +442,16 @@ describe('roundMoney', () => {
 
 	it('handles zero', () => {
 		expect(roundMoney(0)).toBe(0);
-		expect(roundMoney(-0)).toBe(-0); // JavaScript -0 === 0, but Object.is distinguishes them
+		expect(roundMoney(-0)).toBe(-0);
 	});
 
-	it('defensive guards: handles NaN', () => {
+	it('handles integers', () => {
+		expect(roundMoney(5)).toBe(5);
+		expect(roundMoney(-10)).toBe(-10);
+	});
+
+	it('guards against NaN and Infinity', () => {
 		expect(roundMoney(NaN)).toBe(0);
-	});
-
-	it('defensive guards: handles Infinity', () => {
 		expect(roundMoney(Infinity)).toBe(0);
 		expect(roundMoney(-Infinity)).toBe(0);
 	});

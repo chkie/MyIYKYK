@@ -78,22 +78,26 @@ export interface MonthInputs {
 	fixedCategories: FixedCategory[];
 	privateExpenses: PrivateExpense[];
 	privateBalanceStart: Money; // can be negative
-	totalTransferThisMonth: Money; // >= 0
+	prepaymentThisMonth: Money; // >= 0 - amount prepaid this month for fixed costs
 }
 
 /**
  * MonthComputed contains all calculated values for a month.
+ * Uses prepayment model: I prepay fixed costs at month start,
+ * debt accumulates from private expenses + any underpayment.
  */
 export interface MonthComputed {
 	shareMe: number; // 0..1 (income proportion)
 	sharePartner: number; // 0..1 (income proportion)
 	totalFixedCosts: Money;
-	myFixedShare: Money;
+	myFixedShare: Money; // Total share including 'me' items
 	privateAddedThisMonth: Money;
-	missingFixed: Money;
-	surplusForPrivates: Money;
-	privateTotalDueBeforePayment: Money;
 	privateBalanceStart: Money; // can be negative
-	privateBalanceEnd: Money;
+	privateBalanceEnd: Money; // can be negative
+	prepaymentThisMonth: Money; // Amount I prepaid this month
+	fixedCostDue: Money; // What I owe for fixed costs (transfer-relevant only)
+	fixedCostShortfall: Money; // How much I underpaid (if any)
+	fixedCostOverpayment: Money; // How much I overpaid (if any)
+	privateTotalDueBeforePrepayment: Money; // Total debt before prepayment applied
+	recommendedPrepayment: Money; // Suggested prepayment for next month
 }
-

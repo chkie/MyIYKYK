@@ -238,6 +238,11 @@ export function calculateMyTransferFixedShare(
  * This is the main orchestration function that combines all helper functions
  * to compute the complete monthly financial picture.
  *
+ * PREPAYMENT MODEL:
+ * - At month start, I prepay my expected fixed cost share to partner
+ * - During month, private expenses are paid by partner and added to my debt
+ * - At month end: debt = oldDebt + privateExpenses + fixedShare - prepayment
+ *
  * @param inputs - All input data for the month
  * @returns Complete computed month data
  *
@@ -248,7 +253,7 @@ export function calculateMyTransferFixedShare(
  *   fixedCategories: [...],
  *   privateExpenses: [...],
  *   privateBalanceStart: 0,
- *   totalTransferThisMonth: 1000
+ *   prepaymentThisMonth: 1000
  * });
  */
 export function calculateMonth(inputs: MonthInputs): MonthComputed {
@@ -261,33 +266,41 @@ export function calculateMonth(inputs: MonthInputs): MonthComputed {
 	// b) Calculate total fixed costs
 	const totalFixedCosts = sumFixedCosts(inputs.fixedCategories);
 
-	// c) Calculate my fixed share
+	// c) Calculate my fixed share (total including 'me' items for display)
 	const myFixedShare = calculateMyFixedShare(inputs.fixedCategories, shareMe);
 
 	// c2) Calculate transfer-relevant fixed share (excludes splitMode='me')
+	// This is what I actually owe to partner for shared costs
 	const myTransferFixedShare = calculateMyTransferFixedShare(inputs.fixedCategories, shareMe);
 
 	// d) Calculate private expenses added this month
 	const privateAddedThisMonth = sumPrivateExpenses(inputs.privateExpenses);
 
-	// e) Calculate missing fixed costs and surplus for privates
-	const missingFixed = roundMoney(
-		Math.max(0, myTransferFixedShare - inputs.totalTransferThisMonth)
-	);
-	const surplusForPrivates = roundMoney(
-		Math.max(0, inputs.totalTransferThisMonth - myTransferFixedShare)
-	);
-
-	// f) Round and preserve private balance start
+	// e) Round and preserve private balance start
 	const privateBalanceStart = roundMoney(inputs.privateBalanceStart);
 
-	// g) Calculate private total due before payment
-	const privateTotalDueBeforePayment = roundMoney(
-		privateBalanceStart + privateAddedThisMonth + missingFixed
+	// f) Calculate what I owe for fixed costs (transfer-relevant only)
+	const fixedCostDue = roundMoney(myTransferFixedShare);
+
+	// g) Calculate prepayment amount this month
+	const prepaymentThisMonth = roundMoney(inputs.prepaymentThisMonth);
+
+	// h) Calculate underpayment or overpayment of fixed costs
+	const fixedCostShortfall = roundMoney(Math.max(0, fixedCostDue - prepaymentThisMonth));
+	const fixedCostOverpayment = roundMoney(Math.max(0, prepaymentThisMonth - fixedCostDue));
+
+	// i) Calculate total debt before prepayment is applied
+	// Debt increases by: private expenses + fixed costs owed
+	const privateTotalDueBeforePrepayment = roundMoney(
+		privateBalanceStart + privateAddedThisMonth + fixedCostDue
 	);
 
-	// h) Calculate final private balance
-	const privateBalanceEnd = roundMoney(privateTotalDueBeforePayment - surplusForPrivates);
+	// j) Calculate final private balance after prepayment
+	// Debt decreases by: prepayment made
+	const privateBalanceEnd = roundMoney(privateTotalDueBeforePrepayment - prepaymentThisMonth);
+
+	// k) Calculate recommended prepayment for next month (for UI guidance)
+	const recommendedPrepayment = roundMoney(myTransferFixedShare);
 
 	return {
 		shareMe,
@@ -295,10 +308,13 @@ export function calculateMonth(inputs: MonthInputs): MonthComputed {
 		totalFixedCosts,
 		myFixedShare,
 		privateAddedThisMonth,
-		missingFixed,
-		surplusForPrivates,
-		privateTotalDueBeforePayment,
 		privateBalanceStart,
-		privateBalanceEnd
+		privateBalanceEnd,
+		prepaymentThisMonth,
+		fixedCostDue,
+		fixedCostShortfall,
+		fixedCostOverpayment,
+		privateTotalDueBeforePrepayment,
+		recommendedPrepayment
 	};
 }

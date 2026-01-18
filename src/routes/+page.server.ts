@@ -110,7 +110,7 @@ export const load: PageServerLoad = async () => {
 				amount: Number(exp.amount)
 			})),
 			privateBalanceStart: Number(month.private_balance_start || 0),
-			totalTransferThisMonth: Number(month.total_transfer_this_month) || 0
+			prepaymentThisMonth: Number(month.total_transfer_this_month) || 0
 		};
 
 		// Calculate month
@@ -409,28 +409,28 @@ export const actions: Actions = {
 	},
 
 	/**
-	 * Save month transfer amount.
+	 * Save month prepayment amount.
 	 */
-	saveTransfer: async ({ request }) => {
+	savePrepayment: async ({ request }) => {
 		try {
 			const formData = await request.formData();
 			const monthId = formData.get('monthId')?.toString();
-			const totalTransfer = parseFloat(formData.get('totalTransfer')?.toString() || '0');
+			const prepayment = parseFloat(formData.get('prepayment')?.toString() || '0');
 
 			if (!monthId) {
 				return fail(400, { error: 'Month ID is required' });
 			}
 
-			if (isNaN(totalTransfer) || totalTransfer < 0) {
-				return fail(400, { error: 'Invalid transfer amount' });
+			if (isNaN(prepayment) || prepayment < 0) {
+				return fail(400, { error: 'Invalid prepayment amount' });
 			}
 
-			await updateMonthTransfer(monthId, totalTransfer);
+			await updateMonthTransfer(monthId, prepayment);
 			return { success: true };
 		} catch (err) {
-			console.error('Error saving transfer:', err);
+			console.error('Error saving prepayment:', err);
 			return fail(500, {
-				error: err instanceof Error ? err.message : 'Failed to save transfer'
+				error: err instanceof Error ? err.message : 'Failed to save prepayment'
 			});
 		}
 	},

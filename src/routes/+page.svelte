@@ -132,141 +132,182 @@
 	}
 </script>
 
-<h1>Kosten-Tool</h1>
+<h1 class="sr-only">Kosten-Tool</h1>
 
-<!-- Month Period Info -->
-<div class="my-4 text-center text-gray-600">
-	Monat: {data.month.year}-{String(data.month.month).padStart(2, '0')}
+<!-- Month Period Info - Non-sticky, clean badge -->
+<div class="mb-6 overflow-hidden rounded-2xl bg-white shadow-md">
+	<div class="flex items-center justify-between bg-gradient-to-r from-primary-50 to-primary-100 px-5 py-4">
+		<div class="flex items-center gap-3">
+			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500 text-white">
+				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+				</svg>
+			</div>
+			<div>
+				<p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Aktueller Monat</p>
+				<p class="text-xl font-bold text-primary-900">
+					{data.month.year}-{String(data.month.month).padStart(2, '0')}
+				</p>
+			</div>
+		</div>
+		<div class="rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide {data.month.status === 'open' ? 'bg-success-100 text-success-700' : 'bg-neutral-200 text-neutral-700'}">
+			{data.month.status === 'open' ? '✓ Aktiv' : 'Geschlossen'}
+		</div>
+	</div>
 </div>
 
 <!-- DEV Tools (only visible in development) -->
 {#if import.meta.env.DEV}
-	<div class="my-6 rounded-lg border-2 border-red-300 bg-red-50 p-4">
-		<h3 class="mb-2 text-sm font-semibold text-red-800">🛠️ DEV TOOLS (nicht in Production)</h3>
+	<div class="my-6 overflow-hidden rounded-2xl border-2 border-danger-300 bg-white shadow-lg">
+		<div class="bg-gradient-to-r from-danger-50 to-danger-100 px-5 py-4">
+			<h3 class="flex items-center gap-2 text-lg font-bold text-danger-900">
+				<span class="text-xl">🛠️</span>
+				DEV TOOLS <span class="text-xs font-normal">(nicht in Production)</span>
+			</h3>
+		</div>
 
-		{#if !showDevResetConfirm}
-			<button
-				type="button"
-				onclick={() => {
-					showDevResetConfirm = true;
-				}}
-				class="w-full rounded bg-red-100 px-4 py-2 text-sm font-medium text-red-800 transition-colors hover:bg-red-200"
-			>
-				Reset current month (löscht alle Daten)
-			</button>
-		{:else}
-			<div class="space-y-3">
-				<div class="rounded border border-red-400 bg-white p-3">
-					<p class="mb-2 text-sm font-medium text-red-700">
-						⚠️ Alle Daten des aktuellen Monats werden gelöscht!
-					</p>
-					<p class="mb-3 text-xs text-gray-600">
-						Fixkosten, Private Ausgaben, Einkommen werden zurückgesetzt. Der Monat bleibt 'open'.
-					</p>
-					<label class="flex cursor-pointer items-center space-x-2">
-						<input
-							type="checkbox"
-							bind:checked={devResetConfirmed}
-							class="h-4 w-4 rounded text-red-600 focus:ring-red-500"
-						/>
-						<span class="text-sm text-gray-800">Ich verstehe, dass alle Daten gelöscht werden</span>
-					</label>
+		<div class="p-5">
+			{#if !showDevResetConfirm}
+				<button
+					type="button"
+					onclick={() => {
+						showDevResetConfirm = true;
+					}}
+					class="w-full rounded-xl bg-danger-100 px-4 py-3 font-semibold text-danger-800 transition-all hover:bg-danger-200 active:scale-95"
+				>
+					Reset current month (löscht alle Daten)
+				</button>
+			{:else}
+				<div class="space-y-4">
+					<div class="rounded-xl border-2 border-danger-400 bg-white p-4">
+						<p class="mb-3 font-bold text-danger-700">
+							⚠️ Alle Daten des aktuellen Monats werden gelöscht!
+						</p>
+						<p class="mb-4 text-sm text-neutral-600">
+							Fixkosten, Private Ausgaben, Einkommen werden zurückgesetzt. Der Monat bleibt 'open'.
+						</p>
+						<label class="flex cursor-pointer items-center gap-3">
+							<input
+								type="checkbox"
+								bind:checked={devResetConfirmed}
+								class="h-5 w-5 rounded border-danger-300 text-danger-600 focus:ring-danger-500"
+							/>
+							<span class="text-sm font-medium text-neutral-800">Ich verstehe, dass alle Daten gelöscht werden</span>
+						</label>
+					</div>
+
+					<form method="POST" action="?/resetMonthDev" class="flex gap-3">
+						<input type="hidden" name="monthId" value={data.month.id} />
+						<button
+							type="button"
+							onclick={cancelDevReset}
+							class="flex-1 rounded-xl bg-neutral-200 px-4 py-3 font-semibold text-neutral-800 transition-all hover:bg-neutral-300 active:scale-95"
+						>
+							Abbrechen
+						</button>
+						<button
+							type="submit"
+							disabled={!devResetConfirmed}
+							class="flex-1 rounded-xl px-4 py-3 font-bold transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 {devResetConfirmed
+								? 'bg-danger-600 text-white hover:bg-danger-700'
+								: 'bg-neutral-300 text-neutral-500'}"
+						>
+							Jetzt zurücksetzen
+						</button>
+					</form>
 				</div>
-
-				<form method="POST" action="?/resetMonthDev" class="flex gap-2">
-					<input type="hidden" name="monthId" value={data.month.id} />
-					<button
-						type="button"
-						onclick={cancelDevReset}
-						class="flex-1 rounded bg-gray-200 px-3 py-2 text-sm text-gray-800 transition-colors hover:bg-gray-300"
-					>
-						Abbrechen
-					</button>
-					<button
-						type="submit"
-						disabled={!devResetConfirmed}
-						class="flex-1 rounded px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 {devResetConfirmed
-							? 'bg-red-600 text-white hover:bg-red-700'
-							: 'bg-gray-300 text-gray-500'}"
-					>
-						Jetzt zurücksetzen
-					</button>
-				</form>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
 {/if}
 
 <!-- Results Section -->
 <div class="my-8">
-	<h2 class="mb-4 text-2xl font-semibold">Monatsübersicht</h2>
+	<h2 class="mb-6 text-2xl font-bold text-neutral-900">Monatsübersicht</h2>
 
 	<div class="space-y-4">
-		<!-- Card 1: Fixkosten -->
-		<div class="rounded-lg border-2 border-blue-300 bg-white p-4 shadow-sm">
-			<h3 class="mb-3 text-lg font-semibold text-blue-900">Fixkosten</h3>
-			<div class="space-y-2">
-				<div class="flex justify-between">
-					<span class="text-gray-700">Gesamt Fixkosten:</span>
-					<span class="font-semibold">{formatEuro(data.computed.totalFixedCosts)}</span>
+		<!-- Card 1: Fixkosten - Primary Indigo -->
+		<div class="overflow-hidden rounded-2xl border-2 border-primary-200 bg-white shadow-md transition-all hover:shadow-lg">
+			<div class="bg-gradient-to-r from-primary-50 to-primary-100 px-5 py-4">
+				<h3 class="flex items-center gap-2 text-lg font-bold text-primary-900">
+					<span class="text-xl">🏠</span>
+					Fixkosten
+				</h3>
+			</div>
+			<div class="space-y-3 p-5">
+				<div class="flex justify-between items-center">
+					<span class="text-sm text-neutral-600">Gesamt Fixkosten:</span>
+					<span class="text-lg font-bold text-neutral-900">{formatEuro(data.computed.totalFixedCosts)}</span>
 				</div>
-				<div class="flex justify-between">
-					<span class="text-gray-700">Dein Anteil:</span>
-					<span class="font-semibold text-blue-600">{formatEuro(data.computed.myFixedShare)}</span>
+				<div class="flex justify-between items-center">
+					<span class="text-sm text-neutral-600">Dein Anteil:</span>
+					<span class="text-2xl font-bold text-primary-600">{formatEuro(data.computed.myFixedShare)}</span>
 				</div>
-				<div class="mt-2 border-t border-blue-200 pt-2">
-					<span class="text-xs text-gray-600"
+				<div class="mt-3 border-t border-primary-100 pt-3">
+					<span class="text-xs text-neutral-500"
 						>Dein Einkommensanteil: {formatPct(data.computed.shareMe)}</span
 					>
 				</div>
 			</div>
 		</div>
 
-		<!-- Card 2: Transfer & Ausgleich -->
-		<div class="rounded-lg border-2 border-purple-300 bg-white p-4 shadow-sm">
-			<h3 class="mb-3 text-lg font-semibold text-purple-900">Transfer & Ausgleich</h3>
-			<div class="space-y-2">
-				<div class="flex justify-between">
-					<span class="text-gray-700">Überweisung (diesen Monat):</span>
-					<span class="font-semibold">{formatEuro(data.month.total_transfer_this_month || 0)}</span>
+		<!-- Card 2: Vorauszahlung - Accent Pink -->
+		<div class="overflow-hidden rounded-2xl border-2 border-accent-200 bg-white shadow-md transition-all hover:shadow-lg">
+			<div class="bg-gradient-to-r from-accent-50 to-accent-100 px-5 py-4">
+				<h3 class="flex items-center gap-2 text-lg font-bold text-accent-900">
+					<span class="text-xl">💳</span>
+					Vorauszahlung & Ausgleich
+				</h3>
+			</div>
+			<div class="space-y-3 p-5">
+				<div class="flex justify-between items-center">
+					<span class="text-sm text-neutral-600">Deine Fixkosten (Anteil):</span>
+					<span class="font-bold text-primary-600">{formatEuro(data.computed.fixedCostDue)}</span>
 				</div>
-				<div class="flex justify-between">
-					<span class="text-gray-700">Fehlbetrag Fixkosten:</span>
-					<span class="font-semibold text-red-600">{formatEuro(data.computed.missingFixed)}</span>
+				<div class="flex justify-between items-center">
+					<span class="text-sm text-neutral-600">Vorauszahlung (diesen Monat):</span>
+					<span class="font-bold text-accent-600">{formatEuro(data.computed.prepaymentThisMonth)}</span>
 				</div>
-				<div class="flex justify-between">
-					<span class="text-gray-700">Überschuss für Privates:</span>
-					<span class="font-semibold text-green-600"
-						>{formatEuro(data.computed.surplusForPrivates)}</span
-					>
+				<div class="flex justify-between items-center">
+					<span class="text-sm text-neutral-600">Fehlbetrag:</span>
+					<span class="font-bold text-danger-600">{formatEuro(data.computed.fixedCostShortfall)}</span>
+				</div>
+				<div class="flex justify-between items-center">
+					<span class="text-sm text-neutral-600">Überzahlung:</span>
+					<span class="font-bold text-success-600">{formatEuro(data.computed.fixedCostOverpayment)}</span>
 				</div>
 			</div>
 		</div>
 
-		<!-- Card 3: Schulden an Steffi -->
-		<div class="rounded-lg border-2 border-orange-300 bg-white p-4 shadow-sm">
-			<h3 class="mb-3 text-lg font-semibold text-orange-900">Schulden an Steffi</h3>
-			<div class="space-y-2">
-				<div class="flex justify-between text-sm">
-					<span class="text-gray-600">Schulden vom Vormonat:</span>
-					<span class="font-medium">{formatEuro(data.computed.privateBalanceStart)}</span>
+		<!-- Card 3: Schulden - Warning Amber -->
+		<div class="overflow-hidden rounded-2xl border-2 border-warning-200 bg-white shadow-md transition-all hover:shadow-lg">
+			<div class="bg-gradient-to-r from-warning-50 to-warning-100 px-5 py-4">
+				<h3 class="flex items-center gap-2 text-lg font-bold text-warning-900">
+					<span class="text-xl">📊</span>
+					Schulden an Steffi
+				</h3>
+			</div>
+			<div class="space-y-3 p-5">
+				<div class="flex justify-between items-center text-sm">
+					<span class="text-neutral-600">Schulden vom Vormonat:</span>
+					<span class="font-semibold text-neutral-700">{formatEuro(data.computed.privateBalanceStart)}</span>
 				</div>
-				<div class="flex justify-between text-sm">
-					<span class="text-gray-600">+ Private Ausgaben (von Steffis Konto):</span>
-					<span class="font-medium">{formatEuro(data.computed.privateAddedThisMonth)}</span>
+				<div class="flex justify-between items-center text-sm">
+					<span class="text-neutral-600">+ Private Ausgaben:</span>
+					<span class="font-semibold text-neutral-700">{formatEuro(data.computed.privateAddedThisMonth)}</span>
 				</div>
-				<div class="flex justify-between text-sm">
-					<span class="text-gray-600">+ Fehlbetrag Fixkosten:</span>
-					<span class="font-medium">{formatEuro(data.computed.missingFixed)}</span>
+				<div class="flex justify-between items-center text-sm">
+					<span class="text-neutral-600">+ Dein Anteil Fixkosten:</span>
+					<span class="font-semibold text-neutral-700">{formatEuro(data.computed.fixedCostDue)}</span>
 				</div>
-				<div class="flex justify-between text-sm">
-					<span class="text-gray-600">- Überzahlung:</span>
-					<span class="font-medium">-{formatEuro(data.computed.surplusForPrivates)}</span>
+				<div class="flex justify-between items-center text-sm">
+					<span class="text-neutral-600">- Vorauszahlung:</span>
+					<span class="font-semibold text-neutral-700">-{formatEuro(data.computed.prepaymentThisMonth)}</span>
 				</div>
-				<div class="mt-3 border-t border-orange-200 pt-2">
-					<div class="flex justify-between">
-						<span class="font-semibold text-gray-800">Aktuelle Schulden:</span>
-						<span class="text-xl font-bold text-orange-600"
+				<div class="mt-4 border-t-2 border-warning-200 pt-4">
+					<div class="flex justify-between items-center">
+						<span class="font-bold text-neutral-800">Aktuelle Schulden:</span>
+						<span class="text-3xl font-black text-warning-600"
 							>{formatEuro(data.computed.privateBalanceEnd)}</span
 						>
 					</div>
@@ -274,57 +315,109 @@
 			</div>
 		</div>
 
-		<!-- Card 4: Empfehlung -->
+		<!-- Card 4: Empfehlung - Success/Danger Dynamic -->
 		<div
-			class="rounded-lg border-2 border-green-400 bg-gradient-to-r from-green-50 to-blue-50 p-4 shadow-md"
+			class="overflow-hidden rounded-2xl border-2 {data.computed.privateBalanceEnd > 0 ? 'border-danger-200' : 'border-success-200'} bg-white shadow-lg"
 		>
-			<h3 class="mb-3 text-lg font-semibold text-green-900">💡 Empfehlung für Überweisung</h3>
-			<div class="space-y-3">
+			<div class="bg-gradient-to-r {data.computed.privateBalanceEnd > 0 ? 'from-danger-50 to-danger-100' : 'from-success-50 to-success-100'} px-5 py-4">
+				<h3 class="flex items-center gap-2 text-lg font-bold {data.computed.privateBalanceEnd > 0 ? 'text-danger-900' : 'text-success-900'}">
+					<span class="text-xl">💡</span>
+					Empfehlung für dich
+				</h3>
+			</div>
+			<div class="space-y-4 p-5">
 				{#if data.computed.privateBalanceEnd > 0}
 					<!-- Christian schuldet Steffi Geld -->
-					<div class="rounded bg-white p-3">
-						<p class="mb-2 text-sm text-gray-700">
+					<div class="rounded-xl bg-danger-50 p-4">
+						<p class="mb-3 text-center text-sm font-medium text-neutral-700">
 							Überweise an Steffi, um alle Schulden auszugleichen:
 						</p>
-						<p class="text-center text-3xl font-bold text-red-600">
+						<p class="text-center text-4xl font-black text-danger-600">
 							{formatEuro(data.computed.privateBalanceEnd)}
 						</p>
 					</div>
-					<div class="rounded bg-blue-50 p-3 text-sm text-gray-700">
-						<p class="mb-1 font-medium">Das deckt ab:</p>
-						<ul class="ml-4 list-disc space-y-1">
+					<div class="rounded-xl bg-primary-50 p-4">
+						<p class="mb-2 text-sm font-bold text-primary-900">Das deckt ab:</p>
+						<ul class="ml-4 space-y-1 text-sm text-neutral-700">
 							{#if data.computed.privateBalanceStart > 0}
-								<li>Schulden vom Vormonat: {formatEuro(data.computed.privateBalanceStart)}</li>
-							{/if}
-							{#if data.computed.privateAddedThisMonth > 0}
-								<li>
-									Private Ausgaben (von Steffis Konto): {formatEuro(
-										data.computed.privateAddedThisMonth
-									)}
+								<li class="flex items-center gap-2">
+									<span class="text-danger-500">•</span>
+									Schulden vom Vormonat: {formatEuro(data.computed.privateBalanceStart)}
 								</li>
 							{/if}
-							{#if data.computed.missingFixed > 0}
-								<li>Dein Anteil an Fixkosten: {formatEuro(data.computed.missingFixed)}</li>
+							{#if data.computed.privateAddedThisMonth > 0}
+								<li class="flex items-center gap-2">
+									<span class="text-danger-500">•</span>
+									Private Ausgaben: {formatEuro(data.computed.privateAddedThisMonth)}
+								</li>
+							{/if}
+							{#if data.computed.fixedCostShortfall > 0}
+								<li class="flex items-center gap-2">
+									<span class="text-danger-500">•</span>
+									Fehlender Fixkosten-Anteil: {formatEuro(data.computed.fixedCostShortfall)}
+								</li>
 							{/if}
 						</ul>
 					</div>
+					
+					<!-- Next month recommendation -->
+					<div class="rounded-xl border-2 border-accent-200 bg-accent-50 p-4">
+						<p class="mb-1 flex items-center gap-2 text-sm font-bold text-accent-900">
+							<span>📅</span>
+							Für den nächsten Monat:
+						</p>
+						<p class="text-sm text-neutral-700">
+							Empfohlene Vorauszahlung: <strong class="text-accent-700">{formatEuro(data.computed.recommendedPrepayment)}</strong>
+						</p>
+						<p class="mt-2 text-xs text-neutral-600">
+							Überweise dies zu Monatsbeginn, um Steffi nicht in Vorleistung gehen zu lassen.
+						</p>
+					</div>
 				{:else if data.computed.privateBalanceEnd < 0}
 					<!-- Christian hat vorausgezahlt -->
-					<div class="rounded bg-white p-3">
-						<p class="mb-2 text-sm text-gray-700">Du hast mehr gezahlt als nötig:</p>
-						<p class="text-center text-3xl font-bold text-green-600">
+					<div class="rounded-xl bg-success-50 p-4">
+						<p class="mb-3 text-center text-sm font-medium text-neutral-700">Du hast mehr gezahlt als nötig:</p>
+						<p class="text-center text-4xl font-black text-success-600">
 							+{formatEuro(Math.abs(data.computed.privateBalanceEnd))}
 						</p>
 					</div>
-					<p class="rounded bg-green-50 p-3 text-sm text-gray-700">
+					<p class="rounded-xl bg-success-100 p-4 text-sm text-neutral-700">
 						Dieses Guthaben wird automatisch im nächsten Monat verrechnet. Du musst aktuell nichts
 						überweisen.
 					</p>
+					
+					<!-- Next month recommendation -->
+					<div class="rounded-xl border-2 border-accent-200 bg-accent-50 p-4">
+						<p class="mb-1 flex items-center gap-2 text-sm font-bold text-accent-900">
+							<span>📅</span>
+							Für den nächsten Monat:
+						</p>
+						<p class="text-sm text-neutral-700">
+							Empfohlene Vorauszahlung: <strong class="text-accent-700">{formatEuro(data.computed.recommendedPrepayment)}</strong>
+						</p>
+						<p class="mt-2 text-xs text-neutral-600">
+							Da du ein Guthaben hast, kannst du weniger überweisen oder abwarten.
+						</p>
+					</div>
 				{:else}
 					<!-- Alles ausgeglichen -->
-					<div class="rounded bg-white p-3 text-center">
-						<p class="text-2xl font-bold text-green-600">✓ Alles ausgeglichen</p>
-						<p class="mt-2 text-sm text-gray-600">Du hast keine offenen Schulden bei Steffi.</p>
+					<div class="rounded-xl bg-success-50 p-4 text-center">
+						<p class="text-3xl font-black text-success-600">✓ Alles ausgeglichen</p>
+						<p class="mt-2 text-sm text-neutral-600">Du hast keine offenen Schulden bei Steffi.</p>
+					</div>
+					
+					<!-- Next month recommendation -->
+					<div class="rounded-xl border-2 border-accent-200 bg-accent-50 p-4">
+						<p class="mb-1 flex items-center gap-2 text-sm font-bold text-accent-900">
+							<span>📅</span>
+							Für den nächsten Monat:
+						</p>
+						<p class="text-sm text-neutral-700">
+							Empfohlene Vorauszahlung: <strong class="text-accent-700">{formatEuro(data.computed.recommendedPrepayment)}</strong>
+						</p>
+						<p class="mt-2 text-xs text-neutral-600">
+							Überweise dies zu Monatsbeginn für einen sauberen Start.
+						</p>
 					</div>
 				{/if}
 			</div>
@@ -333,103 +426,116 @@
 </div>
 
 <!-- Edit Incomes -->
-<div class="my-6 rounded border border-green-200 bg-green-50 p-4">
-	<div class="mb-3 flex items-center justify-between">
-		<h2 class="font-semibold">Einkommen</h2>
-		{#if !editingIncomes}
-			<button
-				type="button"
-				onclick={() => {
-					editingIncomes = true;
-				}}
-				class="rounded bg-green-600 px-3 py-1 text-sm text-white transition-colors hover:bg-green-700"
-			>
-				Bearbeiten
-			</button>
-		{/if}
-	</div>
-
-	{#if form?.error}
-		<div class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-			{form.error}
-		</div>
-	{/if}
-
-	{#if editingIncomes}
-		<!-- Edit Mode -->
-		<form
-			method="POST"
-			action="?/saveIncomes"
-			class="space-y-3"
-			use:enhance={() => {
-				return async ({ result, update }) => {
-					if (result.type === 'success') {
-						editingIncomes = false;
-					}
-					await update();
-				};
-			}}
-		>
-			<input type="hidden" name="monthId" value={data.month.id} />
-
-			{#each data.profiles as profile}
-				<div class="flex flex-col">
-					<label for="income_{profile.id}" class="mb-1 text-sm font-medium">
-						{profile.name || profile.role}
-					</label>
-					<input
-						type="number"
-						id="income_{profile.id}"
-						name="income_{profile.id}"
-						value={getIncomeForProfile(profile.id)}
-						step="0.01"
-						min="0"
-						required
-						class="rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-					/>
-				</div>
-			{/each}
-
-			<div class="flex gap-2">
-				<button
-					type="submit"
-					class="flex-1 rounded bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
-				>
-					Speichern
-				</button>
+<div class="my-6 overflow-hidden rounded-2xl border-2 border-success-200 bg-white shadow-md">
+	<div class="bg-gradient-to-r from-success-50 to-success-100 px-5 py-4">
+		<div class="flex items-center justify-between">
+			<h2 class="flex items-center gap-2 text-lg font-bold text-success-900">
+				<span class="text-xl">💵</span>
+				Einkommen
+			</h2>
+			{#if !editingIncomes}
 				<button
 					type="button"
 					onclick={() => {
-						editingIncomes = false;
+						editingIncomes = true;
 					}}
-					class="rounded bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300"
+					class="rounded-lg bg-success-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-success-700 active:scale-95"
 				>
-					Abbrechen
+					Bearbeiten
 				</button>
-			</div>
-		</form>
-	{:else}
-		<!-- Display Mode -->
-		<div class="space-y-2">
-			{#each data.profiles as profile}
-				<div class="flex items-center justify-between rounded bg-white p-3">
-					<span class="font-medium text-gray-700">{profile.name || profile.role}</span>
-					<span class="text-lg font-semibold text-green-600"
-						>{formatEuro(getIncomeForProfile(profile.id))}</span
-					>
-				</div>
-			{/each}
+			{/if}
 		</div>
+	</div>
 
-		<!-- Income Shares Display -->
-		<div class="mt-4 border-t border-green-300 pt-3">
-			<p class="mb-1 text-xs font-medium text-gray-700">Berechnete Einkommensanteile:</p>
-			<div class="flex gap-4 text-sm text-gray-600">
-				<span><strong>Christian:</strong> {formatPct(data.computed.shareMe)}</span>
-				<span><strong>Steffi:</strong> {formatPct(data.computed.sharePartner)}</span>
+	<div class="p-5">
+		{#if form?.error}
+			<div class="mb-4 rounded-xl border-2 border-danger-200 bg-danger-50 p-4 text-sm font-medium text-danger-700">
+				{form.error}
 			</div>
-		</div>
-	{/if}
+		{/if}
+
+		{#if editingIncomes}
+			<!-- Edit Mode -->
+			<form
+				method="POST"
+				action="?/saveIncomes"
+				class="space-y-4"
+				use:enhance={() => {
+					return async ({ result, update }) => {
+						if (result.type === 'success') {
+							editingIncomes = false;
+						}
+						await update();
+					};
+				}}
+			>
+				<input type="hidden" name="monthId" value={data.month.id} />
+
+				{#each data.profiles as profile}
+					<div class="flex flex-col">
+						<label for="income_{profile.id}" class="mb-2 text-sm font-semibold text-neutral-700">
+							{profile.name || profile.role}
+						</label>
+						<input
+							type="number"
+							id="income_{profile.id}"
+							name="income_{profile.id}"
+							value={getIncomeForProfile(profile.id)}
+							step="0.01"
+							min="0"
+							required
+							class="rounded-xl border-2 border-neutral-300 px-4 py-3 text-lg transition-all focus:border-success-500 focus:ring-4 focus:ring-success-100 focus:outline-none"
+						/>
+					</div>
+				{/each}
+
+				<div class="flex gap-3 pt-2">
+					<button
+						type="submit"
+						class="flex-1 rounded-xl bg-success-600 px-6 py-3 font-bold text-white transition-all hover:bg-success-700 active:scale-95"
+					>
+						Speichern
+					</button>
+					<button
+						type="button"
+						onclick={() => {
+							editingIncomes = false;
+						}}
+						class="rounded-xl bg-neutral-200 px-6 py-3 font-semibold text-neutral-700 transition-all hover:bg-neutral-300 active:scale-95"
+					>
+						Abbrechen
+					</button>
+				</div>
+			</form>
+		{:else}
+			<!-- Display Mode -->
+			<div class="space-y-3">
+				{#each data.profiles as profile}
+					<div class="flex items-center justify-between rounded-xl bg-success-50 px-4 py-3">
+						<span class="font-semibold text-neutral-700">{profile.name || profile.role}</span>
+						<span class="text-xl font-bold text-success-600"
+							>{formatEuro(getIncomeForProfile(profile.id))}</span
+						>
+					</div>
+				{/each}
+			</div>
+
+			<!-- Income Shares Display -->
+			<div class="mt-4 border-t-2 border-success-100 pt-4">
+				<p class="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-500">Berechnete Einkommensanteile</p>
+				<div class="flex gap-4 text-sm">
+					<div class="flex items-center gap-2">
+						<div class="h-3 w-3 rounded-full bg-primary-500"></div>
+						<span class="font-semibold">Christian: {formatPct(data.computed.shareMe)}</span>
+					</div>
+					<div class="flex items-center gap-2">
+						<div class="h-3 w-3 rounded-full bg-accent-500"></div>
+						<span class="font-semibold">Steffi: {formatPct(data.computed.sharePartner)}</span>
+					</div>
+				</div>
+			</div>
+		{/if}
+	</div>
 </div>
 
 <!-- Fixed Costs Section -->
@@ -837,29 +943,56 @@
 	{/if}
 </div>
 
-<!-- Month Transfer Section -->
-<div class="my-8 rounded border border-purple-200 bg-purple-50 p-4">
-	<h2 class="mb-3 text-xl font-semibold">Überweisung (diesen Monat)</h2>
-	<form method="POST" action="?/saveTransfer" class="flex flex-col gap-2 sm:flex-row" use:enhance>
-		<input type="hidden" name="monthId" value={data.month.id} />
-		<div class="flex-1">
-			<input
-				type="number"
-				name="totalTransfer"
-				value={data.month.total_transfer_this_month || 0}
-				step="0.01"
-				min="0"
-				required
-				class="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-			/>
-		</div>
-		<button
-			type="submit"
-			class="rounded bg-purple-600 px-4 py-2 whitespace-nowrap text-white transition-colors hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-		>
-			Speichern
-		</button>
-	</form>
+<!-- Month Prepayment Section -->
+<div class="my-6 overflow-hidden rounded-2xl border-2 border-accent-200 bg-white shadow-md">
+	<div class="bg-gradient-to-r from-accent-50 to-accent-100 px-5 py-4">
+		<h2 class="flex items-center gap-2 text-lg font-bold text-accent-900">
+			<span class="text-xl">💳</span>
+			Vorauszahlung (diesen Monat)
+		</h2>
+		<p class="mt-2 text-sm text-neutral-600">
+			Trage hier ein, wie viel du zu Monatsbeginn an Steffi für deine Fixkosten überwiesen hast.
+		</p>
+	</div>
+	
+	<div class="p-5">
+		<form method="POST" action="?/savePrepayment" class="space-y-4" use:enhance>
+			<input type="hidden" name="monthId" value={data.month.id} />
+			<div class="flex flex-col">
+				<label for="prepayment" class="mb-2 text-sm font-semibold text-neutral-700">
+					Betrag in €
+				</label>
+				<input
+					type="number"
+					id="prepayment"
+					name="prepayment"
+					value={data.month.total_transfer_this_month || 0}
+					step="0.01"
+					min="0"
+					required
+					placeholder="z.B. 800.00"
+					class="rounded-xl border-2 border-neutral-300 px-4 py-3 text-xl font-bold transition-all focus:border-accent-500 focus:ring-4 focus:ring-accent-100 focus:outline-none"
+				/>
+			</div>
+			<button
+				type="submit"
+				class="w-full rounded-xl bg-accent-600 px-6 py-3 font-bold text-white transition-all hover:bg-accent-700 active:scale-95"
+			>
+				Vorauszahlung speichern
+			</button>
+		</form>
+		{#if data.computed.recommendedPrepayment > 0}
+			<div class="mt-4 rounded-xl bg-primary-50 px-4 py-3">
+				<p class="flex items-center gap-2 text-sm text-neutral-700">
+					<span class="text-lg">💡</span>
+					<span>
+						<strong class="text-primary-700">Empfehlung:</strong> 
+						{formatEuro(data.computed.recommendedPrepayment)} (basierend auf deinem Fixkosten-Anteil)
+					</span>
+				</p>
+			</div>
+		{/if}
+	</div>
 </div>
 
 <!-- Private Expenses Section -->
