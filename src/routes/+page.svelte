@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types.js';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -65,6 +66,16 @@
 	let editingItemId = $state<string | null>(null);
 	let addingCategoryId = $state<string | null>(null);
 
+	// Optimistic UI: Temporary categories/items shown immediately while server processes
+	let optimisticCategories = $state<Array<{ id: string; label: string; items: any[] }>>([]);
+	let optimisticItems = $state<Record<string, any[]>>({});
+	let optimisticExpenses = $state<any[]>([]);
+
+	// Track deleted items for optimistic removal
+	let deletedCategoryIds = $state<Set<string>>(new Set());
+	let deletedItemIds = $state<Set<string>>(new Set());
+	let deletedExpenseIds = $state<Set<string>>(new Set());
+
 	// Close month confirmation state
 	let showCloseConfirm = $state(false);
 	let closeConfirmText = $state('');
@@ -102,6 +113,22 @@
 	function cancelDeleteArchive() {
 		deleteArchiveMonthId = null;
 		deleteArchiveConfirmed = false;
+	}
+
+	// Merge real data with optimistic updates
+	const allCategories = $derived(
+		[...data.fixedCategories, ...optimisticCategories].filter((c) => !deletedCategoryIds.has(c.id))
+	);
+	const allExpenses = $derived(
+		[...data.privateExpenses, ...optimisticExpenses].filter((e) => !deletedExpenseIds.has(e.id))
+	);
+
+	// Helper to get all items for a category (real + optimistic)
+	function getCategoryItems(categoryId: string) {
+		const category = data.fixedCategories.find((c) => c.id === categoryId);
+		const realItems = category?.items || [];
+		const optimistic = optimisticItems[categoryId] || [];
+		return [...realItems, ...optimistic].filter((item) => !deletedItemIds.has(item.id));
 	}
 </script>
 
@@ -330,7 +357,19 @@
 
 	{#if editingIncomes}
 		<!-- Edit Mode -->
-		<form method="POST" action="?/saveIncomes" class="space-y-3">
+		<form
+			method="POST"
+			action="?/saveIncomes"
+			class="space-y-3"
+			use:enhance={() => {
+				return async ({ result, update }) => {
+					if (result.type === 'success') {
+						editingIncomes = false;
+					}
+					await update();
+				};
+			}}
+		>
 			<input type="hidden" name="monthId" value={data.month.id} />
 
 			{#each data.profiles as profile}
@@ -400,7 +439,26 @@
 	<!-- Add Category Form -->
 	<div class="mb-6 rounded border border-blue-200 bg-blue-50 p-4">
 		<h3 class="mb-3 font-semibold">Neue Kategorie</h3>
-		<form method="POST" action="?/addCategory" class="flex flex-col gap-2 sm:flex-row">
+		<form
+			method="POST"
+			action="?/addCategory"
+			class="flex flex-col gap-2 sm:flex-row"
+			use:enhance={({ formData }) => {
+				// Optimistic UI: Show category immediately
+				const label = formData.get('label') as string;
+				const tempId = `temp-${Date.now()}`;
+				optimisticCategories = [...optimisticCategories, { id: tempId, label, items: [] }];
+
+				return async ({ result, update, formElement }) => {
+					await update();
+					// Remove optimistic category (real one is now in data)
+					optimisticCategories = optimisticCategories.filter((c) => c.id !== tempId);
+					if (result.type === 'success') {
+						formElement.reset();
+					}
+				};
+			}}
+		>
 			<input type="hidden" name="monthId" value={data.month.id} />
 			<input
 				type="text"
@@ -419,18 +477,40 @@
 	</div>
 
 	<!-- Categories List -->
-	{#if data.fixedCategories.length === 0}
+	{#if allCategories.length === 0}
 		<p class="py-8 text-center text-gray-500">Noch keine Fixkosten-Kategorien vorhanden.</p>
 	{:else}
 		<div class="space-y-6">
-			{#each data.fixedCategories as category}
-				<div class="overflow-hidden rounded-lg border border-gray-300">
+			{#each allCategories as category}
+				<div
+					class="overflow-hidden rounded-lg border border-gray-300 {category.id.startsWith('temp-')
+						? 'opacity-70'
+						: ''}"
+				>
 					<!-- Category Header -->
 					<div class="flex items-center justify-between bg-gray-100 p-4">
 						<h3 class="text-lg font-semibold">{category.label}</h3>
 						<form
 							method="POST"
 							action="?/deleteCategory"
+							use:enhance={({ formData }) => {
+								// First, show confirm dialog
+								const categoryId = formData.get('categoryId') as string;
+
+								return async ({ result, update }) => {
+									if (result.type === 'success') {
+										// Optimistic: Remove category immediately
+										deletedCategoryIds = new Set([...deletedCategoryIds, categoryId]);
+										await update();
+										// Cleanup: Remove from deleted set (it's now gone from data)
+										deletedCategoryIds = new Set(
+											[...deletedCategoryIds].filter((id) => id !== categoryId)
+										);
+									} else {
+										await update();
+									}
+								};
+							}}
 							onsubmit={(e) => {
 								if (!confirm('Kategorie und alle Items löschen?')) {
 									e.preventDefault();
@@ -449,14 +529,30 @@
 
 					<!-- Items List -->
 					<div class="space-y-3 p-4">
-						{#if category.items.length === 0}
+						{#if getCategoryItems(category.id).length === 0}
 							<p class="text-sm text-gray-500">Keine Items in dieser Kategorie</p>
 						{:else}
-							{#each category.items as item}
-								<div class="rounded border border-gray-200 bg-white p-3">
+							{#each getCategoryItems(category.id) as item}
+								<div
+									class="rounded border border-gray-200 bg-white p-3 {item.id.startsWith('temp-')
+										? 'opacity-60'
+										: ''}"
+								>
 									{#if editingItemId === item.id}
 										<!-- Edit Mode -->
-										<form method="POST" action="?/updateItem" class="space-y-3">
+										<form
+											method="POST"
+											action="?/updateItem"
+											class="space-y-3"
+											use:enhance={() => {
+												return async ({ result, update }) => {
+													if (result.type === 'success') {
+														editingItemId = null;
+													}
+													await update();
+												};
+											}}
+										>
 											<input type="hidden" name="itemId" value={item.id} />
 
 											<!-- Item Label -->
@@ -583,7 +679,27 @@
 												>
 													Bearbeiten
 												</button>
-												<form method="POST" action="?/deleteItem">
+												<form
+													method="POST"
+													action="?/deleteItem"
+													use:enhance={({ formData }) => {
+														const itemId = formData.get('itemId') as string;
+
+														return async ({ result, update }) => {
+															if (result.type === 'success') {
+																// Optimistic: Remove item immediately
+																deletedItemIds = new Set([...deletedItemIds, itemId]);
+																await update();
+																// Cleanup
+																deletedItemIds = new Set(
+																	[...deletedItemIds].filter((id) => id !== itemId)
+																);
+															} else {
+																await update();
+															}
+														};
+													}}
+												>
 													<input type="hidden" name="itemId" value={item.id} />
 													<button
 														type="submit"
@@ -608,7 +724,45 @@
 						{#if addingCategoryId === category.id}
 							<div class="mt-4 rounded border-2 border-blue-200 bg-blue-50 p-4">
 								<h4 class="mb-3 text-sm font-semibold text-blue-900">Neues Item hinzufügen</h4>
-								<form method="POST" action="?/addItem" class="space-y-3">
+								<form
+									method="POST"
+									action="?/addItem"
+									class="space-y-3"
+									use:enhance={({ formData }) => {
+										// Optimistic UI: Show item immediately
+										const label = formData.get('label') as string;
+										const amount = parseFloat(formData.get('amount') as string);
+										const splitMode = formData.get('splitMode') as string;
+										const tempId = `temp-${Date.now()}`;
+
+										const tempItem = {
+											id: tempId,
+											label,
+											amount,
+											splitMode
+										};
+
+										// Add to optimistic items for this category
+										const catId = category.id;
+										optimisticItems = {
+											...optimisticItems,
+											[catId]: [...(optimisticItems[catId] || []), tempItem]
+										};
+
+										return async ({ result, update, formElement }) => {
+											await update();
+											// Remove optimistic item
+											optimisticItems = {
+												...optimisticItems,
+												[catId]: (optimisticItems[catId] || []).filter((i) => i.id !== tempId)
+											};
+											if (result.type === 'success') {
+												addingCategoryId = null;
+												formElement.reset();
+											}
+										};
+									}}
+								>
 									<input type="hidden" name="categoryId" value={category.id} />
 
 									<div>
@@ -686,7 +840,7 @@
 <!-- Month Transfer Section -->
 <div class="my-8 rounded border border-purple-200 bg-purple-50 p-4">
 	<h2 class="mb-3 text-xl font-semibold">Überweisung (diesen Monat)</h2>
-	<form method="POST" action="?/saveTransfer" class="flex flex-col gap-2 sm:flex-row">
+	<form method="POST" action="?/saveTransfer" class="flex flex-col gap-2 sm:flex-row" use:enhance>
 		<input type="hidden" name="monthId" value={data.month.id} />
 		<div class="flex-1">
 			<input
@@ -715,7 +869,36 @@
 	<!-- Add Expense Form -->
 	<div class="mb-6 rounded border border-orange-200 bg-orange-50 p-4">
 		<h3 class="mb-3 font-semibold">Neue Ausgabe</h3>
-		<form method="POST" action="?/addPrivateExpense" class="space-y-3">
+		<form
+			method="POST"
+			action="?/addPrivateExpense"
+			class="space-y-3"
+			use:enhance={({ formData }) => {
+				// Optimistic UI: Show expense immediately
+				const dateISO = formData.get('dateISO') as string;
+				const description = formData.get('description') as string;
+				const amount = parseFloat(formData.get('amount') as string);
+				const tempId = `temp-${Date.now()}`;
+
+				const tempExpense = {
+					id: tempId,
+					date: dateISO,
+					description,
+					amount
+				};
+
+				optimisticExpenses = [...optimisticExpenses, tempExpense];
+
+				return async ({ result, update, formElement }) => {
+					await update();
+					// Remove optimistic expense
+					optimisticExpenses = optimisticExpenses.filter((e) => e.id !== tempId);
+					if (result.type === 'success') {
+						formElement.reset();
+					}
+				};
+			}}
+		>
 			<input type="hidden" name="monthId" value={data.month.id} />
 
 			<div>
@@ -766,18 +949,44 @@
 	</div>
 
 	<!-- Expenses List -->
-	{#if data.privateExpenses.length === 0}
+	{#if allExpenses.length === 0}
 		<p class="py-8 text-center text-gray-500">Noch keine privaten Ausgaben erfasst.</p>
 	{:else}
 		<div class="space-y-3">
-			{#each data.privateExpenses as expense}
-				<div class="flex items-start justify-between rounded border border-gray-300 bg-white p-4">
+			{#each allExpenses as expense}
+				<div
+					class="flex items-start justify-between rounded border border-gray-300 bg-white p-4 {expense.id.startsWith(
+						'temp-'
+					)
+						? 'opacity-60'
+						: ''}"
+				>
 					<div class="flex-1">
 						<div class="mb-1 text-sm text-gray-600">{expense.date}</div>
 						<div class="mb-1 font-medium">{expense.description}</div>
 						<div class="text-lg font-semibold text-orange-600">{expense.amount.toFixed(2)} €</div>
 					</div>
-					<form method="POST" action="?/deletePrivateExpense">
+					<form
+						method="POST"
+						action="?/deletePrivateExpense"
+						use:enhance={({ formData }) => {
+							const expenseId = formData.get('expenseId') as string;
+
+							return async ({ result, update }) => {
+								if (result.type === 'success') {
+									// Optimistic: Remove expense immediately
+									deletedExpenseIds = new Set([...deletedExpenseIds, expenseId]);
+									await update();
+									// Cleanup
+									deletedExpenseIds = new Set(
+										[...deletedExpenseIds].filter((id) => id !== expenseId)
+									);
+								} else {
+									await update();
+								}
+							};
+						}}
+					>
 						<input type="hidden" name="expenseId" value={expense.id} />
 						<button
 							type="submit"
@@ -847,28 +1056,41 @@
 					</div>
 				</div>
 
-				<form method="POST" action="?/closeMonth" class="flex flex-col gap-2 sm:flex-row">
-					<input type="hidden" name="monthId" value={data.month.id} />
-					<input type="hidden" name="privateBalanceEnd" value={data.computed.privateBalanceEnd} />
+			<form
+				method="POST"
+				action="?/closeMonth"
+				class="flex flex-col gap-2 sm:flex-row"
+				use:enhance={() => {
+					return async ({ result, update }) => {
+						await update();
+						if (result.type === 'success') {
+							// Month closed successfully - reload page to create next month
+							window.location.href = '/';
+						}
+					};
+				}}
+			>
+				<input type="hidden" name="monthId" value={data.month.id} />
+				<input type="hidden" name="privateBalanceEnd" value={data.computed.privateBalanceEnd} />
 
-					<button
-						type="button"
-						onclick={cancelCloseMonth}
-						class="flex-1 rounded-lg bg-gray-200 px-4 py-3 font-medium text-gray-800 transition-colors hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 focus:outline-none"
-					>
-						Abbrechen
-					</button>
+				<button
+					type="button"
+					onclick={cancelCloseMonth}
+					class="flex-1 rounded-lg bg-gray-200 px-4 py-3 font-medium text-gray-800 transition-colors hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 focus:outline-none"
+				>
+					Abbrechen
+				</button>
 
-					<button
-						type="submit"
-						disabled={!isCloseConfirmed}
-						class="flex-1 rounded-lg px-4 py-3 font-semibold transition-colors focus:ring-2 focus:ring-red-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 {isCloseConfirmed
-							? 'bg-red-600 text-white hover:bg-red-700'
-							: 'bg-gray-300 text-gray-500'}"
-					>
-						Monat endgültig abschließen
-					</button>
-				</form>
+				<button
+					type="submit"
+					disabled={!isCloseConfirmed}
+					class="flex-1 rounded-lg px-4 py-3 font-semibold transition-colors focus:ring-2 focus:ring-red-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 {isCloseConfirmed
+						? 'bg-red-600 text-white hover:bg-red-700'
+						: 'bg-gray-300 text-gray-500'}"
+				>
+					Monat endgültig abschließen
+				</button>
+			</form>
 			</div>
 		{/if}
 	</div>

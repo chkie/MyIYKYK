@@ -4,15 +4,15 @@
  */
 
 import { getSupabaseServerClient } from './supabase.js';
+import { copyTemplatesToMonth } from './fixed-cost-templates.js';
 
 /**
  * Gets or creates the current month entry.
  *
  * Logic:
- * 1. Find existing month for current year/month
- * 2. If not found, create new month:
- *    - Find last closed month to get private_balance_end
- *    - Create new month with private_balance_start = last month's end (or 0)
+ * 1. Check if there's an open month → return it
+ * 2. If not, find last closed month
+ * 3. Create NEXT month after last closed (or current calendar month if no closed months)
  *
  * @returns Current month row
  * @throws {Error} If database operation fails
@@ -20,35 +20,30 @@ import { getSupabaseServerClient } from './supabase.js';
 export async function getOrCreateCurrentMonth() {
 	const supabase = getSupabaseServerClient();
 
-	// Get current year and month (server timezone)
-	const now = new Date();
-	const currentYear = now.getFullYear();
-	const currentMonth = now.getMonth() + 1; // JavaScript months are 0-based
-
-	// Try to find existing month
-	const { data: existingMonth, error: findError } = await supabase
+	// 1. Try to find existing open month (any year/month)
+	const { data: existingOpenMonth, error: openError } = await supabase
 		.from('months')
 		.select('*')
-		.eq('year', currentYear)
-		.eq('month', currentMonth)
+		.eq('status', 'open')
+		.limit(1)
 		.single();
 
-	if (findError && findError.code !== 'PGRST116') {
+	if (openError && openError.code !== 'PGRST116') {
 		// PGRST116 = no rows found, which is ok
-		throw new Error(`Failed to find month: ${findError.message}`);
+		throw new Error(`Failed to find open month: ${openError.message}`);
 	}
 
-	// If month exists, return it
-	if (existingMonth) {
-		return existingMonth;
+	// If open month exists, return it
+	if (existingOpenMonth) {
+		console.log('✅ Found existing open month:', existingOpenMonth.id, `(${existingOpenMonth.year}-${existingOpenMonth.month})`);
+		return existingOpenMonth;
 	}
 
-	// Month doesn't exist - create it
-
-	// 1. Find last closed month to get private_balance_end
+	// 2. No open month exists - need to create next month
+	// Find last closed month to determine what month to create next
 	const { data: lastClosedMonth, error: lastMonthError } = await supabase
 		.from('months')
-		.select('private_balance_end')
+		.select('year, month, private_balance_end')
 		.eq('status', 'closed')
 		.order('year', { ascending: false })
 		.order('month', { ascending: false })
@@ -59,15 +54,39 @@ export async function getOrCreateCurrentMonth() {
 		throw new Error(`Failed to find last closed month: ${lastMonthError.message}`);
 	}
 
-	// 2. Calculate private_balance_start
-	const privateBalanceStart = lastClosedMonth?.private_balance_end ?? 0;
+	// 3. Calculate next month to create
+	let nextYear: number;
+	let nextMonth: number;
+	let privateBalanceStart: number;
 
-	// 3. Create new month
+	if (lastClosedMonth) {
+		// Create the month AFTER the last closed month
+		nextMonth = lastClosedMonth.month + 1;
+		nextYear = lastClosedMonth.year;
+
+		// Handle year overflow (December → January)
+		if (nextMonth > 12) {
+			nextMonth = 1;
+			nextYear++;
+		}
+
+		privateBalanceStart = lastClosedMonth.private_balance_end ?? 0;
+		console.log('📅 Creating next month after', lastClosedMonth.year, lastClosedMonth.month, '→', nextYear, nextMonth);
+	} else {
+		// No closed months exist - create current calendar month
+		const now = new Date();
+		nextYear = now.getFullYear();
+		nextMonth = now.getMonth() + 1; // JavaScript months are 0-based
+		privateBalanceStart = 0;
+		console.log('📅 Creating first month (calendar-based):', nextYear, nextMonth);
+	}
+
+	// 4. Create new month
 	const { data: newMonth, error: createError } = await supabase
 		.from('months')
 		.insert({
-			year: currentYear,
-			month: currentMonth,
+			year: nextYear,
+			month: nextMonth,
 			status: 'open',
 			private_balance_start: privateBalanceStart,
 			total_transfer_this_month: 0
@@ -76,7 +95,20 @@ export async function getOrCreateCurrentMonth() {
 		.single();
 
 	if (createError) {
+		console.error('❌ Failed to create month:', createError);
 		throw new Error(`Failed to create month: ${createError.message}`);
+	}
+
+	console.log('✅ New month created:', newMonth.id, `(${nextYear}-${nextMonth})`);
+
+	// 5. Copy templates to this new month
+	try {
+		console.log('📋 Copying templates to new month...');
+		await copyTemplatesToMonth(newMonth.id);
+		console.log('✅ Templates copied successfully!');
+	} catch (err) {
+		console.error('❌ Failed to copy templates to new month:', err);
+		// Don't throw - month creation succeeded, template copy failed (can be retried)
 	}
 
 	return newMonth;
