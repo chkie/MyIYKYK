@@ -1,6 +1,7 @@
 <script lang="ts">
 	import './layout.css';
 	import { page } from '$app/stores';
+	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	const { children } = $props();
 
@@ -46,6 +47,9 @@
 				{@render children()}
 			</div>
 		</main>
+
+		<!-- Bottom Navigation -->
+		<BottomNav />
 	</div>
 {/if}
 
