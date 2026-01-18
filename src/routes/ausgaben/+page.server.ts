@@ -1,3 +1,3 @@
 // Ausgaben page uses same server load and actions from root
-export { load, actions } from '../+page.server.js';
+export { load, actions } from '../+page.server';
 

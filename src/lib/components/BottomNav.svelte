@@ -44,7 +44,7 @@
 </script>
 
 <!-- Bottom Navigation - Fixed at bottom with safe area -->
-<nav class="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-neutral-200 bg-white pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<nav class="fixed bottom-0 left-0 right-0 z-[9999] border-t-2 border-neutral-200 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
 	<div class="mx-auto max-w-screen-md">
 		<div class="grid grid-cols-4">
 			{#each navItems as item}
@@ -82,15 +82,10 @@
 	</div>
 </nav>
 
-<!-- Spacer to prevent content from being hidden behind nav -->
-<div class="h-20"></div>
-
 <style>
-	/* Safe area support for iOS */
-	@supports (padding-bottom: env(safe-area-inset-bottom)) {
-		nav {
-			padding-bottom: env(safe-area-inset-bottom);
-		}
+	nav {
+		/* Safe area support for iOS */
+		padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 	}
 </style>
 

@@ -20,7 +20,15 @@
 	
 	// Per-category state for new items
 	let newItems = $state<Record<string, { label: string; amount: string; splitMode: string }>>({});
-	let showNewItemForm = $state<Record<string, boolean>>({});
+	let openItemForms = $state<Set<string>>(new Set());
+
+	// Helper to get or create item state (read-only, doesn't mutate)
+	function getItemState(categoryId: string) {
+		if (!newItems[categoryId]) {
+			return { label: '', amount: '', splitMode: 'income' };
+		}
+		return newItems[categoryId];
+	}
 
 	// Edit state for items
 	let editingItem = $state<string | null>(null);
@@ -67,7 +75,8 @@
 <div class="mb-4">
 	{#if !showNewCategoryForm}
 		<button
-			onclick={() => { showNewCategoryForm = true; }}
+			type="button"
+			onclick={() => showNewCategoryForm = true}
 			class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary-300 bg-primary-50 px-4 py-3 font-semibold text-primary-700 transition-all hover:border-primary-400 hover:bg-primary-100 active:scale-95"
 		>
 			<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +123,10 @@
 				</button>
 				<button
 					type="button"
-					onclick={() => { showNewCategoryForm = false; newCategoryLabel = ''; }}
+					onclick={() => {
+						showNewCategoryForm = false;
+						newCategoryLabel = '';
+					}}
 					class="rounded-lg border-2 border-neutral-300 px-4 py-2 font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95"
 				>
 					Abbrechen
@@ -271,9 +283,12 @@
 
 		<!-- Add Item -->
 		<div class="border-t-2 border-neutral-100 bg-neutral-50 p-4">
-			{#if !showNewItemForm[category.id]}
+			{#if !openItemForms.has(category.id)}
 				<button
-					onclick={() => { showNewItemForm[category.id] = true; }}
+					type="button"
+					onclick={() => {
+						openItemForms = new Set([...openItemForms, category.id]);
+					}}
 					class="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition-all hover:border-neutral-400 hover:bg-neutral-50 active:scale-95"
 				>
 					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,7 +297,7 @@
 					Position hinzufügen
 				</button>
 			{:else}
-				{@const itemState = newItems[category.id] || (newItems[category.id] = { label: '', amount: '', splitMode: 'income' })}
+				{@const itemState = getItemState(category.id)}
 				<form
 					method="POST"
 					action="?/addItem"
@@ -290,8 +305,10 @@
 						return async ({ result, update }) => {
 							await update();
 							if (result.type === 'success') {
-								newItems[category.id] = { label: '', amount: '', splitMode: 'income' };
-								showNewItemForm[category.id] = false;
+								newItems = { ...newItems, [category.id]: { label: '', amount: '', splitMode: 'income' } };
+								const newSet = new Set(openItemForms);
+								newSet.delete(category.id);
+								openItemForms = newSet;
 							}
 						};
 					}}
@@ -305,7 +322,11 @@
 							id="newItemLabel_{category.id}"
 							type="text"
 							name="label"
-							bind:value={itemState.label}
+							value={itemState.label}
+							oninput={(e) => {
+								const target = e.target as HTMLInputElement;
+								newItems = { ...newItems, [category.id]: { ...itemState, label: target.value } };
+							}}
 							placeholder="z.B. Miete, Strom..."
 							class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
 							required
@@ -320,7 +341,11 @@
 								id="newItemAmount_{category.id}"
 								type="number"
 								name="amount"
-								bind:value={itemState.amount}
+								value={itemState.amount}
+								oninput={(e) => {
+									const target = e.target as HTMLInputElement;
+									newItems = { ...newItems, [category.id]: { ...itemState, amount: target.value } };
+								}}
 								step="0.01"
 								min="0"
 								placeholder="0.00"
@@ -335,7 +360,11 @@
 							<select
 								id="newItemSplitMode_{category.id}"
 								name="splitMode"
-								bind:value={itemState.splitMode}
+								value={itemState.splitMode}
+								onchange={(e) => {
+									const target = e.target as HTMLSelectElement;
+									newItems = { ...newItems, [category.id]: { ...itemState, splitMode: target.value } };
+								}}
 								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
 							>
 								<option value="income">Nach Einkommen</option>
@@ -354,7 +383,11 @@
 						</button>
 						<button
 							type="button"
-							onclick={() => { showNewItemForm[category.id] = false; }}
+							onclick={() => {
+								const newSet = new Set(openItemForms);
+								newSet.delete(category.id);
+								openItemForms = newSet;
+							}}
 							class="rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95"
 						>
 							Abbrechen

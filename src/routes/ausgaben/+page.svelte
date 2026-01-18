@@ -16,7 +16,9 @@
 
 	// Date formatter
 	function formatDate(dateISO: string): string {
+		if (!dateISO) return '-';
 		const date = new Date(dateISO);
+		if (isNaN(date.getTime())) return '-';
 		return new Intl.DateTimeFormat('de-DE', {
 			day: '2-digit',
 			month: '2-digit',
@@ -34,7 +36,11 @@
 
 	// Sort expenses by date (newest first)
 	let sortedExpenses = $derived(
-		[...data.privateExpenses].sort((a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime())
+		[...data.privateExpenses].sort((a, b) => {
+			const dateA = new Date(a.dateISO || 0).getTime();
+			const dateB = new Date(b.dateISO || 0).getTime();
+			return dateB - dateA;
+		})
 	);
 </script>
 

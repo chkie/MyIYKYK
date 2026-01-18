@@ -42,7 +42,7 @@
 			</div>
 		</header>
 
-		<main class="flex-1">
+		<main class="flex-1 pb-20">
 			<div class="mx-auto w-full max-w-screen-md px-4 py-6">
 				{@render children()}
 			</div>
