@@ -309,6 +309,7 @@ export async function listClosedMonths(limit: number = 12) {
  * - Deletes all private expenses
  * - Resets month_incomes to 0
  * - Resets month fields to initial values
+ * - Re-copies templates to month (so you start fresh with all standard fixed costs)
  *
  * @param monthId - The month ID (UUID)
  * @throws {Error} If database operation fails
@@ -383,6 +384,16 @@ export async function resetOpenMonthForDev(monthId: string): Promise<void> {
 
 	if (resetMonthError) {
 		throw new Error(`Failed to reset month: ${resetMonthError.message}`);
+	}
+
+	// 7. Re-copy templates to this month (so you start fresh with all standard fixed costs)
+	try {
+		console.log('📋 Re-copying templates to reset month...');
+		await copyTemplatesToMonth(monthId);
+		console.log('✅ Templates re-copied successfully!');
+	} catch (err) {
+		console.error('❌ Failed to re-copy templates:', err);
+		// Don't throw - reset succeeded, template copy can be retried
 	}
 }
 
