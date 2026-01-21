@@ -387,6 +387,49 @@ export const actions: Actions = {
 	},
 
 	/**
+	 * Update a private expense.
+	 */
+	updatePrivateExpense: async ({ request }) => {
+		try {
+			const formData = await request.formData();
+			const expenseId = formData.get('expenseId')?.toString();
+			const dateISO = formData.get('dateISO')?.toString();
+			const description = formData.get('description')?.toString();
+			const amount = parseFloat(formData.get('amount')?.toString() || '0');
+
+			if (!expenseId || !dateISO || !description) {
+				return fail(400, { error: 'Expense ID, date, and description are required' });
+			}
+
+			if (isNaN(amount) || amount < 0) {
+				return fail(400, { error: 'Invalid amount' });
+			}
+
+			// Update expense via private-expenses module
+			const supabase = getSupabaseServerClient();
+			const { error: updateError } = await supabase
+				.from('private_expenses')
+				.update({
+					date: dateISO,
+					description,
+					amount
+				})
+				.eq('id', expenseId);
+
+			if (updateError) {
+				throw new Error(`Failed to update expense: ${updateError.message}`);
+			}
+
+			return { success: true };
+		} catch (err) {
+			console.error('Error updating expense:', err);
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to update expense'
+			});
+		}
+	},
+
+	/**
 	 * Delete a private expense.
 	 */
 	deletePrivateExpense: async ({ request }) => {

@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="128" fill="#4f46e5"/>
+  
+  <!-- Icon: Wallet/Money (scaled up) -->
+  <g transform="translate(128, 128) scale(2.67)">
+    <path d="M88 16H16C11.6 16 8.04 19.6 8.04 24L8 80C8 84.4 11.6 88 16 88H88C92.4 88 96 84.4 96 80V24C96 19.6 92.4 16 88 16ZM88 80H16V24H88V80ZM64 56C64 60.4 60.4 64 56 64C51.6 64 48 60.4 48 56C48 51.6 51.6 48 56 48C60.4 48 64 51.6 64 56Z" fill="white"/>
+  </g>
+  
+  <!-- Badge/Euro Symbol -->
+  <circle cx="384" cy="128" r="64" fill="#ec4899"/>
+  <text x="384" y="158" text-anchor="middle" fill="white" font-size="72" font-weight="bold">€</text>
+</svg>
+

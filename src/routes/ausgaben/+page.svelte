@@ -1,8 +1,30 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageData } from './$types.js';
+	import SwipeActions from '$lib/components/SwipeActions.svelte';
 
 	let { data }: { data: PageData } = $props();
+	
+	// Edit state
+	let editingExpense = $state<string | null>(null);
+	let editExpenseData = $state({
+		dateISO: '',
+		description: '',
+		amount: ''
+	});
+
+	function startEditExpense(expense: any) {
+		editingExpense = expense.id;
+		editExpenseData = {
+			dateISO: expense.dateISO || expense.date,
+			description: expense.description,
+			amount: expense.amount.toString()
+		};
+	}
+
+	function cancelEditExpense() {
+		editingExpense = null;
+	}
 
 	// Currency formatter
 	function formatEuro(amount: number): string {
@@ -28,6 +50,7 @@
 
 	// Local state for new expense form
 	let showNewExpenseForm = $state(false);
+	let isSubmitting = $state(false);
 	let newExpenseData = $state({
 		dateISO: new Date().toISOString().split('T')[0],
 		description: '',
@@ -80,8 +103,10 @@
 			method="POST"
 			action="?/addPrivateExpense"
 			use:enhance={() => {
+				isSubmitting = true;
 				return async ({ result, update }) => {
 					await update();
+					isSubmitting = false;
 					if (result.type === 'success') {
 						newExpenseData = {
 							dateISO: new Date().toISOString().split('T')[0],
@@ -149,9 +174,20 @@
 				<div class="flex gap-3">
 					<button
 						type="submit"
-						class="flex-1 rounded-xl bg-warning-600 px-4 py-3 font-bold text-white transition-all hover:bg-warning-700 active:scale-95"
+						disabled={isSubmitting}
+						class="flex-1 rounded-xl bg-warning-600 px-4 py-3 font-bold text-white transition-all hover:bg-warning-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
-						Hinzufügen
+						{#if isSubmitting}
+							<span class="inline-flex items-center justify-center gap-2">
+								<svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+									<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+									<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								</svg>
+								Speichert...
+							</span>
+						{:else}
+							Hinzufügen
+						{/if}
 					</button>
 					<button
 						type="button"
@@ -169,44 +205,120 @@
 <!-- Expenses List -->
 {#if sortedExpenses.length > 0}
 	<div class="space-y-3">
-		{#each sortedExpenses as expense}
-			<div class="overflow-hidden rounded-xl border-2 border-neutral-200 bg-white shadow-sm transition-all hover:shadow-md">
-				<div class="flex items-center justify-between p-4">
-					<div class="flex-1">
-						<div class="flex items-baseline gap-2">
-							<h3 class="text-lg font-semibold text-neutral-900">{expense.description}</h3>
-						</div>
-						<div class="mt-1 flex items-center gap-2 text-sm text-neutral-600">
-							<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-							</svg>
-							<span>{formatDate(expense.dateISO)}</span>
-						</div>
+		{#each sortedExpenses as expense (expense.id)}
+			{#if editingExpense === expense.id}
+				<!-- Edit Mode -->
+				<div class="overflow-hidden rounded-xl border-2 border-primary-300 bg-white shadow-lg">
+					<div class="bg-primary-50 px-4 py-3">
+						<h3 class="font-bold text-primary-900">Ausgabe bearbeiten</h3>
 					</div>
-					<div class="ml-4 flex items-center gap-3">
-						<div class="text-right">
-							<p class="text-xl font-black text-warning-600">{formatEuro(expense.amount)}</p>
+					<form
+						method="POST"
+						action="?/updatePrivateExpense"
+						use:enhance={() => {
+							return async ({ result, update }) => {
+								await update();
+								if (result.type === 'success') {
+									cancelEditExpense();
+								}
+							};
+						}}
+						class="p-4"
+					>
+						<input type="hidden" name="expenseId" value={expense.id} />
+						
+						<div class="mb-3">
+							<label class="mb-1 block text-xs font-semibold text-neutral-600" for="editDate_{expense.id}">Datum</label>
+							<input
+								id="editDate_{expense.id}"
+								type="date"
+								name="dateISO"
+								bind:value={editExpenseData.dateISO}
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
+								required
+							/>
 						</div>
-						<form
-							method="POST"
-							action="?/deletePrivateExpense"
-							use:enhance
-						>
-							<input type="hidden" name="expenseId" value={expense.id} />
+						<div class="mb-3">
+							<label class="mb-1 block text-xs font-semibold text-neutral-600" for="editDesc_{expense.id}">Beschreibung</label>
+							<input
+								id="editDesc_{expense.id}"
+								type="text"
+								name="description"
+								bind:value={editExpenseData.description}
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
+								required
+							/>
+						</div>
+						<div class="mb-3">
+							<label class="mb-1 block text-xs font-semibold text-neutral-600" for="editAmount_{expense.id}">Betrag (€)</label>
+							<input
+								id="editAmount_{expense.id}"
+								type="number"
+								name="amount"
+								bind:value={editExpenseData.amount}
+								step="0.01"
+								min="0"
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
+								required
+							/>
+						</div>
+						<div class="flex gap-2">
 							<button
 								type="submit"
-								class="rounded-lg border-2 border-danger-200 bg-danger-50 p-2 text-danger-700 transition-all hover:bg-danger-100 active:scale-95"
-								onclick={() => confirm(`Ausgabe '${expense.description}' wirklich löschen?`)}
-								aria-label="Löschen"
+								class="flex-1 rounded-lg bg-success-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-success-700 active:scale-95"
 							>
-								<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-								</svg>
+								Speichern
 							</button>
-						</form>
-					</div>
+							<button
+								type="button"
+								onclick={() => cancelEditExpense()}
+								class="rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95"
+							>
+								Abbrechen
+							</button>
+						</div>
+					</form>
 				</div>
-			</div>
+			{:else}
+				<!-- Display Mode with Swipe Actions -->
+				<SwipeActions
+					onEdit={() => startEditExpense(expense)}
+					onDelete={() => {
+						if (confirm(`'${expense.description}' wirklich löschen?`)) {
+							const form = document.getElementById(`delete-form-${expense.id}`) as HTMLFormElement;
+							if (form) form.requestSubmit();
+						}
+					}}
+				>
+					<div class="overflow-hidden rounded-xl border-2 border-neutral-200 bg-white shadow-sm">
+						<div class="flex items-center justify-between p-4">
+							<div class="flex-1 min-w-0">
+								<h3 class="truncate text-lg font-semibold text-neutral-900">{expense.description}</h3>
+								<div class="mt-1 flex items-center gap-2 text-sm text-neutral-600">
+									<svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+									</svg>
+									<span class="truncate">{formatDate(expense.dateISO)}</span>
+								</div>
+							</div>
+							<div class="ml-4 text-right flex-shrink-0">
+								<p class="text-xl font-black text-warning-600">{formatEuro(expense.amount)}</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Hidden form for deletion -->
+					<form
+						id="delete-form-{expense.id}"
+						method="POST"
+						action="?/deletePrivateExpense"
+						use:enhance
+						class="hidden"
+					>
+						<input type="hidden" name="expenseId" value={expense.id} />
+					</form>
+				</SwipeActions>
+			{/if}
 		{/each}
 	</div>
 {:else}

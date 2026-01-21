@@ -45,7 +45,7 @@
 </script>
 
 <!-- Bottom Navigation - Fixed at bottom with safe area -->
-<nav class="fixed bottom-0 left-0 right-0 z-[9999] border-t-2 border-primary-200 bg-primary-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<nav class="fixed bottom-0 left-0 right-0 z-[9999] border-t-2 border-neutral-200 bg-primary-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
 	<div class="mx-auto max-w-screen-md">
 		<div class="grid grid-cols-4">
 			{#each navItems as item}

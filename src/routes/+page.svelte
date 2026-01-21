@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types.js';
+	import PullToRefresh from '$lib/components/PullToRefresh.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -23,9 +24,10 @@
 	<title>Übersicht - Kosten-Tool</title>
 </svelte:head>
 
-<h1 class="sr-only">Übersicht</h1>
+<PullToRefresh>
+	<h1 class="sr-only">Übersicht</h1>
 
-<!-- Month Info Card -->
+	<!-- Month Info Card -->
 <div class="mb-6 overflow-hidden rounded-2xl bg-white shadow-md">
 	<div class="flex items-center justify-between bg-gradient-to-r from-primary-50 to-primary-100 px-5 py-4">
 		<div class="flex items-center gap-3">
@@ -166,3 +168,4 @@
 		<span class="text-sm">Einkommen</span>
 	</a>
 </div>
+</PullToRefresh>
