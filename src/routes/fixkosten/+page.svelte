@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageData } from './$types.js';
+	import SwipeActions from '$lib/components/SwipeActions.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -17,6 +18,7 @@
 	// Local state for new category/item forms
 	let newCategoryLabel = $state('');
 	let showNewCategoryForm = $state(false);
+	let isSubmitting = $state(false);
 	
 	// Per-category state for new items
 	let newItems = $state<Record<string, { label: string; amount: string; splitMode: string }>>({});
@@ -50,6 +52,19 @@
 		me: '👤 Nur ich',
 		partner: '👥 Nur Partner'
 	};
+
+	// Collapsible categories
+	let collapsedCategories = $state<Set<string>>(new Set());
+
+	function toggleCategory(categoryId: string) {
+		const newSet = new Set(collapsedCategories);
+		if (newSet.has(categoryId)) {
+			newSet.delete(categoryId);
+		} else {
+			newSet.add(categoryId);
+		}
+		collapsedCategories = newSet;
+	}
 </script>
 
 <svelte:head>
@@ -89,8 +104,10 @@
 			method="POST"
 			action="?/addCategory"
 			use:enhance={() => {
+				isSubmitting = true;
 				return async ({ result, update }) => {
 					await update();
+					isSubmitting = false;
 					if (result.type === 'success') {
 						newCategoryLabel = '';
 						showNewCategoryForm = false;
@@ -117,9 +134,20 @@
 			<div class="flex gap-2">
 				<button
 					type="submit"
-					class="flex-1 rounded-lg bg-primary-600 px-4 py-2 font-semibold text-white transition-all hover:bg-primary-700 active:scale-95"
+					disabled={isSubmitting}
+					class="flex-1 rounded-lg bg-primary-600 px-4 py-2 font-semibold text-white transition-all hover:bg-primary-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
 				>
-					Hinzufügen
+					{#if isSubmitting}
+						<span class="inline-flex items-center gap-2">
+							<svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+							Speichert...
+						</span>
+					{:else}
+						Hinzufügen
+					{/if}
 				</button>
 				<button
 					type="button"
@@ -138,28 +166,40 @@
 
 <!-- Categories List -->
 {#each data.fixedCategories as category}
-	<div class="mb-4 overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-md">
-		<!-- Category Header -->
-		<div class="flex items-center justify-between bg-neutral-50 px-5 py-3">
-			<h2 class="text-lg font-bold text-neutral-900">{category.label}</h2>
-			<form
-				method="POST"
-				action="?/deleteCategory"
-				use:enhance
-			>
-				<input type="hidden" name="categoryId" value={category.id} />
-				<button
-					type="submit"
-					class="rounded-lg border-2 border-danger-200 bg-danger-50 px-3 py-1 text-sm font-semibold text-danger-700 transition-all hover:bg-danger-100 active:scale-95"
-					onclick={() => confirm(`Kategorie '${category.label}' wirklich löschen?`)}
+	<div class="mb-4 overflow-hidden rounded-2xl border-2 border-primary-200 bg-white shadow-lg transition-all hover:shadow-xl">
+		<!-- Category Header - Clickable -->
+		<button
+			type="button"
+			onclick={() => toggleCategory(category.id)}
+			class="flex w-full items-center justify-between bg-gradient-to-r from-primary-50 to-primary-100 px-5 py-4 text-left transition-colors hover:from-primary-100 hover:to-primary-200 active:scale-[0.99]"
+		>
+			<div class="flex items-center gap-3">
+				<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500 text-white">
+					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+					</svg>
+				</div>
+				<div>
+					<h2 class="text-lg font-bold text-primary-900">{category.label}</h2>
+					<p class="text-xs text-neutral-600">{category.items.length} {category.items.length === 1 ? 'Position' : 'Positionen'}</p>
+				</div>
+			</div>
+			<div class="flex items-center gap-3">
+				<span class="text-sm font-semibold text-neutral-600">{category.items.length > 0 ? formatEuro(category.items.reduce((sum, item) => sum + item.amount, 0)) : '0,00 €'}</span>
+				<svg 
+					class="h-5 w-5 text-primary-600 transition-transform duration-200 {collapsedCategories.has(category.id) ? '' : 'rotate-180'}"
+					fill="none" 
+					stroke="currentColor" 
+					viewBox="0 0 24 24"
 				>
-					Löschen
-				</button>
-			</form>
-		</div>
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+				</svg>
+			</div>
+		</button>
 
-		<!-- Items -->
-		<div class="divide-y divide-neutral-100">
+		<!-- Items (Collapsible) -->
+		{#if !collapsedCategories.has(category.id)}
+			<div class="divide-y divide-neutral-100">
 			{#each category.items as item}
 				<div class="p-4">
 					{#if editingItem === item.id}
@@ -240,42 +280,43 @@
 							</div>
 						</form>
 					{:else}
-						<!-- Display Mode -->
-						<div class="flex items-start justify-between">
-							<div class="flex-1">
-								<h3 class="font-semibold text-neutral-900">{item.label}</h3>
-								<div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-600">
-									<span class="rounded-full bg-neutral-100 px-2 py-1 font-medium">
+						<!-- Display Mode with Swipe Actions -->
+						<SwipeActions
+							onEdit={() => startEditItem(item.id, item.label, item.amount, item.splitMode)}
+							onDelete={() => {
+								if (confirm(`'${item.label}' wirklich löschen?`)) {
+									const form = document.getElementById(`delete-item-${item.id}`) as HTMLFormElement;
+									if (form) form.requestSubmit();
+								}
+							}}
+						>
+							<div class="flex items-center justify-between gap-4">
+								<div class="flex-1 min-w-0">
+									<h3 class="truncate font-semibold text-neutral-900">{item.label}</h3>
+									<div class="mt-2 flex items-center gap-2">
+										<span class="inline-flex items-center gap-1 rounded-lg bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
+											{splitModeLabels[item.splitMode]}
+										</span>
+									</div>
+								</div>
+								<div class="flex-shrink-0">
+									<span class="whitespace-nowrap text-xl font-black text-primary-600">
 										{formatEuro(item.amount)}
-									</span>
-									<span class="rounded-full bg-primary-100 px-2 py-1 font-medium text-primary-700">
-										{splitModeLabels[item.splitMode]}
 									</span>
 								</div>
 							</div>
-							<div class="ml-3 flex gap-2">
-								<button
-									onclick={() => startEditItem(item.id, item.label, item.amount, item.splitMode)}
-									class="rounded-lg border-2 border-primary-200 bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700 transition-all hover:bg-primary-100 active:scale-95"
-								>
-									Bearbeiten
-								</button>
-								<form
-									method="POST"
-									action="?/deleteItem"
-									use:enhance
-								>
-									<input type="hidden" name="itemId" value={item.id} />
-									<button
-										type="submit"
-										class="rounded-lg border-2 border-danger-200 bg-danger-50 px-3 py-1 text-xs font-semibold text-danger-700 transition-all hover:bg-danger-100 active:scale-95"
-										onclick={() => confirm(`Item '${item.label}' wirklich löschen?`)}
-									>
-										Löschen
-									</button>
-								</form>
-							</div>
-						</div>
+
+							<!-- Hidden form for deletion -->
+							<form
+								id="delete-item-{item.id}"
+								method="POST"
+								action="?/deleteItem"
+								use:enhance
+								class="hidden"
+							>
+								<input type="hidden" name="itemId" value={item.id} />
+							</form>
+						</SwipeActions>
 					{/if}
 				</div>
 			{/each}
@@ -396,6 +437,29 @@
 				</form>
 			{/if}
 		</div>
+			
+			<!-- Delete Category Button (at bottom when expanded) -->
+			<div class="border-t-2 border-neutral-100 bg-neutral-50 px-5 py-3">
+				<form
+					method="POST"
+					action="?/deleteCategory"
+					use:enhance
+					class="flex justify-end"
+				>
+					<input type="hidden" name="categoryId" value={category.id} />
+					<button
+						type="submit"
+						class="rounded-lg border-2 border-danger-200 bg-danger-50 px-4 py-2 text-sm font-semibold text-danger-700 transition-all hover:bg-danger-100 active:scale-95"
+						onclick={() => confirm(`Kategorie '${category.label}' und alle Positionen wirklich löschen?`)}
+					>
+						<svg class="mr-2 inline-block h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+						</svg>
+						Kategorie löschen
+					</button>
+				</form>
+			</div>
+		{/if}
 	</div>
 {:else}
 	<div class="rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">

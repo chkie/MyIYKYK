@@ -3,6 +3,27 @@
 @plugin '@tailwindcss/typography';
 
 /* ============================================================================
+   Touch & Scroll Optimization
+   ============================================================================ */
+
+html {
+	scroll-behavior: smooth;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+body {
+	overscroll-behavior-y: none; /* Prevent bounce on iOS */
+	touch-action: pan-y;
+}
+
+button,
+a {
+	touch-action: manipulation; /* Disable double-tap zoom */
+}
+
+/* ============================================================================
    MyIYKYK - Modern Color Palette 2026
    ============================================================================ */
 
