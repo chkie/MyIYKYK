@@ -34,15 +34,14 @@
 			<div class="mx-auto max-w-screen-md px-4 py-3">
 				<!-- Top Row: App Title & Actions -->
 				<div class="mb-2 flex items-center justify-between">
-					<!-- App name with icon -->
-					<div class="flex items-center gap-3">
-						<div
-							class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm"
-						>
-							<span class="text-2xl">💰</span>
-						</div>
-						<h1 class="text-xl font-bold text-white">Kosten-Tool</h1>
-					</div>
+					<!-- App logo -->
+					<a href="/" class="flex items-center transition-opacity hover:opacity-80 active:scale-95">
+						<img 
+							src="/webtool_logo.png" 
+							alt="App Logo" 
+							class="h-24 w-auto"
+						/>
+					</a>
 
 					<!-- Action buttons -->
 					<div class="flex items-center gap-2">
@@ -122,9 +121,7 @@
 		.page-content {
 			will-change: opacity, transform;
 		}
-	}
-
-	/* Disable animations for users who prefer reduced motion */
+	}	/* Disable animations for users who prefer reduced motion */
 	@media (prefers-reduced-motion: reduce) {
 		.page-content {
 			animation: none;
