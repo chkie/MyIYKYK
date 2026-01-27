@@ -48,7 +48,7 @@
 
 <!-- Einkommen Card -->
 <div class="mb-6 overflow-hidden rounded-2xl border-2 border-success-200 bg-white shadow-lg">
-	<div class="bg-linear-to-r from-success-50 to-success-100 px-5 py-4">
+	<div class="bg-linear-to-r from-emerald-100 to-emerald-200 px-5 py-4">
 		<div class="flex items-center justify-between">
 			<h2 class="flex items-center gap-2 text-lg font-bold text-success-900">
 				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +175,7 @@
 
 <!-- Vorauszahlung Card -->
 <div class="mb-6 overflow-hidden rounded-2xl border-2 border-accent-200 bg-white shadow-lg">
-	<div class="bg-linear-to-r from-accent-50 to-accent-100 px-5 py-4">
+	<div class="bg-linear-to-r from-pink-100 to-pink-200 px-5 py-4">
 		<div class="flex items-center justify-between">
 			<h2 class="flex items-center gap-2 text-lg font-bold text-accent-900">
 				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -271,7 +271,7 @@
 <!-- Monat abschließen Card -->
 {#if data.month.status === 'open'}
 	<div class="mb-6 overflow-hidden rounded-2xl border-2 border-primary-200 bg-white shadow-lg">
-		<div class="bg-linear-to-r from-primary-50 to-primary-100 px-5 py-4">
+		<div class="bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4">
 			<h2 class="flex items-center gap-2 text-lg font-bold text-primary-900">
 				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

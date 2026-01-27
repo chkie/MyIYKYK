@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { hapticImpact, hapticSelection } from '../utils/haptics';
+	import { hapticImpact, hapticSelection } from '../utils/haptics.js';
 
 	let { children, onDelete }: { children: any; onDelete: () => void } = $props();
 

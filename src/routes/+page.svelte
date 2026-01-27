@@ -29,7 +29,7 @@
 
 	<!-- Month Info Card -->
 <div class="mb-6 overflow-hidden rounded-2xl bg-white shadow-md">
-	<div class="flex items-center justify-between bg-gradient-to-r from-primary-50 to-primary-100 px-5 py-4">
+	<div class="flex items-center justify-between bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4">
 		<div class="flex items-center gap-3">
 			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500 text-white">
 				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,23 +73,23 @@
 <!-- Summary Cards Grid -->
 <div class="mb-6 grid grid-cols-2 gap-4">
 	<!-- Fixkosten -->
-	<div class="overflow-hidden rounded-xl border-2 border-primary-200 bg-white shadow-sm">
-		<div class="bg-primary-50 px-4 py-3">
-			<p class="text-xs font-bold uppercase tracking-wide text-primary-700">Fixkosten</p>
+	<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+		<div class="px-4 py-3">
+			<p class="text-sm font-semibold uppercase tracking-wide text-primary-700">Fixkosten</p>
 		</div>
-		<div class="p-4">
-			<p class="text-2xl font-bold text-primary-600">{formatEuro(data.computed.myFixedShare)}</p>
-			<p class="mt-1 text-xs text-neutral-500">{formatPct(data.computed.shareMe)} Anteil</p>
+		<div class="px-4 pb-4">
+			<p class="text-2xl font-bold text-neutral-900">{formatEuro(data.computed.myFixedShare)}</p>
+			<p class="mt-1 text-xs text-neutral-600">{formatPct(data.computed.shareMe)} Anteil</p>
 		</div>
 	</div>
 
 	<!-- Vorauszahlung -->
-	<div class="overflow-hidden rounded-xl border-2 border-accent-200 bg-white shadow-sm">
-		<div class="bg-accent-50 px-4 py-3">
-			<p class="text-xs font-bold uppercase tracking-wide text-accent-700">Vorauszahlung</p>
+	<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+		<div class="px-4 py-3">
+			<p class="text-sm font-semibold uppercase tracking-wide text-pink-700">Vorauszahlung</p>
 		</div>
-		<div class="p-4">
-			<p class="text-2xl font-bold text-accent-600">{formatEuro(data.computed.prepaymentThisMonth)}</p>
+		<div class="px-4 pb-4">
+			<p class="text-2xl font-bold text-neutral-900">{formatEuro(data.computed.prepaymentThisMonth)}</p>
 			{#if data.computed.fixedCostShortfall > 0}
 				<p class="mt-1 text-xs text-danger-600">-{formatEuro(data.computed.fixedCostShortfall)} fehlt</p>
 			{:else if data.computed.fixedCostOverpayment > 0}
@@ -101,26 +101,26 @@
 	</div>
 
 	<!-- Private Ausgaben -->
-	<div class="overflow-hidden rounded-xl border-2 border-warning-200 bg-white shadow-sm">
-		<div class="bg-warning-50 px-4 py-3">
-			<p class="text-xs font-bold uppercase tracking-wide text-warning-700">Private</p>
+	<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+		<div class="px-4 py-3">
+			<p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Private</p>
 		</div>
-		<div class="p-4">
-			<p class="text-2xl font-bold text-warning-600">{formatEuro(data.computed.privateAddedThisMonth)}</p>
-			<p class="mt-1 text-xs text-neutral-500">{data.privateExpenses.length} Ausgaben</p>
+		<div class="px-4 pb-4">
+			<p class="text-2xl font-bold text-neutral-900">{formatEuro(data.computed.privateAddedThisMonth)}</p>
+			<p class="mt-1 text-xs text-neutral-600">{data.privateExpenses.length} Ausgaben</p>
 		</div>
 	</div>
 
 	<!-- Vom Vormonat -->
-	<div class="overflow-hidden rounded-xl border-2 border-neutral-200 bg-white shadow-sm">
-		<div class="bg-neutral-50 px-4 py-3">
-			<p class="text-xs font-bold uppercase tracking-wide text-neutral-700">Vormonat</p>
+	<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+		<div class="px-4 py-3">
+			<p class="text-sm font-semibold uppercase tracking-wide text-neutral-700">Vormonat</p>
 		</div>
-		<div class="p-4">
+		<div class="px-4 pb-4">
 			<p class="text-2xl font-bold {data.computed.privateBalanceStart > 0 ? 'text-danger-600' : data.computed.privateBalanceStart < 0 ? 'text-success-600' : 'text-neutral-600'}">
 				{formatEuro(data.computed.privateBalanceStart)}
 			</p>
-			<p class="mt-1 text-xs text-neutral-500">Startsaldo</p>
+			<p class="mt-1 text-xs text-neutral-600">Startsaldo</p>
 		</div>
 	</div>
 </div>
@@ -128,7 +128,7 @@
 <!-- Empfehlung Card -->
 {#if data.computed.recommendedPrepayment > 0}
 	<div class="overflow-hidden rounded-2xl border-2 border-accent-200 bg-white shadow-md">
-		<div class="bg-gradient-to-r from-accent-50 to-accent-100 px-5 py-4">
+		<div class="bg-linear-to-r from-pink-100 to-pink-200 px-5 py-4">
 			<h3 class="flex items-center gap-2 text-lg font-bold text-accent-900">
 				<span class="text-xl">📅</span>
 				Nächster Monat

@@ -59,7 +59,7 @@
 						<img 
 							src="/webtool_logo.png" 
 							alt="App Logo" 
-							class="h-24 w-auto"
+							class="h-16 w-auto"
 						/>
 					</a>
 

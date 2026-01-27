@@ -24,7 +24,7 @@ import {
 	deletePrivateExpense,
 	updateMonthTransfer
 } from '$lib/server/private-expenses.js';
-import { calculateMonth } from '$lib/domain';
+import { calculateMonth } from '$lib/domain/index.js';
 import type { Actions, PageServerLoad } from './$types.js';
 
 /**
@@ -100,7 +100,8 @@ export const load: PageServerLoad = async () => {
 					id: item.id,
 					label: item.label,
 					amount: Number(item.amount),
-					splitMode: item.splitMode
+					// Legacy: convert 'half' to 'income' (half mode was removed)
+					splitMode: (item.splitMode === 'half' ? 'income' : item.splitMode) as 'income' | 'me' | 'partner'
 				}))
 			})),
 			privateExpenses: privateExpenses.map((exp) => ({

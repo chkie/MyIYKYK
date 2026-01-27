@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { hapticSelection } from '../utils/haptics';
+	import { hapticSelection } from '../utils/haptics.js';
 
 	// Navigation items
 	const navItems = [
@@ -45,7 +45,7 @@
 </script>
 
 <!-- Bottom Navigation - Fixed at bottom with safe area -->
-<nav class="fixed bottom-0 left-0 right-0 z-9999 border-t-2 border-primary-200 bg-primary-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<nav class="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-primary-200 bg-primary-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
 	<div class="mx-auto max-w-3xl">
 		<div class="grid grid-cols-4">
 			{#each navItems as item}
@@ -53,7 +53,7 @@
 					href={item.href}
 					class="group flex flex-col items-center gap-1 px-2 py-3 transition-all active:scale-95 {isActive(item.activePattern)
 						? 'text-primary-600'
-						: 'text-neutral-500 hover:text-neutral-700'}"
+						: 'text-neutral-600 hover:text-neutral-700'}"
 					data-sveltekit-preload-data="tap"
 					data-sveltekit-noscroll
 					onclick={() => hapticSelection()}

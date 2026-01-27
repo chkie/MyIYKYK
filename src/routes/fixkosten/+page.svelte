@@ -110,10 +110,10 @@
 
 	// Split mode labels
 	const splitModeLabels: Record<string, string> = {
-		income: '📊 Nach Einkommen',
+		income: '📊 Einkommen',
 		half: '⚖️ 50/50',
-		me: '👤 Nur ich',
-		partner: '👥 Nur Partner'
+		me: '👤 Ich',
+		partner: '👥 Partner'
 	};
 
 	// Collapsible categories
@@ -138,12 +138,12 @@
 
 <!-- Summary Card -->
 <div class="mb-6 overflow-hidden rounded-2xl border-2 border-primary-200 bg-white shadow-lg">
-	<div class="bg-linear-to-r from-primary-50 to-primary-100 px-5 py-4">
+	<div class="bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4">
 		<p class="text-sm font-semibold uppercase tracking-wide text-primary-700">Mein Anteil</p>
 	</div>
 	<div class="p-5">
 		<p class="text-4xl font-black text-primary-600">{formatEuro(data.computed.myFixedShare)}</p>
-		<p class="mt-2 text-sm text-neutral-600">
+		<p class="mt-2 text-sm font-medium text-neutral-600">
 			Gesamt: {formatEuro(data.computed.totalFixedCosts)}
 		</p>
 	</div>
@@ -237,20 +237,20 @@
 		<button
 			type="button"
 			onclick={() => toggleCategory(category.id)}
-			class="flex w-full items-center justify-between bg-linear-to-r from-primary-50 to-primary-100 px-5 py-4 text-left transition-colors hover:from-primary-100 hover:to-primary-200 active:scale-[0.99]"
+			class="flex w-full items-center justify-between bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4 text-left transition-colors hover:from-indigo-200 hover:to-indigo-300 active:scale-[0.99]"
 		>
-			<div class="flex items-center gap-3">
-				<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500 text-white">
+			<div class="flex items-center gap-3 min-w-0">
+				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500 text-white">
 					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
 					</svg>
 				</div>
-				<div>
-					<h2 class="text-lg font-bold text-primary-900">{category.label}</h2>
+				<div class="min-w-0">
+					<h2 class="truncate text-lg font-bold text-primary-900">{category.label}</h2>
 					<p class="text-xs text-neutral-600">{category.items.length} {category.items.length === 1 ? 'Position' : 'Positionen'}</p>
 				</div>
 			</div>
-			<div class="flex items-center gap-3">
+			<div class="flex shrink-0 items-center gap-3">
 				<span class="text-sm font-semibold text-neutral-600">{category.items.length > 0 ? formatEuro(category.items.reduce((sum: number, item: any) => sum + item.amount, 0)) : '0,00 €'}</span>
 				<svg 
 					class="h-5 w-5 text-primary-600 transition-transform duration-200 {collapsedCategories.has(category.id) ? '' : 'rotate-180'}"
@@ -297,12 +297,12 @@
 									enterkeyhint="next"
 									autocomplete="off"
 									disabled={isSubmittingEditItem}
-									class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+									class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
 									required
 								/>
 							</div>
-							<div class="mb-3 grid grid-cols-2 gap-3">
-								<div>
+							<div class="mb-3 grid grid-cols-2 gap-3 overflow-hidden">
+								<div class="min-w-0">
 									<label class="mb-1 block text-xs font-semibold text-neutral-600" for="editAmount_{item.id}">
 										Betrag
 									</label>
@@ -317,11 +317,11 @@
 										disabled={isSubmittingEditItem}
 										step="0.01"
 										min="0"
-										class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+										class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
 										required
 									/>
 								</div>
-								<div>
+								<div class="min-w-0">
 									<label class="mb-1 block text-xs font-semibold text-neutral-600" for="editSplitMode_{item.id}">
 										Aufteilung
 									</label>
@@ -331,12 +331,12 @@
 										bind:value={editItemData.splitMode}
 										aria-label="Aufteilungsmodus wählen"
 										disabled={isSubmittingEditItem}
-										class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+										class="w-full truncate rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
 									>
-										<option value="income">Nach Einkommen</option>
+										<option value="income">Einkommen</option>
 										<option value="half">50/50</option>
 										<option value="me">Nur ich</option>
-										<option value="partner">Nur Partner</option>
+										<option value="partner">Partner</option>
 									</select>
 								</div>
 							</div>
@@ -372,8 +372,8 @@
 							<div class="flex items-center justify-between gap-4">
 								<div class="flex-1 min-w-0">
 									<h3 class="truncate font-semibold text-neutral-900">{item.label}</h3>
-									<div class="mt-2 flex items-center gap-2">
-										<span class="inline-flex items-center gap-1 rounded-lg bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
+									<div class="mt-2 flex items-center gap-2 overflow-hidden">
+										<span class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
 											{splitModeLabels[item.splitMode]}
 										</span>
 									</div>
@@ -451,12 +451,12 @@
 							enterkeyhint="next"
 							autocomplete="off"
 							placeholder="z.B. Miete, Strom..."
-							class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
+							class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base"
 							required
 						/>
 					</div>
-					<div class="mb-3 grid grid-cols-2 gap-3">
-						<div>
+					<div class="mb-3 grid grid-cols-2 gap-3 overflow-hidden">
+						<div class="min-w-0">
 							<label class="mb-1 block text-xs font-semibold text-neutral-600" for="newItemAmount_{category.id}">
 								Betrag (€)
 							</label>
@@ -476,11 +476,11 @@
 								step="0.01"
 								min="0"
 								placeholder="0.00"
-								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base"
 								required
 							/>
 						</div>
-						<div>
+						<div class="min-w-0">
 							<label class="mb-1 block text-xs font-semibold text-neutral-600" for="newItemSplitMode_{category.id}">
 								Aufteilung
 							</label>
@@ -493,12 +493,12 @@
 									newItems = { ...newItems, [category.id]: { ...itemState, splitMode: target.value } };
 								}}
 								aria-label="Aufteilungsmodus wählen"
-								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
+								class="w-full truncate rounded-lg border-2 border-neutral-300 px-3 py-2 text-base"
 							>
-								<option value="income">Nach Einkommen</option>
+								<option value="income">Einkommen</option>
 								<option value="half">50/50</option>
 								<option value="me">Nur ich</option>
-								<option value="partner">Nur Partner</option>
+								<option value="partner">Partner</option>
 							</select>
 						</div>
 					</div>

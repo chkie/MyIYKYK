@@ -114,12 +114,12 @@
 
 <!-- Summary Card -->
 <div class="mb-6 overflow-hidden rounded-2xl border-2 border-warning-200 bg-white shadow-lg">
-	<div class="bg-linear-to-r from-warning-50 to-warning-100 px-5 py-4">
+	<div class="bg-linear-to-r from-amber-100 to-amber-200 px-5 py-4">
 		<p class="text-sm font-semibold uppercase tracking-wide text-warning-700">Diesen Monat</p>
 	</div>
 	<div class="p-5">
 		<p class="text-4xl font-black text-warning-600">{formatEuro(data.computed.privateAddedThisMonth)}</p>
-		<p class="mt-2 text-sm text-neutral-600">
+		<p class="mt-2 text-sm font-medium text-neutral-600">
 			{data.privateExpenses.length} {data.privateExpenses.length === 1 ? 'Ausgabe' : 'Ausgaben'}
 		</p>
 	</div>
@@ -178,7 +178,7 @@
 						bind:value={newExpenseData.dateISO}
 						onkeydown={(e) => handleFieldKeyDown(e, 'newExpenseDescription')}
 						enterkeyhint="next"
-						class="w-full rounded-lg border-2 border-neutral-300 px-4 py-3 transition-all focus:border-warning-500 focus:outline-none focus:ring-2 focus:ring-warning-200"
+						class="w-full rounded-lg border-2 border-neutral-300 px-4 py-3 text-base transition-all focus:border-warning-500 focus:outline-none focus:ring-2 focus:ring-warning-200"
 						required
 					/>
 				</div>
@@ -196,7 +196,7 @@
 						enterkeyhint="next"
 						autocomplete="off"
 						placeholder="z.B. Einkaufen, Restaurant, Tanken..."
-						class="w-full rounded-lg border-2 border-neutral-300 px-4 py-3 transition-all focus:border-warning-500 focus:outline-none focus:ring-2 focus:ring-warning-200"
+						class="w-full rounded-lg border-2 border-neutral-300 px-4 py-3 text-base transition-all focus:border-warning-500 focus:outline-none focus:ring-2 focus:ring-warning-200"
 						required
 					/>
 				</div>
@@ -290,7 +290,7 @@
 								bind:value={editExpenseData.dateISO}
 								enterkeyhint="next"
 								disabled={isSubmittingEdit}
-								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
 								required
 							/>
 						</div>
@@ -304,7 +304,7 @@
 								enterkeyhint="next"
 								autocomplete="off"
 								disabled={isSubmittingEdit}
-								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
 								required
 							/>
 						</div>
@@ -321,7 +321,7 @@
 								disabled={isSubmittingEdit}
 								step="0.01"
 								min="0"
-								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
 								required
 							/>
 						</div>
