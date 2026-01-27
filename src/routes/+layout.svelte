@@ -1,6 +1,7 @@
 <script lang="ts">
 	import './layout.css';
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	const { children } = $props();
@@ -10,6 +11,25 @@
 
 	// Page transition key - changes when route changes
 	const pageKey = $derived($page.url.pathname);
+
+	// Service Worker Registration (PWA)
+	onMount(() => {
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker
+				.register('/sw.js')
+				.then((registration) => {
+					console.log('[PWA] Service Worker registered:', registration.scope);
+
+					// Check for updates periodically (every hour)
+					setInterval(() => {
+						registration.update();
+					}, 60 * 60 * 1000);
+				})
+				.catch((error) => {
+					console.error('[PWA] Service Worker registration failed:', error);
+				});
+		}
+	});
 </script>
 
 <svelte:head>
@@ -31,7 +51,7 @@
 		<header
 			class="sticky top-0 z-50 border-b-2 border-primary-300 bg-primary-600 shadow-lg"
 		>
-			<div class="mx-auto max-w-screen-md px-4 py-3">
+			<div class="mx-auto max-w-3xl px-4 py-3">
 				<!-- Top Row: App Title & Actions -->
 				<div class="mb-2 flex items-center justify-between">
 					<!-- App logo -->
@@ -78,7 +98,7 @@
 		</header>
 
 		<main class="flex-1 pb-20">
-			<div class="mx-auto w-full max-w-screen-md px-4 py-6">
+			<div class="mx-auto w-full max-w-3xl px-4 py-6">
 				<div class="page-transition-container">
 					{#key pageKey}
 						<div class="page-content">

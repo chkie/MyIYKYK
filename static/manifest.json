@@ -3,12 +3,25 @@
 	"short_name": "Kosten",
 	"description": "Gemeinsame Kostenverwaltung für Paare",
 	"start_url": "/",
+	"scope": "/",
 	"display": "standalone",
 	"background_color": "#f8fafc",
 	"theme_color": "#4f46e5",
 	"orientation": "portrait-primary",
 	"categories": ["finance", "productivity"],
 	"icons": [
+		{
+			"src": "/icon-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
 		{
 			"src": "/icon-192.svg",
 			"sizes": "192x192",
@@ -20,6 +33,22 @@
 			"sizes": "512x512",
 			"type": "image/svg+xml",
 			"purpose": "any"
+		}
+	],
+	"shortcuts": [
+		{
+			"name": "Neue Ausgabe",
+			"short_name": "Ausgabe",
+			"description": "Schnell neue Ausgabe erfassen",
+			"url": "/ausgaben",
+			"icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "Fixkosten",
+			"short_name": "Fixkosten",
+			"description": "Fixkosten verwalten",
+			"url": "/fixkosten",
+			"icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
 		}
 	]
 }

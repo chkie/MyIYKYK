@@ -7,6 +7,7 @@
 	
 	// Edit state
 	let editingExpense = $state<string | null>(null);
+	let isSubmittingEdit = $state(false);
 	let editExpenseData = $state({
 		dateISO: '',
 		description: '',
@@ -23,7 +24,9 @@
 	}
 
 	function cancelEditExpense() {
-		editingExpense = null;
+		if (!isSubmittingEdit) {
+			editingExpense = null;
+		}
 	}
 
 	// Currency formatter
@@ -57,6 +60,42 @@
 		amount: ''
 	});
 
+	// Focus management for add form (DOM reference, not reactive)
+	// svelte-ignore non_reactive_update
+	let addFormContainer: HTMLFormElement;
+	
+	function openNewExpenseForm() {
+		showNewExpenseForm = true;
+		// Focus first input after DOM update
+		setTimeout(() => {
+			const firstInput = addFormContainer?.querySelector('input:not([type="hidden"])') as HTMLInputElement;
+			firstInput?.focus();
+		}, 0);
+	}
+	
+	function closeNewExpenseForm() {
+		showNewExpenseForm = false;
+	}
+	
+	// Keyboard navigation for add form
+	function handleFormKeyDown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && !isSubmitting) {
+			closeNewExpenseForm();
+		}
+	}
+	
+	function handleFieldKeyDown(e: KeyboardEvent, nextFieldId?: string) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			if (nextFieldId) {
+				document.getElementById(nextFieldId)?.focus();
+			} else {
+				// Last field - submit form
+				(e.target as HTMLElement).closest('form')?.requestSubmit();
+			}
+		}
+	}
+
 	// Sort expenses by date (newest first)
 	let sortedExpenses = $derived(
 		[...data.privateExpenses].sort((a, b) => {
@@ -75,7 +114,7 @@
 
 <!-- Summary Card -->
 <div class="mb-6 overflow-hidden rounded-2xl border-2 border-warning-200 bg-white shadow-lg">
-	<div class="bg-gradient-to-r from-warning-50 to-warning-100 px-5 py-4">
+	<div class="bg-linear-to-r from-warning-50 to-warning-100 px-5 py-4">
 		<p class="text-sm font-semibold uppercase tracking-wide text-warning-700">Diesen Monat</p>
 	</div>
 	<div class="p-5">
@@ -90,7 +129,7 @@
 <div class="mb-6">
 	{#if !showNewExpenseForm}
 		<button
-			onclick={() => { showNewExpenseForm = true; }}
+			onclick={openNewExpenseForm}
 			class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-warning-300 bg-warning-50 px-4 py-4 font-bold text-warning-700 transition-all hover:border-warning-400 hover:bg-warning-100 active:scale-95"
 		>
 			<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,9 +138,12 @@
 			Neue Ausgabe hinzufügen
 		</button>
 	{:else}
+		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 		<form
+			bind:this={addFormContainer}
 			method="POST"
 			action="?/addPrivateExpense"
+			onkeydown={handleFormKeyDown}
 			use:enhance={() => {
 				isSubmitting = true;
 				return async ({ result, update }) => {
@@ -134,6 +176,8 @@
 						type="date"
 						name="dateISO"
 						bind:value={newExpenseData.dateISO}
+						onkeydown={(e) => handleFieldKeyDown(e, 'newExpenseDescription')}
+						enterkeyhint="next"
 						class="w-full rounded-lg border-2 border-neutral-300 px-4 py-3 transition-all focus:border-warning-500 focus:outline-none focus:ring-2 focus:ring-warning-200"
 						required
 					/>
@@ -148,6 +192,9 @@
 						type="text"
 						name="description"
 						bind:value={newExpenseData.description}
+						onkeydown={(e) => handleFieldKeyDown(e, 'newExpenseAmount')}
+						enterkeyhint="next"
+						autocomplete="off"
 						placeholder="z.B. Einkaufen, Restaurant, Tanken..."
 						class="w-full rounded-lg border-2 border-neutral-300 px-4 py-3 transition-all focus:border-warning-500 focus:outline-none focus:ring-2 focus:ring-warning-200"
 						required
@@ -163,6 +210,10 @@
 						type="number"
 						name="amount"
 						bind:value={newExpenseData.amount}
+						onkeydown={(e) => handleFieldKeyDown(e)}
+						inputmode="decimal"
+						enterkeyhint="done"
+						autocomplete="off"
 						step="0.01"
 						min="0"
 						placeholder="0.00"
@@ -191,8 +242,9 @@
 					</button>
 					<button
 						type="button"
-						onclick={() => { showNewExpenseForm = false; }}
-						class="rounded-xl border-2 border-neutral-300 px-4 py-3 font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95"
+						disabled={isSubmitting}
+						onclick={closeNewExpenseForm}
+						class="rounded-xl border-2 border-neutral-300 px-4 py-3 font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						Abbrechen
 					</button>
@@ -216,8 +268,10 @@
 						method="POST"
 						action="?/updatePrivateExpense"
 						use:enhance={() => {
+							isSubmittingEdit = true;
 							return async ({ result, update }) => {
 								await update();
+								isSubmittingEdit = false;
 								if (result.type === 'success') {
 									cancelEditExpense();
 								}
@@ -234,7 +288,9 @@
 								type="date"
 								name="dateISO"
 								bind:value={editExpenseData.dateISO}
-								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
+								enterkeyhint="next"
+								disabled={isSubmittingEdit}
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
 								required
 							/>
 						</div>
@@ -245,7 +301,10 @@
 								type="text"
 								name="description"
 								bind:value={editExpenseData.description}
-								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
+								enterkeyhint="next"
+								autocomplete="off"
+								disabled={isSubmittingEdit}
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
 								required
 							/>
 						</div>
@@ -256,23 +315,29 @@
 								type="number"
 								name="amount"
 								bind:value={editExpenseData.amount}
+								inputmode="decimal"
+								enterkeyhint="done"
+								autocomplete="off"
+								disabled={isSubmittingEdit}
 								step="0.01"
 								min="0"
-								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm"
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
 								required
 							/>
 						</div>
 						<div class="flex gap-2">
 							<button
 								type="submit"
-								class="flex-1 rounded-lg bg-success-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-success-700 active:scale-95"
+								disabled={isSubmittingEdit}
+								class="flex-1 rounded-lg bg-success-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-success-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								Speichern
+								{isSubmittingEdit ? 'Speichert...' : 'Speichern'}
 							</button>
 							<button
 								type="button"
+								disabled={isSubmittingEdit}
 								onclick={() => cancelEditExpense()}
-								class="rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95"
+								class="rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								Abbrechen
 							</button>
@@ -295,13 +360,13 @@
 							<div class="flex-1 min-w-0">
 								<h3 class="truncate text-lg font-semibold text-neutral-900">{expense.description}</h3>
 								<div class="mt-1 flex items-center gap-2 text-sm text-neutral-600">
-									<svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
 									</svg>
 									<span class="truncate">{formatDate(expense.dateISO)}</span>
 								</div>
 							</div>
-							<div class="ml-4 text-right flex-shrink-0">
+							<div class="ml-4 text-right shrink-0">
 								<p class="text-xl font-black text-warning-600">{formatEuro(expense.amount)}</p>
 							</div>
 						</div>

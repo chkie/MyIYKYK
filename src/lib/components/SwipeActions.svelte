@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { hapticImpact, hapticSelection } from '$lib/utils/haptics';
+	import { hapticImpact, hapticSelection } from '../utils/haptics';
 
 	let { 
 		children, 
@@ -98,6 +98,7 @@
 		{#if onEdit}
 			<button
 				type="button"
+				aria-label="Bearbeiten"
 				onclick={(e) => {
 					e.stopPropagation();
 					hapticSelection();
@@ -116,6 +117,7 @@
 		{#if onDelete}
 			<button
 				type="button"
+				aria-label="Löschen"
 				onclick={(e) => {
 					e.stopPropagation();
 					hapticImpact();

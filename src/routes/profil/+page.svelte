@@ -33,11 +33,11 @@
 	let editingPrepayment = $state(false);
 
 	// Get profiles
-	const meProfile = $derived(data.profiles?.find((p) => p.role === 'me'));
-	const partnerProfile = $derived(data.profiles?.find((p) => p.role === 'partner'));
+	const meProfile = $derived(data.profiles?.find((p: any) => p.role === 'me'));
+	const partnerProfile = $derived(data.profiles?.find((p: any) => p.role === 'partner'));
 	
-	const meIncome = $derived(data.incomes.find((i) => i.profile_id === meProfile?.id));
-	const partnerIncome = $derived(data.incomes.find((i) => i.profile_id === partnerProfile?.id));
+	const meIncome = $derived(data.incomes.find((i: any) => i.profile_id === meProfile?.id));
+	const partnerIncome = $derived(data.incomes.find((i: any) => i.profile_id === partnerProfile?.id));
 </script>
 
 <svelte:head>
@@ -48,7 +48,7 @@
 
 <!-- Einkommen Card -->
 <div class="mb-6 overflow-hidden rounded-2xl border-2 border-success-200 bg-white shadow-lg">
-	<div class="bg-gradient-to-r from-success-50 to-success-100 px-5 py-4">
+	<div class="bg-linear-to-r from-success-50 to-success-100 px-5 py-4">
 		<div class="flex items-center justify-between">
 			<h2 class="flex items-center gap-2 text-lg font-bold text-success-900">
 				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,6 +96,9 @@
 								type="number"
 								name="income_{meProfile.id}"
 								value={meIncome.net_income}
+								inputmode="decimal"
+								enterkeyhint="next"
+								autocomplete="off"
 								step="0.01"
 								min="0"
 								placeholder="0.00"
@@ -118,6 +121,9 @@
 								type="number"
 								name="income_{partnerProfile.id}"
 								value={partnerIncome.net_income}
+								inputmode="decimal"
+								enterkeyhint="done"
+								autocomplete="off"
 								step="0.01"
 								min="0"
 								placeholder="0.00"
@@ -169,7 +175,7 @@
 
 <!-- Vorauszahlung Card -->
 <div class="mb-6 overflow-hidden rounded-2xl border-2 border-accent-200 bg-white shadow-lg">
-	<div class="bg-gradient-to-r from-accent-50 to-accent-100 px-5 py-4">
+	<div class="bg-linear-to-r from-accent-50 to-accent-100 px-5 py-4">
 		<div class="flex items-center justify-between">
 			<h2 class="flex items-center gap-2 text-lg font-bold text-accent-900">
 				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,6 +228,9 @@
 							type="number"
 							name="prepayment"
 							value={data.month.total_transfer_this_month}
+							inputmode="decimal"
+							enterkeyhint="done"
+							autocomplete="off"
 							step="0.01"
 							min="0"
 							placeholder="0.00"
@@ -262,7 +271,7 @@
 <!-- Monat abschließen Card -->
 {#if data.month.status === 'open'}
 	<div class="mb-6 overflow-hidden rounded-2xl border-2 border-primary-200 bg-white shadow-lg">
-		<div class="bg-gradient-to-r from-primary-50 to-primary-100 px-5 py-4">
+		<div class="bg-linear-to-r from-primary-50 to-primary-100 px-5 py-4">
 			<h2 class="flex items-center gap-2 text-lg font-bold text-primary-900">
 				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

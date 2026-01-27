@@ -27,9 +27,9 @@
 					type="password"
 					id="password"
 					name="password"
-					required
-					autofocus
+					enterkeyhint="done"
 					autocomplete="current-password webauthn"
+					required
 				/>
 			</div>
 

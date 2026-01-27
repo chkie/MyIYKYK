@@ -1,48 +1,32 @@
 /**
- * Haptic Feedback Helper
- * Provides vibration feedback on mobile devices
+ * Haptic Feedback Utilities
+ * Provides tactile feedback using the Web Vibration API
  */
 
-export type HapticStyle = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error';
-
-/**
- * Trigger haptic feedback (vibration) on supported devices
- */
-export function triggerHaptic(style: HapticStyle = 'light'): void {
-	// Check if vibration API is available
-	if (!navigator.vibrate) return;
-
-	// Vibration patterns (in milliseconds)
-	const patterns: Record<HapticStyle, number | number[]> = {
-		light: 10,
-		medium: 20,
-		heavy: 30,
-		success: [10, 50, 10],
-		warning: [20, 100, 20],
-		error: [30, 100, 30, 100, 30]
-	};
-
-	navigator.vibrate(patterns[style]);
-}
-
-/**
- * Trigger selection haptic (for buttons, taps)
- */
 export function hapticSelection(): void {
-	triggerHaptic('light');
+	if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+		navigator.vibrate(10);
+	}
 }
 
-/**
- * Trigger impact haptic (for destructive actions)
- */
 export function hapticImpact(): void {
-	triggerHaptic('medium');
+	if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+		navigator.vibrate(20);
+	}
 }
 
-/**
- * Trigger notification haptic (for success/error feedback)
- */
-export function hapticNotification(type: 'success' | 'warning' | 'error'): void {
-	triggerHaptic(type);
+export function hapticNotification(type: 'success' | 'warning' | 'error' = 'success'): void {
+	if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+		switch (type) {
+			case 'success':
+				navigator.vibrate([10, 50, 10]);
+				break;
+			case 'warning':
+				navigator.vibrate([20, 50, 20]);
+				break;
+			case 'error':
+				navigator.vibrate([30, 50, 30, 50, 30]);
+				break;
+		}
+	}
 }
-
