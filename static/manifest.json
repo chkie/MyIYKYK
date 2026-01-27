@@ -5,12 +5,14 @@
 	"start_url": "/",
 	"scope": "/",
 	"display": "standalone",
+	"display_override": ["standalone", "minimal-ui", "browser"],
 	"background_color": "#f8fafc",
 	"theme_color": "#4f46e5",
 	"orientation": "portrait-primary",
 	"categories": ["finance", "productivity"],
 	"lang": "de",
 	"dir": "ltr",
+	"prefer_related_applications": false,
 	"icons": [
 		{
 			"src": "/icon-192.png",

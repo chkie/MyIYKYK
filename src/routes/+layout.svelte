@@ -59,7 +59,12 @@
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="apple-mobile-web-app-title" content="Kosten-Tool" />
+	
+	<!-- Apple Touch Icons (multiple sizes for iOS) -->
 	<link rel="apple-touch-icon" href="/icon-192.png" />
+	<link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png" />
+	<link rel="apple-touch-icon" sizes="152x152" href="/icon-192.png" />
+	<link rel="apple-touch-icon" sizes="120x120" href="/icon-192.png" />
 	
 	<!-- Performance: Preload LCP assets -->
 	<link rel="preload" as="image" href="/webtool_logo.webp" type="image/webp" fetchpriority="high" />
@@ -73,7 +78,7 @@
 	<div class="flex min-h-screen flex-col bg-neutral-50">
 		<!-- Modern Header with Gradient & Month Info -->
 		<header
-			class="sticky top-0 z-50 border-b-2 border-primary-300 bg-primary-600 shadow-lg"
+			class="app-header sticky top-0 z-50 border-b-2 border-primary-300 bg-primary-600 shadow-lg"
 		>
 			<div class="mx-auto max-w-3xl px-4 py-3">
 				<!-- Top Row: App Title & Actions -->
@@ -99,7 +104,7 @@
 					<!-- Archive button -->
 					<a
 						href="/archiv"
-						class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
+						class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-3 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
 						aria-label={t('aria.archive')}
 						data-sveltekit-preload-code="off"
 					>
@@ -112,7 +117,7 @@
 						<!-- Logout button -->
 						<a
 							href="/logout"
-							class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
+							class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-3 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
 						>
 							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path
@@ -129,7 +134,7 @@
 			</div>
 		</header>
 
-		<main class="flex-1 pb-20">
+		<main class="app-main flex-1">
 			<div class="mx-auto w-full max-w-3xl px-4 py-6">
 				<div class="page-transition-container">
 					{#key pageKey}

@@ -192,8 +192,10 @@
 					type="text"
 					name="label"
 					bind:value={newCategoryLabel}
+					onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 					enterkeyhint="done"
 					autocomplete="off"
+					autocapitalize="sentences"
 					placeholder="z.B. Wohnung, Auto, Versicherungen..."
 					class="w-full rounded-lg border-2 border-neutral-300 px-4 py-2 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
 					required
@@ -294,8 +296,10 @@
 									type="text"
 									name="label"
 									bind:value={editItemData.label}
+									onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 									enterkeyhint="next"
 									autocomplete="off"
+									autocapitalize="sentences"
 									disabled={isSubmittingEditItem}
 									class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
 									required
@@ -311,6 +315,7 @@
 										type="number"
 										name="amount"
 										bind:value={editItemData.amount}
+										onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 										inputmode="decimal"
 										enterkeyhint="next"
 										autocomplete="off"
@@ -407,7 +412,7 @@
 				<button
 					type="button"
 					onclick={() => openItemForm(category.id)}
-					class="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition-all hover:border-neutral-400 hover:bg-neutral-50 active:scale-95"
+					class="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-neutral-300 bg-white px-3 py-3 text-sm font-semibold text-neutral-700 transition-all hover:border-neutral-400 hover:bg-neutral-50 active:scale-95"
 				>
 					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -448,8 +453,10 @@
 								const target = e.target as HTMLInputElement;
 								newItems = { ...newItems, [category.id]: { ...itemState, label: target.value } };
 							}}
+							onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 							enterkeyhint="next"
 							autocomplete="off"
+							autocapitalize="sentences"
 							placeholder="z.B. Miete, Strom..."
 							class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base"
 							required
@@ -470,6 +477,7 @@
 									const target = e.target as HTMLInputElement;
 									newItems = { ...newItems, [category.id]: { ...itemState, amount: target.value } };
 								}}
+								onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 								inputmode="decimal"
 								enterkeyhint="next"
 								autocomplete="off"

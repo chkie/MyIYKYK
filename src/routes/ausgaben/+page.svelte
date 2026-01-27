@@ -198,8 +198,10 @@
 						name="description"
 						bind:value={newExpenseData.description}
 						onkeydown={(e) => handleFieldKeyDown(e, 'newExpenseAmount')}
+						onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 						enterkeyhint="next"
 						autocomplete="off"
+						autocapitalize="sentences"
 						placeholder="z.B. Einkaufen, Restaurant, Tanken..."
 						class="w-full rounded-lg border-2 border-neutral-300 px-4 py-3 text-base transition-all focus:border-warning-500 focus:outline-none focus:ring-2 focus:ring-warning-200"
 						required
@@ -216,6 +218,7 @@
 						name="amount"
 						bind:value={newExpenseData.amount}
 						onkeydown={(e) => handleFieldKeyDown(e)}
+						onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 						inputmode="decimal"
 						enterkeyhint="done"
 						autocomplete="off"
@@ -306,8 +309,10 @@
 								type="text"
 								name="description"
 								bind:value={editExpenseData.description}
+								onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 								enterkeyhint="next"
 								autocomplete="off"
+								autocapitalize="sentences"
 								disabled={isSubmittingEdit}
 								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
 								required
@@ -320,6 +325,7 @@
 								type="number"
 								name="amount"
 								bind:value={editExpenseData.amount}
+								onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
 								inputmode="decimal"
 								enterkeyhint="done"
 								autocomplete="off"

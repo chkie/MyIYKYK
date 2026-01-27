@@ -52,7 +52,7 @@
 			{#each navItems as item}
 				<a
 					href={item.href}
-					class="group flex flex-col items-center gap-1 px-2 py-3 transition-all active:scale-95 {isActive(item.activePattern)
+					class="group flex flex-col items-center gap-1 px-2 py-4 transition-all active:scale-95 {isActive(item.activePattern)
 						? 'text-primary-600'
 						: 'text-neutral-600 hover:text-neutral-700'}"
 					data-sveltekit-preload-data="hover"
@@ -89,8 +89,8 @@
 
 <style>
 	nav {
-		/* Safe area support for iOS */
-		padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+		/* Safe area support for iOS - adjusted for py-4 tap targets */
+		padding-bottom: max(1rem, env(safe-area-inset-bottom));
 	}
 </style>
 
