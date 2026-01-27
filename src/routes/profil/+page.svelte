@@ -89,7 +89,7 @@
 				{#if meProfile && meIncome}
 					<div class="mb-4">
 						<label class="mb-2 block text-sm font-semibold text-neutral-700" for="income_me">
-							{meProfile.name} (Du)
+							{meProfile.name}
 						</label>
 						<div class="flex items-center gap-2">
 							<input
@@ -158,7 +158,7 @@
 			<div class="space-y-3">
 				{#if meProfile && meIncome}
 					<div class="flex items-center justify-between rounded-lg bg-neutral-50 px-4 py-3">
-						<span class="text-sm font-semibold text-neutral-700">{meProfile.name} (Du)</span>
+						<span class="text-sm font-semibold text-neutral-700">{meProfile.name}</span>
 						<span class="text-lg font-bold text-neutral-900">{formatEuro(meIncome.net_income)}</span>
 					</div>
 				{/if}

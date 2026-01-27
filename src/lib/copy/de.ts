@@ -60,14 +60,14 @@ export const de = {
 		splitMode: 'Aufteilung',
 		splitModeIncome: 'Einkommen',
 		splitModeHalf: '50/50',
-		splitModeMe: 'Nur ich',
-		splitModePartner: 'Partner',
+		splitModeMe: 'Christian',
+		splitModePartner: 'Steffi',
 		
 		// Split Mode Labels (mit Emojis)
 		splitModeLabelIncome: '📊 Einkommen',
 		splitModeLabelHalf: '⚖️ 50/50',
-		splitModeLabelMe: '👤 Ich',
-		splitModeLabelPartner: '👥 Partner',
+		splitModeLabelMe: '👤 Christian',
+		splitModeLabelPartner: '👤 Steffi',
 	},
 
 	// ========================================
@@ -100,8 +100,8 @@ export const de = {
 		statusClosed: 'Geschlossen',
 		
 		// Hero Status
-		youOwe: 'Du schuldest Steffi',
-		owesYou: 'Steffi schuldet dir',
+		youOwe: 'Christian schuldet Steffi',
+		owesYou: 'Steffi schuldet Christian',
 		allSettled: '✓ Alles ausgeglichen',
 		noDebts: 'Keine offenen Schulden',
 		
@@ -122,7 +122,7 @@ export const de = {
 		// Recommendation Card
 		nextMonth: 'Nächster Monat',
 		recommendedPrepayment: 'Empfohlene Vorauszahlung:',
-		recommendationHint: 'Überweise dies zu Monatsbeginn, um Steffi nicht in Vorleistung gehen zu lassen.',
+		recommendationHint: 'Christian sollte diesen Betrag an Steffi überweisen, damit Steffi nicht in Vorleistung gehen muss.',
 		
 		// Quick Actions
 		newExpense: 'Neue Ausgabe',
@@ -134,7 +134,7 @@ export const de = {
 	// ========================================
 	fixedCosts: {
 		title: 'Fixkosten',
-		myShare: 'Mein Anteil',
+		myShare: 'Christians Anteil',
 		total: 'Gesamt',
 		
 		// Category
@@ -165,7 +165,7 @@ export const de = {
 		
 		// Empty State
 		noExpensesTitle: 'Noch keine Ausgaben vorhanden',
-		noExpensesHint: 'Füge oben deine erste Ausgabe hinzu!',
+		noExpensesHint: 'Füge oben eine neue Ausgabe hinzu!',
 	},
 
 	// ========================================
@@ -176,7 +176,7 @@ export const de = {
 		
 		// Income Card
 		incomeTitle: 'Einkommen',
-		youLabel: '(Du)',
+		youLabel: '(Christian)',
 		
 		// Prepayment Card
 		prepaymentTitle: 'Vorauszahlung',
@@ -199,7 +199,7 @@ export const de = {
 	// ========================================
 	archive: {
 		title: 'Archiv',
-		subtitle: 'Hier findest du alle abgeschlossenen Monate ({count})',
+		subtitle: 'Alle abgeschlossenen Monate ({count})',
 		finalBalance: 'Endsaldo:',
 		closedAt: 'Abgeschlossen am',
 		

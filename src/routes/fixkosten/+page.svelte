@@ -112,8 +112,8 @@
 	const splitModeLabels: Record<string, string> = {
 		income: '📊 Einkommen',
 		half: '⚖️ 50/50',
-		me: '👤 Ich',
-		partner: '👥 Partner'
+		me: '👤 Christian',
+		partner: '👤 Steffi'
 	};
 
 	// Collapsible categories
@@ -139,7 +139,7 @@
 <!-- Summary Card -->
 <div class="mb-6 overflow-hidden rounded-2xl border-2 border-primary-200 bg-white shadow-lg">
 	<div class="bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4">
-		<p class="text-sm font-semibold uppercase tracking-wide text-primary-700">Mein Anteil</p>
+		<p class="text-sm font-semibold uppercase tracking-wide text-primary-700">Christians Anteil</p>
 	</div>
 	<div class="p-5">
 		<p class="text-4xl font-black text-primary-600">{formatEuro(data.computed.myFixedShare)}</p>
@@ -340,8 +340,8 @@
 									>
 										<option value="income">Einkommen</option>
 										<option value="half">50/50</option>
-										<option value="me">Nur ich</option>
-										<option value="partner">Partner</option>
+										<option value="me">Christian</option>
+										<option value="partner">Steffi</option>
 									</select>
 								</div>
 							</div>
@@ -505,8 +505,8 @@
 							>
 								<option value="income">Einkommen</option>
 								<option value="half">50/50</option>
-								<option value="me">Nur ich</option>
-								<option value="partner">Partner</option>
+								<option value="me">Christian</option>
+								<option value="partner">Steffi</option>
 							</select>
 						</div>
 					</div>

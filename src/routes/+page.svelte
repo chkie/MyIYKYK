@@ -57,7 +57,7 @@
 	<div class="mb-6 overflow-hidden rounded-2xl {data.computed.privateBalanceEnd > 0 ? 'border-4 border-danger-300 bg-danger-50' : 'border-4 border-success-300 bg-success-50'} shadow-xl">
 		<div class="p-6 text-center">
 			<p class="mb-2 text-sm font-semibold uppercase tracking-wide {data.computed.privateBalanceEnd > 0 ? 'text-danger-700' : 'text-success-700'}">
-				{data.computed.privateBalanceEnd > 0 ? 'Du schuldest Steffi' : 'Steffi schuldet dir'}
+				{data.computed.privateBalanceEnd > 0 ? 'Christian schuldet Steffi' : 'Steffi schuldet Christian'}
 			</p>
 			<p class="text-5xl font-black {data.computed.privateBalanceEnd > 0 ? 'text-danger-600' : 'text-success-600'}">
 				{formatEuro(Math.abs(data.computed.privateBalanceEnd))}
@@ -130,23 +130,37 @@
 
 <!-- Empfehlung Card -->
 {#if data.computed.recommendedPrepayment > 0}
-	<div class="overflow-hidden rounded-2xl border-2 border-accent-200 bg-white shadow-md">
-		<div class="bg-linear-to-r from-pink-100 to-pink-200 px-5 py-4">
-			<h3 class="flex items-center gap-2 text-lg font-bold text-accent-900">
-				<span class="text-xl">📅</span>
-				Nächster Monat
-			</h3>
+	{@const remaining = data.computed.recommendedPrepayment - data.computed.prepaymentThisMonth}
+	{@const isPaid = remaining <= 0}
+	
+	{#if !isPaid}
+		<div class="overflow-hidden rounded-2xl border-2 border-accent-200 bg-white shadow-md">
+			<div class="bg-linear-to-r from-pink-100 to-pink-200 px-5 py-4">
+				<h3 class="flex items-center gap-2 text-lg font-bold text-accent-900">
+					<span class="text-xl">💡</span>
+					Empfehlung Vorauszahlung
+				</h3>
+			</div>
+			<div class="p-5">
+				<p class="mb-2 text-sm text-neutral-700">
+					Noch empfohlen:
+				</p>
+				<p class="text-3xl font-black text-accent-600">{formatEuro(remaining)}</p>
+				<p class="mt-3 text-xs text-neutral-600">
+					Von {formatEuro(data.computed.recommendedPrepayment)} empfohlen, bereits {formatEuro(data.computed.prepaymentThisMonth)} überwiesen.
+				</p>
+			</div>
 		</div>
-		<div class="p-5">
-			<p class="mb-2 text-sm text-neutral-700">
-				Empfohlene Vorauszahlung:
-			</p>
-			<p class="text-3xl font-black text-accent-600">{formatEuro(data.computed.recommendedPrepayment)}</p>
-			<p class="mt-3 text-xs text-neutral-600">
-				Überweise dies zu Monatsbeginn, um Steffi nicht in Vorleistung gehen zu lassen.
-			</p>
+	{:else}
+		<div class="overflow-hidden rounded-2xl border-2 border-success-200 bg-success-50 shadow-md">
+			<div class="p-5 text-center">
+				<p class="text-2xl font-black text-success-600">✓ Vorauszahlung erledigt</p>
+				<p class="mt-2 text-sm text-success-700">
+					{formatEuro(data.computed.prepaymentThisMonth)} von {formatEuro(data.computed.recommendedPrepayment)} überwiesen
+				</p>
+			</div>
 		</div>
-	</div>
+	{/if}
 {/if}
 
 <!-- Quick Actions -->
