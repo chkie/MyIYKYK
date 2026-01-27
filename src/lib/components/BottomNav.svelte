@@ -1,31 +1,32 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { hapticSelection } from '../utils/haptics.js';
+	import { t } from '$lib/copy/index.js';
 
 	// Navigation items
 	const navItems = [
 		{
 			href: '/',
 			icon: 'overview',
-			label: 'Übersicht',
+			label: t('nav.overview'),
 			activePattern: /^\/$/
 		},
 		{
 			href: '/fixkosten',
 			icon: 'home',
-			label: 'Fixkosten',
+			label: t('nav.fixedCosts'),
 			activePattern: /^\/fixkosten/
 		},
 		{
 			href: '/ausgaben',
 			icon: 'money',
-			label: 'Ausgaben',
+			label: t('nav.expenses'),
 			activePattern: /^\/ausgaben/
 		},
 		{
 			href: '/profil',
 			icon: 'user',
-			label: 'Profil',
+			label: t('nav.profile'),
 			activePattern: /^\/profil/
 		}
 	];
@@ -54,7 +55,8 @@
 					class="group flex flex-col items-center gap-1 px-2 py-3 transition-all active:scale-95 {isActive(item.activePattern)
 						? 'text-primary-600'
 						: 'text-neutral-600 hover:text-neutral-700'}"
-					data-sveltekit-preload-data="tap"
+					data-sveltekit-preload-data="hover"
+					data-sveltekit-preload-code="viewport"
 					data-sveltekit-noscroll
 					onclick={() => hapticSelection()}
 				>

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { t } from '$lib/copy/index.js';
+
 	interface Props {
 		form?: {
 			error?: string;
@@ -8,9 +10,13 @@
 	let { form = null }: Props = $props();
 </script>
 
+<svelte:head>
+	<title>{t('pageTitle.login')}</title>
+</svelte:head>
+
 <div class="login-container">
 	<div class="login-card">
-		<h1>Login</h1>
+		<h1>{t('login.title')}</h1>
 
 		<form method="POST" class="login-form">
 			<!-- Hidden username field for Apple Keychain / Password Manager integration -->
@@ -22,7 +28,7 @@
 			/>
 
 			<div class="form-group">
-				<label for="password">Passwort</label>
+				<label for="password">{t('login.passwordLabel')}</label>
 				<input
 					type="password"
 					id="password"
@@ -39,7 +45,7 @@
 				</div>
 			{/if}
 
-			<button type="submit" class="btn-primary">Anmelden</button>
+			<button type="submit" class="btn-primary">{t('login.submitButton')}</button>
 		</form>
 	</div>
 </div>

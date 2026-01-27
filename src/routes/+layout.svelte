@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import { t } from '$lib/copy/index.js';
 
 	const { children } = $props();
 
@@ -12,8 +13,25 @@
 	// Page transition key - changes when route changes
 	const pageKey = $derived($page.url.pathname);
 
-	// Service Worker Registration (PWA)
-	onMount(() => {
+	// Service Worker Registration (PWA) - Only in Production
+	onMount(async () => {
+		// CRITICAL: Only register SW in production, NOT in dev mode
+		const isProduction = import.meta.env.PROD;
+		
+		if (!isProduction) {
+			console.log('[PWA] Service Worker disabled in dev mode');
+			
+			// Unregister any existing service workers in dev mode
+			if ('serviceWorker' in navigator) {
+				const registrations = await navigator.serviceWorker.getRegistrations();
+				for (const registration of registrations) {
+					await registration.unregister();
+					console.log('[PWA] Unregistered old service worker');
+				}
+			}
+			return;
+		}
+
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker
 				.register('/sw.js')
@@ -35,10 +53,17 @@
 <svelte:head>
 	<link rel="manifest" href="/manifest.json" />
 	<meta name="theme-color" content="#4f46e5" />
+	
+	<!-- PWA Meta Tags -->
+	<meta name="mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="apple-mobile-web-app-title" content="Kosten-Tool" />
 	<link rel="apple-touch-icon" href="/icon-192.png" />
+	
+	<!-- Performance: Preload kritische Assets -->
+	<link rel="preload" as="image" href="/webtool_logo.webp" type="image/webp" fetchpriority="high" />
+	<link rel="preload" as="image" href="/webtool_logo.png" fetchpriority="high" />
 </svelte:head>
 
 {#if isLoginPage}
@@ -54,13 +79,20 @@
 			<div class="mx-auto max-w-3xl px-4 py-3">
 				<!-- Top Row: App Title & Actions -->
 				<div class="mb-2 flex items-center justify-between">
-					<!-- App logo -->
+					<!-- App logo (WebP with PNG fallback) -->
 					<a href="/" class="flex items-center transition-opacity hover:opacity-80 active:scale-95">
-						<img 
-							src="/webtool_logo.png" 
-							alt="App Logo" 
-							class="h-16 w-auto"
-						/>
+						<picture>
+							<source srcset="/webtool_logo.webp" type="image/webp" />
+							<img 
+								src="/webtool_logo.png" 
+								alt={t('aria.appLogo')}
+								width="64"
+								height="64"
+								class="h-16 w-auto"
+								loading="eager"
+								fetchpriority="high"
+							/>
+						</picture>
 					</a>
 
 					<!-- Action buttons -->
@@ -69,12 +101,12 @@
 						<a
 							href="/archiv"
 							class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
-							aria-label="Archiv"
+							aria-label={t('aria.archive')}
 						>
 							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
 							</svg>
-							<span>Archiv</span>
+							<span>{t('nav.archive')}</span>
 						</a>
 						
 						<!-- Logout button -->
@@ -90,7 +122,7 @@
 									d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
 								/>
 							</svg>
-							<span>Logout</span>
+							<span>{t('nav.logout')}</span>
 						</a>
 					</div>
 				</div>

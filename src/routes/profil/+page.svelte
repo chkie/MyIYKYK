@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types.js';
+	import { t } from '$lib/copy/index.js';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -60,9 +61,9 @@
 				<button
 					onclick={() => { editingIncomes = true; }}
 					class="rounded-lg px-3 py-1.5 text-sm font-medium text-success-700 transition-colors hover:bg-success-200/50"
-					aria-label="Einkommen bearbeiten"
+					aria-label={t('aria.editIncome')}
 				>
-					Bearbeiten
+					{t('common.edit')}
 				</button>
 			{/if}
 		</div>
@@ -141,14 +142,14 @@
 						onclick={() => { editingIncomes = false; }}
 						class="flex-1 rounded-xl border-2 border-neutral-300 bg-white px-4 py-3 font-bold text-neutral-700 transition-all hover:bg-neutral-50 active:scale-95"
 					>
-						Abbrechen
+						{t('common.cancel')}
 					</button>
 					<button
 						type="submit"
 						disabled={savingIncomes}
 						class="flex-1 rounded-xl bg-success-600 px-4 py-3 font-bold text-white transition-all hover:bg-success-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 					>
-						{savingIncomes ? 'Speichert...' : 'Speichern'}
+						{savingIncomes ? t('common.saving') : t('common.save')}
 					</button>
 				</div>
 			</form>
@@ -187,9 +188,9 @@
 				<button
 					onclick={() => { editingPrepayment = true; }}
 					class="rounded-lg px-3 py-1.5 text-sm font-medium text-accent-700 transition-colors hover:bg-accent-200/50"
-					aria-label="Vorauszahlung bearbeiten"
+					aria-label={t('aria.editPrepayment')}
 				>
-					Bearbeiten
+					{t('common.edit')}
 				</button>
 			{/if}
 		</div>
@@ -247,14 +248,14 @@
 						onclick={() => { editingPrepayment = false; }}
 						class="flex-1 rounded-xl border-2 border-neutral-300 bg-white px-4 py-3 font-bold text-neutral-700 transition-all hover:bg-neutral-50 active:scale-95"
 					>
-						Abbrechen
+						{t('common.cancel')}
 					</button>
 					<button
 						type="submit"
 						disabled={savingPrepayment}
 						class="flex-1 rounded-xl bg-accent-600 px-4 py-3 font-bold text-white transition-all hover:bg-accent-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 					>
-						{savingPrepayment ? 'Speichert...' : 'Speichern'}
+						{savingPrepayment ? t('common.saving') : t('common.save')}
 					</button>
 				</div>
 			</form>
@@ -309,10 +310,10 @@
 				<button
 					type="submit"
 					disabled={closingMonth}
-					onclick={() => confirm('Monat wirklich abschließen? Dies erstellt den nächsten Monat!')}
+					onclick={() => confirm(t('confirm.closeMonth'))}
 					class="w-full rounded-xl bg-primary-600 px-4 py-3 font-bold text-white transition-all hover:bg-primary-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 				>
-					{closingMonth ? 'Schließt ab...' : 'Jetzt abschließen'}
+					{closingMonth ? t('common.closing') : t('profile.closeMonthButton')}
 				</button>
 			</form>
 		</div>

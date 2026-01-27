@@ -1,8 +1,8 @@
 // Service Worker for Kosten-Tool PWA
 // Strategy: Conservative, Auth-Safe, Network-First for Dynamic Content
 
-const CACHE_NAME = 'kosten-tool-v1';
-const CACHE_VERSION = 1;
+const CACHE_NAME = 'kosten-tool-v2'; // BUMPED: Logo optimized
+const CACHE_VERSION = 2;
 
 // ============================================================================
 // WHITELIST: Safe to cache (Static Assets)
@@ -16,7 +16,8 @@ const PWA_ASSETS = [
 	'/icon-192.svg',
 	'/icon-512.svg',
 	'/favicon.svg',
-	'/webtool_logo.png'
+	'/webtool_logo.webp', // Optimized WebP (15KB)
+	'/webtool_logo.png'   // Fallback PNG (169KB)
 ];
 
 // ============================================================================
