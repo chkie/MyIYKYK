@@ -37,25 +37,27 @@ export const load: PageServerLoad = async () => {
 		// Get server-only Supabase client
 		const supabase = getSupabaseServerClient();
 
-		// 1. Get or create current month
+		// 1. Get or create current month (MUST be first - needed for month.id)
 		const month = await getOrCreateCurrentMonth();
 
-		// 2. Ensure month_incomes exist for all profiles
+		// 2. Ensure month_incomes exist for all profiles (depends on month.id)
 		const incomes = await ensureMonthIncomes(month.id);
 
-		// 3. Get profiles for display (role + name + id)
-		const { data: profiles, error: profilesError } = await supabase
-			.from('profiles')
-			.select('id, role, name')
-			.order('role', { ascending: true });
+		// 3-6. PARALLEL QUERIES (all depend on month.id but not on each other)
+		const [profilesResult, fixedCategories, privateExpenses, closedMonths] = await Promise.all([
+			supabase.from('profiles').select('id, role, name').order('role', { ascending: true }),
+			listFixedCategoriesWithItems(month.id),
+			listPrivateExpenses(month.id),
+			listClosedMonths(12)
+		]);
 
-		if (profilesError) {
-			console.error('Supabase error:', profilesError);
-			throw error(500, `Database error: ${profilesError.message}`);
+		// Handle profiles error
+		if (profilesResult.error) {
+			console.error('Supabase error:', profilesResult.error);
+			throw error(500, `Database error: ${profilesResult.error.message}`);
 		}
 
-		// 4. Get fixed categories with items
-		const fixedCategories = await listFixedCategoriesWithItems(month.id);
+		const profiles = profilesResult.data;
 		
 		// DEBUG: Log what we got
 		console.log('🔍 DEBUG - Fixed Categories loaded:', {
@@ -68,10 +70,7 @@ export const load: PageServerLoad = async () => {
 			}))
 		});
 
-		// 5. Get private expenses
-		const privateExpenses = await listPrivateExpenses(month.id);
-
-		// 6. Map DB data to Domain types and calculate
+		// 7. Map DB data to Domain types and calculate
 
 		// Find profiles
 		const meProfile = profiles?.find((p) => p.role === 'me');
@@ -116,9 +115,6 @@ export const load: PageServerLoad = async () => {
 
 		// Calculate month
 		const computed = calculateMonth(monthInputs);
-
-		// 7. Load closed months for archive
-		const closedMonths = await listClosedMonths(12);
 
 		// Return data for the page
 		return {

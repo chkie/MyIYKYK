@@ -4,6 +4,7 @@
 /* ============================================================================
    Variable Fonts (Self-Hosted) - Optimized for Performance
    Note: fontsource includes font-display: swap by default
+   unicode-range automatically loads only used character sets (latin for DE)
    ============================================================================ */
 @import '@fontsource-variable/inter/wght.css'; /* weight-only, no italic */
 @import '@fontsource-variable/geist/wght.css'; /* weight-only, no italic */

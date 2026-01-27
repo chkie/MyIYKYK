@@ -4,14 +4,17 @@
 
 	let { data }: { data: PageData } = $props();
 
+	// Memoized formatters (avoid recreating on every call)
+	const euroFormatter = new Intl.NumberFormat('de-DE', {
+		style: 'currency',
+		currency: 'EUR',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	});
+
 	// Currency formatter
 	function formatEuro(amount: number): string {
-		return new Intl.NumberFormat('de-DE', {
-			style: 'currency',
-			currency: 'EUR',
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		}).format(amount);
+		return euroFormatter.format(amount);
 	}
 
 	// Percentage formatter

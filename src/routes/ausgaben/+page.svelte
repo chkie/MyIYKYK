@@ -29,14 +29,23 @@
 		}
 	}
 
+	// Memoized formatters (avoid recreating on every call)
+	const euroFormatter = new Intl.NumberFormat('de-DE', {
+		style: 'currency',
+		currency: 'EUR',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	});
+
+	const dateFormatter = new Intl.DateTimeFormat('de-DE', {
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric'
+	});
+
 	// Currency formatter
 	function formatEuro(amount: number): string {
-		return new Intl.NumberFormat('de-DE', {
-			style: 'currency',
-			currency: 'EUR',
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		}).format(amount);
+		return euroFormatter.format(amount);
 	}
 
 	// Date formatter
@@ -44,11 +53,7 @@
 		if (!dateISO) return '-';
 		const date = new Date(dateISO);
 		if (isNaN(date.getTime())) return '-';
-		return new Intl.DateTimeFormat('de-DE', {
-			day: '2-digit',
-			month: '2-digit',
-			year: 'numeric'
-		}).format(date);
+		return dateFormatter.format(date);
 	}
 
 	// Local state for new expense form

@@ -61,9 +61,8 @@
 	<meta name="apple-mobile-web-app-title" content="Kosten-Tool" />
 	<link rel="apple-touch-icon" href="/icon-192.png" />
 	
-	<!-- Performance: Preload kritische Assets -->
+	<!-- Performance: Preload LCP assets -->
 	<link rel="preload" as="image" href="/webtool_logo.webp" type="image/webp" fetchpriority="high" />
-	<link rel="preload" as="image" href="/webtool_logo.png" fetchpriority="high" />
 </svelte:head>
 
 {#if isLoginPage}
@@ -97,12 +96,13 @@
 
 					<!-- Action buttons -->
 					<div class="flex items-center gap-2">
-						<!-- Archive button -->
-						<a
-							href="/archiv"
-							class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
-							aria-label={t('aria.archive')}
-						>
+					<!-- Archive button -->
+					<a
+						href="/archiv"
+						class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
+						aria-label={t('aria.archive')}
+						data-sveltekit-preload-code="off"
+					>
 							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
 							</svg>
