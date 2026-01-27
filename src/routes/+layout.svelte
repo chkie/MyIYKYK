@@ -13,6 +13,59 @@
 	// Page transition key - changes when route changes
 	const pageKey = $derived($page.url.pathname);
 
+	// Remove boot screen with smooth overlapping cross-fade (only on first cold start)
+	onMount(() => {
+		const bootScreen = document.getElementById('boot-screen');
+		const appContent = document.getElementById('app-content');
+		if (!bootScreen || !appContent) return;
+
+		// Check if boot screen was already shown in this session
+		const hasBootShown = sessionStorage.getItem('boot-screen-shown');
+
+		if (hasBootShown) {
+			// Not first load - skip boot screen entirely
+			bootScreen.remove();
+			appContent.style.opacity = '1';
+			appContent.style.visibility = 'visible';
+			return;
+		}
+
+		// First cold start - show boot screen and mark as shown
+		sessionStorage.setItem('boot-screen-shown', 'true');
+
+		// Timing configuration for ultra-smooth transition
+		const minDisplayTime = 2000; // Minimum 2 seconds visible
+		const bootFadeOutDuration = 1200; // Longer boot screen fade-out
+		const contentFadeInDuration = 1200; // Login fade-in duration
+		const overlapStart = 400; // Content starts fading in 400ms before boot-screen finishes
+		const cssAnimationDelay = 100; // Anti-flicker delay from CSS
+
+		const removeBootScreen = () => {
+			// Wait for minimum display time
+			setTimeout(() => {
+				// Start content fade-in FIRST (creates overlap)
+				setTimeout(() => {
+					appContent.style.visibility = 'visible'; // Make visible immediately
+					appContent.style.transition = `opacity ${contentFadeInDuration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+					appContent.style.opacity = '1';
+				}, 0);
+
+				// Then start boot screen fade-out after short delay (creates blend)
+				setTimeout(() => {
+					bootScreen.style.transition = `opacity ${bootFadeOutDuration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+					bootScreen.style.opacity = '0';
+				}, overlapStart);
+
+				// Remove boot screen after complete fade-out
+				setTimeout(() => {
+					bootScreen.remove();
+				}, bootFadeOutDuration + overlapStart);
+			}, minDisplayTime - cssAnimationDelay);
+		};
+
+		removeBootScreen();
+	});
+
 	// Service Worker Registration (PWA) - Only in Production
 	onMount(async () => {
 		// CRITICAL: Only register SW in production, NOT in dev mode
