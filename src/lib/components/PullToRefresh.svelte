@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { hapticSelection } from '$lib/utils/haptics';
+	import { hapticSelection } from '../utils/haptics.js';
 
 	let { children }: { children: any } = $props();
 

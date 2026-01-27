@@ -4,14 +4,17 @@
 
 	let { data }: { data: PageData } = $props();
 
+	// Memoized formatters (avoid recreating on every call)
+	const euroFormatter = new Intl.NumberFormat('de-DE', {
+		style: 'currency',
+		currency: 'EUR',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	});
+
 	// Currency formatter
 	function formatEuro(amount: number): string {
-		return new Intl.NumberFormat('de-DE', {
-			style: 'currency',
-			currency: 'EUR',
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		}).format(amount);
+		return euroFormatter.format(amount);
 	}
 
 	// Percentage formatter
@@ -29,7 +32,7 @@
 
 	<!-- Month Info Card -->
 <div class="mb-6 overflow-hidden rounded-2xl bg-white shadow-md">
-	<div class="flex items-center justify-between bg-gradient-to-r from-primary-50 to-primary-100 px-5 py-4">
+	<div class="flex items-center justify-between bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4">
 		<div class="flex items-center gap-3">
 			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500 text-white">
 				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +57,7 @@
 	<div class="mb-6 overflow-hidden rounded-2xl {data.computed.privateBalanceEnd > 0 ? 'border-4 border-danger-300 bg-danger-50' : 'border-4 border-success-300 bg-success-50'} shadow-xl">
 		<div class="p-6 text-center">
 			<p class="mb-2 text-sm font-semibold uppercase tracking-wide {data.computed.privateBalanceEnd > 0 ? 'text-danger-700' : 'text-success-700'}">
-				{data.computed.privateBalanceEnd > 0 ? 'Du schuldest Steffi' : 'Steffi schuldet dir'}
+				{data.computed.privateBalanceEnd > 0 ? 'Christian schuldet Steffi' : 'Steffi schuldet Christian'}
 			</p>
 			<p class="text-5xl font-black {data.computed.privateBalanceEnd > 0 ? 'text-danger-600' : 'text-success-600'}">
 				{formatEuro(Math.abs(data.computed.privateBalanceEnd))}
@@ -73,23 +76,23 @@
 <!-- Summary Cards Grid -->
 <div class="mb-6 grid grid-cols-2 gap-4">
 	<!-- Fixkosten -->
-	<div class="overflow-hidden rounded-xl border-2 border-primary-200 bg-white shadow-sm">
-		<div class="bg-primary-50 px-4 py-3">
-			<p class="text-xs font-bold uppercase tracking-wide text-primary-700">Fixkosten</p>
+	<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+		<div class="px-4 py-3">
+			<p class="text-sm font-semibold uppercase tracking-wide text-primary-700">Fixkosten</p>
 		</div>
-		<div class="p-4">
-			<p class="text-2xl font-bold text-primary-600">{formatEuro(data.computed.myFixedShare)}</p>
-			<p class="mt-1 text-xs text-neutral-500">{formatPct(data.computed.shareMe)} Anteil</p>
+		<div class="px-4 pb-4">
+			<p class="text-2xl font-bold text-neutral-900">{formatEuro(data.computed.myFixedShare)}</p>
+			<p class="mt-1 text-xs text-neutral-600">{formatPct(data.computed.shareMe)} Anteil</p>
 		</div>
 	</div>
 
 	<!-- Vorauszahlung -->
-	<div class="overflow-hidden rounded-xl border-2 border-accent-200 bg-white shadow-sm">
-		<div class="bg-accent-50 px-4 py-3">
-			<p class="text-xs font-bold uppercase tracking-wide text-accent-700">Vorauszahlung</p>
+	<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+		<div class="px-4 py-3">
+			<p class="text-sm font-semibold uppercase tracking-wide text-pink-700">Vorauszahlung</p>
 		</div>
-		<div class="p-4">
-			<p class="text-2xl font-bold text-accent-600">{formatEuro(data.computed.prepaymentThisMonth)}</p>
+		<div class="px-4 pb-4">
+			<p class="text-2xl font-bold text-neutral-900">{formatEuro(data.computed.prepaymentThisMonth)}</p>
 			{#if data.computed.fixedCostShortfall > 0}
 				<p class="mt-1 text-xs text-danger-600">-{formatEuro(data.computed.fixedCostShortfall)} fehlt</p>
 			{:else if data.computed.fixedCostOverpayment > 0}
@@ -101,49 +104,63 @@
 	</div>
 
 	<!-- Private Ausgaben -->
-	<div class="overflow-hidden rounded-xl border-2 border-warning-200 bg-white shadow-sm">
-		<div class="bg-warning-50 px-4 py-3">
-			<p class="text-xs font-bold uppercase tracking-wide text-warning-700">Private</p>
+	<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+		<div class="px-4 py-3">
+			<p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Private</p>
 		</div>
-		<div class="p-4">
-			<p class="text-2xl font-bold text-warning-600">{formatEuro(data.computed.privateAddedThisMonth)}</p>
-			<p class="mt-1 text-xs text-neutral-500">{data.privateExpenses.length} Ausgaben</p>
+		<div class="px-4 pb-4">
+			<p class="text-2xl font-bold text-neutral-900">{formatEuro(data.computed.privateAddedThisMonth)}</p>
+			<p class="mt-1 text-xs text-neutral-600">{data.privateExpenses.length} Ausgaben</p>
 		</div>
 	</div>
 
 	<!-- Vom Vormonat -->
-	<div class="overflow-hidden rounded-xl border-2 border-neutral-200 bg-white shadow-sm">
-		<div class="bg-neutral-50 px-4 py-3">
-			<p class="text-xs font-bold uppercase tracking-wide text-neutral-700">Vormonat</p>
+	<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+		<div class="px-4 py-3">
+			<p class="text-sm font-semibold uppercase tracking-wide text-neutral-700">Vormonat</p>
 		</div>
-		<div class="p-4">
+		<div class="px-4 pb-4">
 			<p class="text-2xl font-bold {data.computed.privateBalanceStart > 0 ? 'text-danger-600' : data.computed.privateBalanceStart < 0 ? 'text-success-600' : 'text-neutral-600'}">
 				{formatEuro(data.computed.privateBalanceStart)}
 			</p>
-			<p class="mt-1 text-xs text-neutral-500">Startsaldo</p>
+			<p class="mt-1 text-xs text-neutral-600">Startsaldo</p>
 		</div>
 	</div>
 </div>
 
 <!-- Empfehlung Card -->
 {#if data.computed.recommendedPrepayment > 0}
-	<div class="overflow-hidden rounded-2xl border-2 border-accent-200 bg-white shadow-md">
-		<div class="bg-gradient-to-r from-accent-50 to-accent-100 px-5 py-4">
-			<h3 class="flex items-center gap-2 text-lg font-bold text-accent-900">
-				<span class="text-xl">📅</span>
-				Nächster Monat
-			</h3>
+	{@const remaining = data.computed.recommendedPrepayment - data.computed.prepaymentThisMonth}
+	{@const isPaid = remaining <= 0}
+	
+	{#if !isPaid}
+		<div class="overflow-hidden rounded-2xl border-2 border-accent-200 bg-white shadow-md">
+			<div class="bg-linear-to-r from-pink-100 to-pink-200 px-5 py-4">
+				<h3 class="flex items-center gap-2 text-lg font-bold text-accent-900">
+					<span class="text-xl">💡</span>
+					Empfehlung Vorauszahlung
+				</h3>
+			</div>
+			<div class="p-5">
+				<p class="mb-2 text-sm text-neutral-700">
+					Noch empfohlen:
+				</p>
+				<p class="text-3xl font-black text-accent-600">{formatEuro(remaining)}</p>
+				<p class="mt-3 text-xs text-neutral-600">
+					Von {formatEuro(data.computed.recommendedPrepayment)} empfohlen, bereits {formatEuro(data.computed.prepaymentThisMonth)} überwiesen.
+				</p>
+			</div>
 		</div>
-		<div class="p-5">
-			<p class="mb-2 text-sm text-neutral-700">
-				Empfohlene Vorauszahlung:
-			</p>
-			<p class="text-3xl font-black text-accent-600">{formatEuro(data.computed.recommendedPrepayment)}</p>
-			<p class="mt-3 text-xs text-neutral-600">
-				Überweise dies zu Monatsbeginn, um Steffi nicht in Vorleistung gehen zu lassen.
-			</p>
+	{:else}
+		<div class="overflow-hidden rounded-2xl border-2 border-success-200 bg-success-50 shadow-md">
+			<div class="p-5 text-center">
+				<p class="text-2xl font-black text-success-600">✓ Vorauszahlung erledigt</p>
+				<p class="mt-2 text-sm text-success-700">
+					{formatEuro(data.computed.prepaymentThisMonth)} von {formatEuro(data.computed.recommendedPrepayment)} überwiesen
+				</p>
+			</div>
 		</div>
-	</div>
+	{/if}
 {/if}
 
 <!-- Quick Actions -->

@@ -26,7 +26,7 @@ function createPerson(role: 'me' | 'partner', netIncome: number): Person {
 
 function createFixedItem(
 	amount: number,
-	splitMode: 'income' | 'me' | 'partner' | 'half' = 'income'
+	splitMode: 'income' | 'me' | 'partner' = 'income'
 ): FixedItem {
 	return {
 		id: `item-${Math.random()}`,
@@ -124,14 +124,6 @@ describe('calculateMyShareForFixedItem', () => {
 		expect(result).toBe(60); // I pay 60% when mode is "income"
 	});
 
-	it('handles legacy "half" mode as income-based', () => {
-		const item = createFixedItem(100, 'half');
-		const shareMe = 0.6;
-
-		const result = calculateMyShareForFixedItem(item, shareMe);
-
-		expect(result).toBe(60); // Legacy "half" treated as "income"
-	});
 });
 
 // ============================================================================

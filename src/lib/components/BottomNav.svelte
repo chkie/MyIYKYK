@@ -1,31 +1,32 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { hapticSelection } from '$lib/utils/haptics';
+	import { hapticSelection } from '../utils/haptics.js';
+	import { t } from '$lib/copy/index.js';
 
 	// Navigation items
 	const navItems = [
 		{
 			href: '/',
 			icon: 'overview',
-			label: 'Übersicht',
+			label: t('nav.overview'),
 			activePattern: /^\/$/
 		},
 		{
 			href: '/fixkosten',
 			icon: 'home',
-			label: 'Fixkosten',
+			label: t('nav.fixedCosts'),
 			activePattern: /^\/fixkosten/
 		},
 		{
 			href: '/ausgaben',
 			icon: 'money',
-			label: 'Ausgaben',
+			label: t('nav.expenses'),
 			activePattern: /^\/ausgaben/
 		},
 		{
 			href: '/profil',
 			icon: 'user',
-			label: 'Profil',
+			label: t('nav.profile'),
 			activePattern: /^\/profil/
 		}
 	];
@@ -36,7 +37,7 @@
 	}
 
 	// SVG Icons
-	const icons = {
+	const icons: Record<string, string> = {
 		overview: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />`,
 		home: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />`,
 		money: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />`,
@@ -45,16 +46,17 @@
 </script>
 
 <!-- Bottom Navigation - Fixed at bottom with safe area -->
-<nav class="fixed bottom-0 left-0 right-0 z-[9999] border-t-2 border-primary-200 bg-primary-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-	<div class="mx-auto max-w-screen-md">
+<nav class="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-primary-200 bg-primary-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+	<div class="mx-auto max-w-3xl">
 		<div class="grid grid-cols-4">
 			{#each navItems as item}
 				<a
 					href={item.href}
-					class="group flex flex-col items-center gap-1 px-2 py-3 transition-all active:scale-95 {isActive(item.activePattern)
+					class="group flex flex-col items-center gap-1 px-2 py-4 transition-all active:scale-95 {isActive(item.activePattern)
 						? 'text-primary-600'
-						: 'text-neutral-500 hover:text-neutral-700'}"
-					data-sveltekit-preload-data="tap"
+						: 'text-neutral-600 hover:text-neutral-700'}"
+					data-sveltekit-preload-data="hover"
+					data-sveltekit-preload-code="viewport"
 					data-sveltekit-noscroll
 					onclick={() => hapticSelection()}
 				>
@@ -87,8 +89,8 @@
 
 <style>
 	nav {
-		/* Safe area support for iOS */
-		padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+		/* Safe area support for iOS - adjusted for py-4 tap targets */
+		padding-bottom: max(1rem, env(safe-area-inset-bottom));
 	}
 </style>
 
