@@ -197,7 +197,7 @@ export async function deleteTemplateItem(itemId: string): Promise<void> {
 
 /**
  * Copy all templates to a specific month
- * This is called when creating a new month
+ * This is called when creating a new month (only if no previous month exists)
  */
 export async function copyTemplatesToMonth(monthId: string): Promise<void> {
 	const supabase = getSupabaseServerClient();
@@ -242,5 +242,107 @@ export async function copyTemplatesToMonth(monthId: string): Promise<void> {
 			}
 		}
 	}
+}
+
+/**
+ * Copy all fixed costs (categories + items) from previous month to new month
+ * This preserves all manually entered amounts and categories
+ * 
+ * @param previousMonthId - The previous (closed) month ID to copy from
+ * @param newMonthId - The new month ID to copy to
+ * @throws {Error} If database operation fails
+ */
+export async function copyFixedCostsFromLastMonth(
+	previousMonthId: string,
+	newMonthId: string
+): Promise<void> {
+	const supabase = getSupabaseServerClient();
+
+	console.log(`📋 Copying fixed costs from previous month (${previousMonthId}) to new month (${newMonthId})...`);
+
+	// 1. Get ONLY template-based categories from previous month (not manually created ones)
+	const { data: previousCategories, error: categoriesError } = await supabase
+		.from('fixed_categories')
+		.select('*')
+		.eq('month_id', previousMonthId)
+		.eq('is_from_template', true) // ← ONLY template-based categories!
+		.order('sort_order', { ascending: true })
+		.order('created_at', { ascending: true });
+
+	if (categoriesError) {
+		throw new Error(`Failed to fetch previous month categories: ${categoriesError.message}`);
+	}
+
+	if (!previousCategories || previousCategories.length === 0) {
+		console.log('⚠️ No template-based categories found in previous month, nothing to copy');
+		return;
+	}
+
+	console.log(`✅ Found ${previousCategories.length} template-based categories in previous month`);
+
+	// 2. Get ONLY template-based items from previous month (not manually created ones)
+	const previousCategoryIds = previousCategories.map((c) => c.id);
+	const { data: previousItems, error: itemsError } = await supabase
+		.from('fixed_items')
+		.select('*')
+		.in('category_id', previousCategoryIds)
+		.eq('is_from_template', true) // ← ONLY template-based items!
+		.order('created_at', { ascending: true });
+
+	if (itemsError) {
+		throw new Error(`Failed to fetch previous month items: ${itemsError.message}`);
+	}
+
+	console.log(`✅ Found ${previousItems?.length || 0} template-based items in previous month`);
+
+	// 3. Copy each category and its items to new month
+	for (const previousCategory of previousCategories) {
+		// Create new category in new month
+		const { data: newCategory, error: newCategoryError } = await supabase
+			.from('fixed_categories')
+			.insert({
+				month_id: newMonthId,
+				label: previousCategory.label,
+				sort_order: previousCategory.sort_order,
+				is_from_template: previousCategory.is_from_template,
+				template_category_id: previousCategory.template_category_id
+			})
+			.select()
+			.single();
+
+		if (newCategoryError || !newCategory) {
+			throw new Error(`Failed to copy category "${previousCategory.label}": ${newCategoryError?.message}`);
+		}
+
+		// Get items for this category
+		const categoryItems = (previousItems || []).filter(
+			(item) => item.category_id === previousCategory.id
+		);
+
+		if (categoryItems.length > 0) {
+			// Copy all items with their amounts
+			const itemsToInsert = categoryItems.map((item) => ({
+				category_id: newCategory.id,
+				label: item.label,
+				amount: item.amount, // ← PRESERVE AMOUNT!
+				split_mode: item.split_mode,
+				is_from_template: item.is_from_template,
+				template_item_id: item.template_item_id,
+				created_by: item.created_by
+			}));
+
+			const { error: insertItemsError } = await supabase
+				.from('fixed_items')
+				.insert(itemsToInsert);
+
+			if (insertItemsError) {
+				throw new Error(`Failed to copy items for category "${previousCategory.label}": ${insertItemsError.message}`);
+			}
+
+			console.log(`✅ Copied ${categoryItems.length} items for category "${previousCategory.label}"`);
+		}
+	}
+
+	console.log(`✅ Successfully copied all fixed costs from previous month!`);
 }
 

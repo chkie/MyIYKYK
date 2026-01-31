@@ -1,0 +1,166 @@
+/**
+ * Server-only history/timeline functions.
+ * Retrieves position history (private expenses + fixed items) for display.
+ */
+
+import { getSupabaseServerClient } from './supabase.js';
+
+/**
+ * Position entry in timeline (union of private expense or fixed item).
+ */
+export interface HistoryPosition {
+	id: string;
+	type: 'private_expense' | 'fixed_item';
+	description: string; // expense.description or item.label
+	amount: number;
+	createdAt: string; // ISO timestamp
+	createdBy: string | null; // profile ID (nullable for legacy)
+	createdByName: string | null; // profile name (nullable)
+}
+
+/**
+ * History result with pagination support.
+ */
+export interface HistoryResult {
+	last5: HistoryPosition[];
+	totalCount: number;
+	fullMonthList?: HistoryPosition[]; // Only populated if requested
+}
+
+/**
+ * Gets month boundaries in Europe/Berlin timezone.
+ * 
+ * @param year - Year (e.g., 2026)
+ * @param month - Month (1-12)
+ * @returns Start and end timestamps (ISO format)
+ */
+function getMonthBoundaries(year: number, month: number): { start: string; end: string } {
+	// Month boundaries in UTC
+	// Europe/Berlin is UTC+1 (winter) or UTC+2 (summer)
+	// For simplicity, use local midnight as boundary (app is DE-only)
+	
+	const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0); // First day 00:00:00
+	const endDate = new Date(year, month, 1, 0, 0, 0, 0); // Next month first day 00:00:00
+
+	return {
+		start: startDate.toISOString(),
+		end: endDate.toISOString()
+	};
+}
+
+/**
+ * Fetches position history for current month.
+ * Combines private_expenses and fixed_items, sorted by created_at DESC.
+ * 
+ * @param monthId - Month ID (UUID)
+ * @param year - Year (e.g., 2026)
+ * @param month - Month (1-12)
+ * @param options - Query options
+ * @returns History result with last5, totalCount, and optional fullMonthList
+ * @throws {Error} If database operation fails
+ */
+export async function getMonthHistory(
+	monthId: string,
+	year: number,
+	month: number,
+	options: {
+		includeFull?: boolean; // If true, returns fullMonthList
+	} = {}
+): Promise<HistoryResult> {
+	const supabase = getSupabaseServerClient();
+	const boundaries = getMonthBoundaries(year, month);
+
+	// 1. Fetch all profiles (for manual JOIN)
+	const { data: profiles, error: profilesError } = await supabase
+		.from('profiles')
+		.select('id, name');
+
+	if (profilesError) {
+		throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
+	}
+
+	// Build lookup map: profileId -> name
+	const profileMap = new Map<string, string>();
+	(profiles || []).forEach((p) => profileMap.set(p.id, p.name));
+
+	// 2. Fetch private expenses for this month
+	const { data: expenses, error: expensesError } = await supabase
+		.from('private_expenses')
+		.select('id, description, amount, created_at, created_by')
+		.eq('month_id', monthId)
+		.gte('created_at', boundaries.start)
+		.lt('created_at', boundaries.end)
+		.order('created_at', { ascending: false });
+
+	if (expensesError) {
+		throw new Error(`Failed to fetch expenses history: ${expensesError.message}`);
+	}
+
+	// 3. Fetch fixed items for this month (with creator JOIN)
+	// Note: Need to get items via categories (category_id -> month_id)
+	const { data: categories, error: categoriesError } = await supabase
+		.from('fixed_categories')
+		.select('id')
+		.eq('month_id', monthId);
+
+	if (categoriesError) {
+		throw new Error(`Failed to fetch categories: ${categoriesError.message}`);
+	}
+
+	const categoryIds = (categories || []).map((c) => c.id);
+
+	let items: any[] = [];
+	if (categoryIds.length > 0) {
+		const { data: itemsData, error: itemsError } = await supabase
+			.from('fixed_items')
+			.select('id, label, amount, created_at, created_by')
+			.in('category_id', categoryIds)
+			.gte('created_at', boundaries.start)
+			.lt('created_at', boundaries.end)
+			.order('created_at', { ascending: false });
+
+		if (itemsError) {
+			throw new Error(`Failed to fetch items history: ${itemsError.message}`);
+		}
+
+		items = itemsData || [];
+	}
+
+	// 4. Combine and transform to unified format (manual JOIN with profileMap)
+	const expensePositions: HistoryPosition[] = (expenses || []).map((exp) => ({
+		id: exp.id,
+		type: 'private_expense' as const,
+		description: exp.description,
+		amount: Number(exp.amount),
+		createdAt: exp.created_at,
+		createdBy: exp.created_by,
+		createdByName: exp.created_by ? profileMap.get(exp.created_by) || null : null
+	}));
+
+	const itemPositions: HistoryPosition[] = items.map((item) => ({
+		id: item.id,
+		type: 'fixed_item' as const,
+		description: item.label,
+		amount: Number(item.amount),
+		createdAt: item.created_at,
+		createdBy: item.created_by,
+		createdByName: item.created_by ? profileMap.get(item.created_by) || null : null
+	}));
+
+	// 5. Merge and sort by created_at DESC
+	const allPositions = [...expensePositions, ...itemPositions].sort(
+		(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+	);
+
+	// 6. Build result
+	const result: HistoryResult = {
+		last5: allPositions.slice(0, 5),
+		totalCount: allPositions.length
+	};
+
+	if (options.includeFull) {
+		result.fullMonthList = allPositions;
+	}
+
+	return result;
+}

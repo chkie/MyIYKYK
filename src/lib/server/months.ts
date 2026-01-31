@@ -4,7 +4,7 @@
  */
 
 import { getSupabaseServerClient } from './supabase.js';
-import { copyTemplatesToMonth } from './fixed-cost-templates.js';
+import { copyTemplatesToMonth, copyFixedCostsFromLastMonth } from './fixed-cost-templates.js';
 
 /**
  * Gets or creates the current month entry.
@@ -43,10 +43,9 @@ export async function getOrCreateCurrentMonth() {
 	// Find last closed month to determine what month to create next
 	const { data: lastClosedMonth, error: lastMonthError } = await supabase
 		.from('months')
-		.select('year, month, private_balance_end')
+		.select('id, year, month, private_balance_end, closed_at')
 		.eq('status', 'closed')
-		.order('year', { ascending: false })
-		.order('month', { ascending: false })
+		.order('closed_at', { ascending: false, nullsFirst: false })
 		.limit(1)
 		.single();
 
@@ -101,14 +100,22 @@ export async function getOrCreateCurrentMonth() {
 
 	console.log('✅ New month created:', newMonth.id, `(${nextYear}-${nextMonth})`);
 
-	// 5. Copy templates to this new month
+	// 5. Copy fixed costs from previous month OR templates (for first month)
 	try {
-		console.log('📋 Copying templates to new month...');
-		await copyTemplatesToMonth(newMonth.id);
-		console.log('✅ Templates copied successfully!');
+		if (lastClosedMonth) {
+			// Copy from previous month (preserves all amounts and categories)
+			console.log('📋 Copying fixed costs from previous month...');
+			await copyFixedCostsFromLastMonth(lastClosedMonth.id, newMonth.id);
+			console.log('✅ Fixed costs copied from previous month!');
+		} else {
+			// First month ever: use templates as fallback
+			console.log('📋 First month - copying templates...');
+			await copyTemplatesToMonth(newMonth.id);
+			console.log('✅ Templates copied successfully!');
+		}
 	} catch (err) {
-		console.error('❌ Failed to copy templates to new month:', err);
-		// Don't throw - month creation succeeded, template copy failed (can be retried)
+		console.error('❌ Failed to copy fixed costs to new month:', err);
+		// Don't throw - month creation succeeded, copy failed (can be retried)
 	}
 
 	return newMonth;
@@ -491,4 +498,268 @@ export async function deleteClosedMonth(monthId: string): Promise<void> {
 	if (deleteMonthError) {
 		throw new Error(`Failed to delete month: ${deleteMonthError.message}`);
 	}
+}
+
+/**
+ * Deletes the current open month completely (DEV/TESTING).
+ * 
+ * WARNING: This permanently deletes the open month and all associated data!
+ * Use this for complete app reset during development.
+ * 
+ * @throws {Error} If database operation fails
+ */
+export async function deleteOpenMonth(): Promise<void> {
+	const supabase = getSupabaseServerClient();
+
+	// 1. Find open month
+	const { data: month, error: monthError } = await supabase
+		.from('months')
+		.select('id')
+		.eq('status', 'open')
+		.limit(1)
+		.single();
+
+	if (monthError) {
+		if (monthError.code === 'PGRST116') {
+			// No open month exists - that's ok
+			return;
+		}
+		throw new Error(`Failed to find open month: ${monthError.message}`);
+	}
+
+	const monthId = month.id;
+
+	// 2. Get category IDs for this month
+	const { data: categories, error: categoriesError } = await supabase
+		.from('fixed_categories')
+		.select('id')
+		.eq('month_id', monthId);
+
+	if (categoriesError) {
+		throw new Error(`Failed to fetch categories: ${categoriesError.message}`);
+	}
+
+	const categoryIds = (categories || []).map((cat) => cat.id);
+
+	// 3. Delete fixed items (if any categories exist)
+	if (categoryIds.length > 0) {
+		const { error: deleteItemsError } = await supabase
+			.from('fixed_items')
+			.delete()
+			.in('category_id', categoryIds);
+
+		if (deleteItemsError) {
+			throw new Error(`Failed to delete fixed items: ${deleteItemsError.message}`);
+		}
+	}
+
+	// 4. Delete fixed categories
+	const { error: deleteCategoriesError } = await supabase
+		.from('fixed_categories')
+		.delete()
+		.eq('month_id', monthId);
+
+	if (deleteCategoriesError) {
+		throw new Error(`Failed to delete fixed categories: ${deleteCategoriesError.message}`);
+	}
+
+	// 5. Delete private expenses
+	const { error: deleteExpensesError } = await supabase
+		.from('private_expenses')
+		.delete()
+		.eq('month_id', monthId);
+
+	if (deleteExpensesError) {
+		throw new Error(`Failed to delete private expenses: ${deleteExpensesError.message}`);
+	}
+
+	// 6. Delete month_incomes
+	const { error: deleteIncomesError } = await supabase
+		.from('month_incomes')
+		.delete()
+		.eq('month_id', monthId);
+
+	if (deleteIncomesError) {
+		throw new Error(`Failed to delete month incomes: ${deleteIncomesError.message}`);
+	}
+
+	// 7. Delete the month itself
+	const { error: deleteMonthError } = await supabase
+		.from('months')
+		.delete()
+		.eq('id', monthId)
+		.eq('status', 'open');
+
+	if (deleteMonthError) {
+		throw new Error(`Failed to delete month: ${deleteMonthError.message}`);
+	}
+
+	console.log('✅ Open month deleted completely');
+}
+
+/**
+ * Deletes ALL months from the system (DEV/TESTING).
+ * 
+ * WARNING: This is a FULL RESET! Deletes everything:
+ * - All open AND closed months
+ * - All fixed categories and items
+ * - All private expenses
+ * - All month_incomes
+ * 
+ * Use this to reset the app to initial state.
+ * 
+ * @throws {Error} If database operation fails
+ */
+export async function deleteAllMonths(): Promise<void> {
+	const supabase = getSupabaseServerClient();
+
+	// 1. Get ALL months
+	const { data: months, error: monthsError } = await supabase
+		.from('months')
+		.select('id');
+
+	if (monthsError) {
+		throw new Error(`Failed to fetch months: ${monthsError.message}`);
+	}
+
+	if (!months || months.length === 0) {
+		console.log('✅ No months to delete');
+		return;
+	}
+
+	const monthIds = months.map(m => m.id);
+
+	// 2. Get ALL category IDs for these months
+	const { data: categories, error: categoriesError } = await supabase
+		.from('fixed_categories')
+		.select('id')
+		.in('month_id', monthIds);
+
+	if (categoriesError) {
+		throw new Error(`Failed to fetch categories: ${categoriesError.message}`);
+	}
+
+	const categoryIds = (categories || []).map((cat) => cat.id);
+
+	// 3. Delete ALL fixed items
+	if (categoryIds.length > 0) {
+		const { error: deleteItemsError } = await supabase
+			.from('fixed_items')
+			.delete()
+			.in('category_id', categoryIds);
+
+		if (deleteItemsError) {
+			throw new Error(`Failed to delete fixed items: ${deleteItemsError.message}`);
+		}
+	}
+
+	// 4. Delete ALL fixed categories
+	const { error: deleteCategoriesError } = await supabase
+		.from('fixed_categories')
+		.delete()
+		.in('month_id', monthIds);
+
+	if (deleteCategoriesError) {
+		throw new Error(`Failed to delete fixed categories: ${deleteCategoriesError.message}`);
+	}
+
+	// 5. Delete ALL private expenses
+	const { error: deleteExpensesError } = await supabase
+		.from('private_expenses')
+		.delete()
+		.in('month_id', monthIds);
+
+	if (deleteExpensesError) {
+		throw new Error(`Failed to delete private expenses: ${deleteExpensesError.message}`);
+	}
+
+	// 6. Delete ALL month_incomes
+	const { error: deleteIncomesError } = await supabase
+		.from('month_incomes')
+		.delete()
+		.in('month_id', monthIds);
+
+	if (deleteIncomesError) {
+		throw new Error(`Failed to delete month incomes: ${deleteIncomesError.message}`);
+	}
+
+	// 7. Delete ALL months
+	const { error: deleteMonthsError } = await supabase
+		.from('months')
+		.delete()
+		.in('id', monthIds);
+
+	if (deleteMonthsError) {
+		throw new Error(`Failed to delete months: ${deleteMonthsError.message}`);
+	}
+
+	console.log(`✅ Deleted ${months.length} month(s) completely`);
+}
+
+/**
+ * Creates a specific month (for initial setup or testing).
+ * 
+ * @param year - Year (e.g., 2026)
+ * @param month - Month (1-12)
+ * @returns Created month record
+ * @throws {Error} If validation fails or database operation fails
+ */
+export async function createSpecificMonth(year: number, month: number) {
+	const supabase = getSupabaseServerClient();
+
+	// Validate inputs
+	if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+		throw new Error('Invalid year (must be 2000-2100)');
+	}
+	if (!Number.isInteger(month) || month < 1 || month > 12) {
+		throw new Error('Invalid month (must be 1-12)');
+	}
+
+	// Check if month already exists
+	const { data: existingMonth, error: checkError } = await supabase
+		.from('months')
+		.select('id')
+		.eq('year', year)
+		.eq('month', month)
+		.limit(1)
+		.single();
+
+	if (checkError && checkError.code !== 'PGRST116') {
+		throw new Error(`Failed to check existing month: ${checkError.message}`);
+	}
+
+	if (existingMonth) {
+		throw new Error(`Month ${year}-${month} already exists`);
+	}
+
+	// Create the month
+	const { data: newMonth, error: createError } = await supabase
+		.from('months')
+		.insert({
+			year,
+			month,
+			status: 'open',
+			private_balance_start: 0,
+			total_transfer_this_month: 0
+		})
+		.select()
+		.single();
+
+	if (createError) {
+		throw new Error(`Failed to create month: ${createError.message}`);
+	}
+
+	console.log(`✅ Created month: ${year}-${month} (${newMonth.id})`);
+
+	// Copy templates to this new month
+	try {
+		console.log('📋 Copying templates to new month...');
+		await copyTemplatesToMonth(newMonth.id);
+		console.log('✅ Templates copied successfully!');
+	} catch (err) {
+		console.error('❌ Failed to copy templates:', err);
+		// Don't throw - month creation succeeded
+	}
+
+	return newMonth;
 }

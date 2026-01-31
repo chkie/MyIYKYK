@@ -3,7 +3,7 @@
  * Handles private expenses (Christian's debt tracking) and month transfer.
  */
 
-import { getSupabaseServerClient, getProfileIdByRole } from './supabase.js';
+import { getSupabaseServerClient } from './supabase.js';
 
 // Simple date format validation (YYYY-MM-DD)
 const DATE_ISO_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -43,7 +43,7 @@ export async function listPrivateExpenses(monthId: string) {
  * Creates a new private expense.
  * 
  * @param monthId - The month ID (UUID)
- * @param input - Expense data (dateISO, description, amount, optional createdBy)
+ * @param input - Expense data (dateISO, description, amount)
  * @returns Created expense row
  * @throws {Error} If validation fails or database operation fails
  */
@@ -53,7 +53,6 @@ export async function createPrivateExpense(
 		dateISO: string;
 		description: string;
 		amount: number;
-		createdBy?: string; // Optional: profile ID, defaults to 'me' if not provided
 	}
 ) {
 	const supabase = getSupabaseServerClient();
@@ -72,9 +71,6 @@ export async function createPrivateExpense(
 		throw new Error('Amount must be >= 0');
 	}
 
-	// Determine created_by: use provided value or fallback to 'me' profile
-	const createdBy = input.createdBy || await getProfileIdByRole('me');
-
 	// Create expense
 	const { data: newExpense, error: createError } = await supabase
 		.from('private_expenses')
@@ -82,8 +78,7 @@ export async function createPrivateExpense(
 			month_id: monthId,
 			date: input.dateISO,
 			description: trimmedDescription,
-			amount: input.amount,
-			created_by: createdBy
+			amount: input.amount
 		})
 		.select()
 		.single();
@@ -144,3 +139,4 @@ export async function updateMonthTransfer(
 		throw new Error(`Failed to update month transfer: ${error.message}`);
 	}
 }
+

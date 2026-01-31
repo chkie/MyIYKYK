@@ -1,0 +1,92 @@
+---
+description: CRITICAL RULE - NEVER delete or modify existing features when fixing bugs
+globs:
+  - "**/*"
+priority: 1000
+---
+
+# 🚨 CRITICAL RULE - OBERSTE PRIORITÄT 🚨
+
+## NIEMALS Features löschen oder verändern beim Bug-Fixing
+
+**Diese Regel hat ABSOLUTE PRIORITÄT über alle anderen Regeln.**
+
+### Grundprinzip
+
+Wenn du einen Bug fixst, eine Warnung behebst, oder Code verbessert:
+
+- **NIEMALS** bestehende Features entfernen
+- **NIEMALS** bestehenden Code löschen (außer er ist explizit als temporär/deprecated markiert)
+- **NIEMALS** UI-Komponenten entfernen die funktionieren
+- **NIEMALS** Funktionalität "vereinfachen" indem du sie löschst
+
+### Was du IMMER tun musst
+
+1. **VOR jeder Änderung:**
+   - Lies die GESAMTE Datei vollständig
+   - Verstehe den Kontext und alle Features
+   - Identifiziere EXAKT was geändert werden muss
+
+2. **WÄHREND der Änderung:**
+   - Ändere NUR die spezifische Stelle die das Problem verursacht
+   - Behalte ALLES andere genau wie es ist
+   - Wenn du eine CSS-Klasse änderst: ändere NUR diese Klasse
+   - Wenn du einen Bug fixst: fixe NUR diesen Bug
+
+3. **NACH der Änderung:**
+   - Verifiziere dass ALLE bestehenden Features noch da sind
+   - Prüfe dass keine Komponenten verschwunden sind
+
+### Konkrete Beispiele
+
+#### ✅ RICHTIG - CSS Bug Fix
+
+```svelte
+<!-- Vorher -->
+<div class="bg-linear-to-r from-blue-100">Content</div>
+
+<!-- Nachher - NUR die fehlerhafte Klasse ändern -->
+<div class="bg-linear-to-r from-blue-100">Content</div>
+```
+
+#### ❌ FALSCH - Feature-Verlust
+
+```svelte
+<!-- Vorher -->
+<div class="container">
+  <MonthInfo />
+  <Statistics />
+  <History />
+</div>
+
+<!-- NIEMALS so machen - History fehlt! -->
+<div class="container">
+  <MonthInfo />
+  <Statistics />
+</div>
+```
+
+### Häufige Fehler die VERBOTEN sind
+
+1. **"Ich mache es einfacher"** - NEIN! Einfacher = oft weniger Features
+2. **"Das braucht man nicht"** - FALSCH! Wenn es da ist, braucht man es
+3. **"Ich refactore das mal"** - NUR wenn explizit gefragt
+4. **"Die alte Version war besser"** - Frag erst, ändere nie ungefragt
+
+### Wenn du unsicher bist
+
+- **STOPP**
+- Lies die Datei nochmal komplett
+- Vergleiche mit Backup-Dateien (`*.backup`, `*.bak`, etc.)
+- Frage den User was fehlt
+- **NIEMALS** raten oder "verbessern"
+
+### Zusammenfassung
+
+```text
+BUG FIX ≠ FEATURE DELETION
+CSS FIX ≠ CODE DELETION
+REFACTOR ≠ SIMPLIFY BY REMOVING
+```
+
+**Diese Regel ist wichtiger als alle anderen Regeln, Best Practices, oder Optimierungen.**

@@ -313,13 +313,13 @@ describe('calculateMonth - Prepayment Model', () => {
 		expect(result.privateBalanceStart).toBe(-50);
 	});
 
-	it('splitMode="me" creates FULL debt towards partner (100%)', () => {
+	it('splitMode="me" does not create debt towards partner', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 2000),
 			fixedCategories: [
 				createFixedCategory([
-					createFixedItem(100, 'me') // Steffi pays from her account, Christian owes 100%
+					createFixedItem(100, 'me') // Personal cost, not shared
 				])
 			],
 			privateExpenses: [],
@@ -333,39 +333,39 @@ describe('calculateMonth - Prepayment Model', () => {
 		expect(result.totalFixedCosts).toBe(100);
 		expect(result.myFixedShare).toBe(100);
 		
-		// Transfer logic: 'me' items create FULL debt (Steffi pays, Christian owes)
-		expect(result.fixedCostDue).toBe(100); // 'me' = 100% debt
-		expect(result.fixedCostShortfall).toBe(100);
+		// But transfer logic excludes 'me' items - no debt towards partner
+		expect(result.fixedCostDue).toBe(0); // No shared costs
+		expect(result.fixedCostShortfall).toBe(0);
 		expect(result.fixedCostOverpayment).toBe(0);
-		expect(result.privateBalanceEnd).toBe(100);
+		expect(result.privateBalanceEnd).toBe(0);
 	});
 
-	it('splitMode="me" contributes 100% to fixedCostDue in mixed scenario', () => {
+	it('splitMode="me" does not contribute to fixedCostDue in mixed scenario', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 2000),
 			fixedCategories: [
 				createFixedCategory([
 					createFixedItem(1000, 'income'), // Shared: 50% = 500€ for me
-					createFixedItem(100, 'me') // Personal: 100% debt!
+					createFixedItem(100, 'me') // Personal: doesn't count for debt
 				])
 			],
 			privateExpenses: [],
 			privateBalanceStart: 0,
-			prepaymentThisMonth: 400 // Underpaid by 200€
+			prepaymentThisMonth: 400 // Underpaid by 100€
 		};
 
 		const result = calculateMonth(inputs);
 
 		expect(result.totalFixedCosts).toBe(1100);
 		expect(result.myFixedShare).toBe(600); // 500 (shared) + 100 (personal)
-		expect(result.fixedCostDue).toBe(600); // 500 (income) + 100 (me)
-		expect(result.fixedCostShortfall).toBe(200); // 600 - 400
+		expect(result.fixedCostDue).toBe(500); // Only shared costs count
+		expect(result.fixedCostShortfall).toBe(100); // 500 - 400
 		expect(result.fixedCostOverpayment).toBe(0);
 		
-		// Debt: 0 + 0 + 600 - 400 = 200
-		expect(result.privateTotalDueBeforePrepayment).toBe(600);
-		expect(result.privateBalanceEnd).toBe(200);
+		// Debt: 0 + 0 + 500 - 400 = 100
+		expect(result.privateTotalDueBeforePrepayment).toBe(500);
+		expect(result.privateBalanceEnd).toBe(100);
 	});
 
 	it('overpayment scenario reduces debt', () => {
@@ -411,8 +411,8 @@ describe('calculateMonth - Prepayment Model', () => {
 
 		const result = calculateMonth(inputs);
 
-		// Recommended prepayment includes 'me' items (they create debt!)
-		expect(result.recommendedPrepayment).toBe(800); // 600 + 200 (me item)
+		// Recommended prepayment should only include shared costs
+		expect(result.recommendedPrepayment).toBe(600); // Not 720 (which would include 'me' item)
 	});
 });
 
@@ -446,329 +446,5 @@ describe('roundMoney', () => {
 		expect(roundMoney(NaN)).toBe(0);
 		expect(roundMoney(Infinity)).toBe(0);
 		expect(roundMoney(-Infinity)).toBe(0);
-	});
-});
-
-// ============================================================================
-// Tests: P0 Test-Matrix Cases (Phase B - Rechenlogik Audit)
-// ============================================================================
-
-describe('P0 Test-Matrix: Complete Scenarios', () => {
-	/**
-	 * TEST 1 (P0): Proportional Split – Basic Case
-	 * Input: Christian 2000€, Steffi 3000€, Fixkosten 100€ proportional
-	 * Expected: Christian schuldet 40€
-	 */
-	it('T1-P0: Proportional Basic (2000/3000 → 40/60 Split)', () => {
-		const inputs: MonthInputs = {
-			me: createPerson('me', 2000),
-			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(100, 'income')])
-			],
-			privateExpenses: [],
-			privateBalanceStart: 0,
-			prepaymentThisMonth: 0
-		};
-
-		const result = calculateMonth(inputs);
-
-		// Anteil: 2000 / 5000 = 0.4 (40%)
-		expect(result.shareMe).toBeCloseTo(0.4, 5);
-		expect(result.sharePartner).toBeCloseTo(0.6, 5);
-
-		// Fixkosten: 100€ × 0.4 = 40€
-		expect(result.myFixedShare).toBe(40);
-		expect(result.fixedCostDue).toBe(40);
-
-		// Schuld: 0 + 0 + 40 - 0 = 40€
-		expect(result.privateBalanceEnd).toBe(40);
-
-		// Empfehlung
-		expect(result.recommendedPrepayment).toBe(40);
-	});
-
-	/**
-	 * TEST 2 (P0): Christian 100% – Persönliche Kosten
-	 * Input: Fixkosten 100€ splitMode='me'
-	 * Expected: Keine Partner-Schuld (0€)
-	 */
-	it('T2-P0: Christian 100% (persönliche Kosten, keine Partner-Schuld)', () => {
-		const inputs: MonthInputs = {
-			me: createPerson('me', 2000),
-			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(100, 'me')])
-			],
-			privateExpenses: [],
-			privateBalanceStart: 0,
-			prepaymentThisMonth: 0
-		};
-
-		const result = calculateMonth(inputs);
-
-		// Display: Christian zahlt 100€
-		expect(result.myFixedShare).toBe(100);
-		expect(result.totalFixedCosts).toBe(100);
-
-		// Partner-Schuld: 100€ (splitMode='me' = 100% debt!)
-		expect(result.fixedCostDue).toBe(100);
-		expect(result.privateBalanceEnd).toBe(100);
-
-		// Empfehlung: 100€ ('me' items create debt)
-		expect(result.recommendedPrepayment).toBe(100);
-	});
-
-	/**
-	 * TEST 3 (P0): Steffi 100% – Partner zahlt alles
-	 * Input: Fixkosten 100€ splitMode='partner'
-	 * Expected: Keine Schuld von Christian (0€)
-	 */
-	it('T3-P0: Steffi 100% (Partner zahlt alles)', () => {
-		const inputs: MonthInputs = {
-			me: createPerson('me', 2000),
-			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(100, 'partner')])
-			],
-			privateExpenses: [],
-			privateBalanceStart: 0,
-			prepaymentThisMonth: 0
-		};
-
-		const result = calculateMonth(inputs);
-
-		// Christian zahlt nichts
-		expect(result.myFixedShare).toBe(0);
-		expect(result.fixedCostDue).toBe(0);
-		expect(result.privateBalanceEnd).toBe(0);
-
-		// Total Fixkosten existieren
-		expect(result.totalFixedCosts).toBe(100);
-	});
-
-	/**
-	 * TEST 4 (P0): Multi-Category Mix
-	 * Input: 2 Kategorien mit gemischten Split-Modi
-	 * Expected: Korrekte Summen inkl./exkl. persönlicher Kosten
-	 */
-	it('T4-P0: Mixed Positions + Multiple Categories', () => {
-		const inputs: MonthInputs = {
-			me: createPerson('me', 3000),
-			partner: createPerson('partner', 2000),
-			fixedCategories: [
-				createFixedCategory([
-					createFixedItem(1000, 'income'), // Miete
-					createFixedItem(150, 'income')    // Strom
-				]),
-				createFixedCategory([
-					createFixedItem(50, 'me'),        // Christian Handy
-					createFixedItem(30, 'partner')    // Steffi Gym
-				])
-			],
-			privateExpenses: [],
-			privateBalanceStart: 0,
-			prepaymentThisMonth: 0
-		};
-
-		const result = calculateMonth(inputs);
-
-		// Anteil: 3000 / 5000 = 0.6 (60%)
-		expect(result.shareMe).toBeCloseTo(0.6, 5);
-
-		// Kategorie 1: 1000×0.6 + 150×0.6 = 600 + 90 = 690€
-		// Kategorie 2: 50 (me) + 0 (partner) = 50€
-		// Total Display: 690 + 50 = 740€
-		expect(result.myFixedShare).toBe(740);
-
-		// Partner-Schuld (inkl. 'me'): 740€
-		expect(result.fixedCostDue).toBe(740);
-		expect(result.privateBalanceEnd).toBe(740);
-
-		// Total Fixkosten: 1000 + 150 + 50 + 30 = 1230€
-		expect(result.totalFixedCosts).toBe(1230);
-
-		// Empfehlung: all transfer-relevant costs (inkl. 'me')
-		expect(result.recommendedPrepayment).toBe(740);
-	});
-
-	/**
-	 * TEST 5 (P0): Vorauszahlung – Underpayment
-	 * Input: Fixkosten 1000€ (400€ Anteil), Vorauszahlung 300€
-	 * Expected: Schuld 100€, Unterzahlung 100€
-	 */
-	it('T5-P0: Underpayment (Vorauszahlung zu niedrig)', () => {
-		const inputs: MonthInputs = {
-			me: createPerson('me', 2000),
-			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(1000, 'income')])
-			],
-			privateExpenses: [],
-			privateBalanceStart: 0,
-			prepaymentThisMonth: 300 // Zu wenig!
-		};
-
-		const result = calculateMonth(inputs);
-
-		// Anteil: 0.4 → 1000×0.4 = 400€
-		expect(result.fixedCostDue).toBe(400);
-
-		// Unterzahlung: 400 - 300 = 100€
-		expect(result.fixedCostShortfall).toBe(100);
-		expect(result.fixedCostOverpayment).toBe(0);
-
-		// Schuld: 0 + 0 + 400 - 300 = 100€
-		expect(result.privateBalanceEnd).toBe(100);
-
-		// Empfehlung: 400€
-		expect(result.recommendedPrepayment).toBe(400);
-	});
-
-	/**
-	 * TEST 6 (P0): Vorauszahlung – Overpayment
-	 * Input: Fixkosten 1000€ (400€ Anteil), Vorauszahlung 500€
-	 * Expected: Guthaben -100€ (Steffi schuldet Christian)
-	 */
-	it('T6-P0: Overpayment (Guthaben-Szenario)', () => {
-		const inputs: MonthInputs = {
-			me: createPerson('me', 2000),
-			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(1000, 'income')])
-			],
-			privateExpenses: [],
-			privateBalanceStart: 0,
-			prepaymentThisMonth: 500 // Zu viel!
-		};
-
-		const result = calculateMonth(inputs);
-
-		// Anteil: 400€
-		expect(result.fixedCostDue).toBe(400);
-
-		// Überzahlung: 500 - 400 = 100€
-		expect(result.fixedCostShortfall).toBe(0);
-		expect(result.fixedCostOverpayment).toBe(100);
-
-		// Guthaben: 0 + 0 + 400 - 500 = -100€
-		expect(result.privateBalanceEnd).toBe(-100);
-
-		// Interpretation: Steffi schuldet Christian 100€
-	});
-
-	/**
-	 * TEST 7 (P0): Monatsabschluss + Carryover
-	 * Input: Monat 1 schließt mit 100€ Schuld → Monat 2 startet mit 100€ Altschuld
-	 * Expected: Altschuld + neue Fixkosten = kumulierte Schuld
-	 */
-	it('T7-P0: Carryover (Altschuld aus Vormonat)', () => {
-		// Monat 1: Berechnung (nur zur Dokumentation)
-		const month1: MonthInputs = {
-			me: createPerson('me', 2000),
-			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(1000, 'income')])
-			],
-			privateExpenses: [],
-			privateBalanceStart: 0,
-			prepaymentThisMonth: 300
-		};
-		const result1 = calculateMonth(month1);
-		// → privateBalanceEnd = 100€ (wird in DB gespeichert)
-
-		// Monat 2: Startet mit Carryover
-		const month2: MonthInputs = {
-			me: createPerson('me', 2000),
-			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([
-					createFixedItem(1000, 'income'), // Aus Vormonat kopiert
-					createFixedItem(200, 'income')   // Neue Position
-				])
-			],
-			privateExpenses: [],
-			privateBalanceStart: result1.privateBalanceEnd, // 100€ Carryover!
-			prepaymentThisMonth: 0
-		};
-
-		const result2 = calculateMonth(month2);
-
-		// Altschuld
-		expect(result2.privateBalanceStart).toBe(100);
-
-		// Neue Fixkosten: 1000×0.4 + 200×0.4 = 400 + 80 = 480€
-		expect(result2.fixedCostDue).toBe(480);
-
-		// Gesamtschuld: 100 (alt) + 480 (neu) - 0 = 580€
-		expect(result2.privateTotalDueBeforePrepayment).toBe(580);
-		expect(result2.privateBalanceEnd).toBe(580);
-
-		// Empfehlung: nur neue Fixkosten
-		expect(result2.recommendedPrepayment).toBe(480);
-	});
-
-	/**
-	 * TEST 10 (P1): Rounding – Krumme Beträge
-	 * Input: Krumme Gehälter + krumme Beträge
-	 * Expected: Korrekte Rundung auf 2 Dezimalen, keine Cent-Abweichung
-	 */
-	it('T10-P1: Rounding Edge Cases (krumme Beträge)', () => {
-		const inputs: MonthInputs = {
-			me: createPerson('me', 2222),
-			partner: createPerson('partner', 3333),
-			fixedCategories: [
-				createFixedCategory([
-					createFixedItem(99.99, 'income'),
-					createFixedItem(0.01, 'income'),
-					createFixedItem(33.33, 'income')
-				])
-			],
-			privateExpenses: [],
-			privateBalanceStart: 0,
-			prepaymentThisMonth: 0
-		};
-
-		const result = calculateMonth(inputs);
-
-		// Anteil: 2222 / 5555 ≈ 0.3996... ≈ 0.4
-		expect(result.shareMe).toBeCloseTo(0.4, 2);
-
-		// Position A: 99.99 × 0.4 = 39.996 → 40.00€
-		// Position B: 0.01 × 0.4 = 0.004 → 0.00€
-		// Position C: 33.33 × 0.4 = 13.332 → 13.33€
-		// Summe: 40.00 + 0.00 + 13.33 = 53.33€
-		expect(result.fixedCostDue).toBe(53.33);
-		expect(result.privateBalanceEnd).toBe(53.33);
-
-		// Verify: Alle Beträge auf 2 Dezimalen
-		expect(result.myFixedShare).toBe(53.33);
-	});
-
-	/**
-	 * TEST 12 (P2): Große Beträge – Precision Check
-	 * Input: Große Beträge (9999.99€)
-	 * Expected: Kein Float-Overflow, korrekte Rundung
-	 */
-	it('T12-P2: Large Numbers (kein Float-Overflow)', () => {
-		const inputs: MonthInputs = {
-			me: createPerson('me', 8000),
-			partner: createPerson('partner', 12000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(9999.99, 'income')])
-			],
-			privateExpenses: [],
-			privateBalanceStart: 0,
-			prepaymentThisMonth: 0
-		};
-
-		const result = calculateMonth(inputs);
-
-		// Anteil: 8000 / 20000 = 0.4
-		expect(result.shareMe).toBe(0.4);
-
-		// Fixkosten: 9999.99 × 0.4 = 3999.996 → 4000.00€
-		expect(result.fixedCostDue).toBe(4000.00);
-		expect(result.privateBalanceEnd).toBe(4000.00);
 	});
 });

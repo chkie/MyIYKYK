@@ -1,138 +1,66 @@
 <script lang="ts">
-	import './layout.css';
-	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
+	import '../routes/layout.css';
+	import type { LayoutData } from './$types.js';
 	import BottomNav from '$lib/components/BottomNav.svelte';
-	import { t } from '$lib/copy/index.js';
+	import ProfileSelector from '$lib/components/ProfileSelector.svelte';
+	import { profileStore } from '$lib/stores/profile.svelte';
+	import { page } from '$app/stores';
+	import { browser, dev } from '$app/environment';
 
-	const { children } = $props();
-
-	// Check if we're on the login page
-	const isLoginPage = $derived($page.url.pathname.startsWith('/login'));
-
-	// Page transition key - changes when route changes
-	const pageKey = $derived($page.url.pathname);
-
-	// Remove boot screen with smooth overlapping cross-fade (only on first cold start)
-	onMount(() => {
-		const bootScreen = document.getElementById('boot-screen');
-		const appContent = document.getElementById('app-content');
-		if (!bootScreen || !appContent) return;
-
-		// Check if boot screen was already shown in this session
-		const hasBootShown = sessionStorage.getItem('boot-screen-shown');
-
-		if (hasBootShown) {
-			// Not first load - skip boot screen entirely
-			bootScreen.remove();
-			appContent.style.opacity = '1';
-			appContent.style.visibility = 'visible';
-			return;
-		}
-
-		// First cold start - show boot screen and mark as shown
-		sessionStorage.setItem('boot-screen-shown', 'true');
-
-		// Timing configuration for ultra-smooth transition
-		const minDisplayTime = 2000; // Minimum 2 seconds visible
-		const bootFadeOutDuration = 1200; // Longer boot screen fade-out
-		const contentFadeInDuration = 1200; // Login fade-in duration
-		const overlapStart = 400; // Content starts fading in 400ms before boot-screen finishes
-		const cssAnimationDelay = 100; // Anti-flicker delay from CSS
-
-		const removeBootScreen = () => {
-			// Wait for minimum display time
-			setTimeout(() => {
-				// Start content fade-in FIRST (creates overlap)
-				setTimeout(() => {
-					appContent.style.visibility = 'visible'; // Make visible immediately
-					appContent.style.transition = `opacity ${contentFadeInDuration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-					appContent.style.opacity = '1';
-				}, 0);
-
-				// Then start boot screen fade-out after short delay (creates blend)
-				setTimeout(() => {
-					bootScreen.style.transition = `opacity ${bootFadeOutDuration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-					bootScreen.style.opacity = '0';
-				}, overlapStart);
-
-				// Remove boot screen after complete fade-out
-				setTimeout(() => {
-					bootScreen.remove();
-				}, bootFadeOutDuration + overlapStart);
-			}, minDisplayTime - cssAnimationDelay);
-		};
-
-		removeBootScreen();
-	});
-
-	// Service Worker Registration (PWA) - Only in Production
-	onMount(async () => {
-		// CRITICAL: Only register SW in production, NOT in dev mode
-		const isProduction = import.meta.env.PROD;
-		
-		if (!isProduction) {
-			console.log('[PWA] Service Worker disabled in dev mode');
-			
-			// Unregister any existing service workers in dev mode
-			if ('serviceWorker' in navigator) {
-				const registrations = await navigator.serviceWorker.getRegistrations();
-				for (const registration of registrations) {
-					await registration.unregister();
-					console.log('[PWA] Unregistered old service worker');
-				}
-			}
-			return;
-		}
-
-		if ('serviceWorker' in navigator) {
-			navigator.serviceWorker
-				.register('/sw.js')
-				.then((registration) => {
-					console.log('[PWA] Service Worker registered:', registration.scope);
-
-					// Check for updates periodically (every hour)
-					setInterval(() => {
-						registration.update();
-					}, 60 * 60 * 1000);
-				})
-				.catch((error) => {
-					console.error('[PWA] Service Worker registration failed:', error);
-				});
+	let { data, children }: { data: LayoutData, children: any } = $props();
+	
+	// Check if we're on login page - SSR safe
+	let currentPath = $derived($page.url.pathname);
+	let isLoginPage = $derived(currentPath === '/login');
+	
+	// Show profile selector ONLY if:
+	// 1. User is authenticated (after login)
+	// 2. Client-side (browser)
+	// 3. No profile selected yet
+	// 4. Not on login page
+	// 5. Profiles are loaded
+	let showProfileSelector = $derived(
+		browser && 
+		data.isAuthenticated && // ← NEW: Only after login!
+		profileStore.isInitialized && 
+		!profileStore.hasProfile && 
+		!isLoginPage && 
+		data?.profiles?.length > 0
+	);
+	
+	// 🔍 DEBUG: Log all conditions
+	$effect(() => {
+		if (browser && dev) {
+			console.log('=== ProfileSelector Conditions ===');
+			console.log('browser:', browser);
+			console.log('isAuthenticated:', data.isAuthenticated);
+			console.log('isInitialized:', profileStore.isInitialized);
+			console.log('hasProfile:', profileStore.hasProfile);
+			console.log('isLoginPage:', isLoginPage);
+			console.log('profiles.length:', data?.profiles?.length);
+			console.log('→ showProfileSelector:', showProfileSelector);
+			console.log('localStorage:', localStorage.getItem('myiykyk_profile'));
 		}
 	});
+	
+	// Always show nav except on login page
+	let showNav = $derived(!isLoginPage);
 </script>
 
 <svelte:head>
-	<link rel="manifest" href="/manifest.json" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 	<meta name="theme-color" content="#4f46e5" />
-	
-	<!-- PWA Meta Tags -->
-	<meta name="mobile-web-app-capable" content="yes" />
-	<meta name="apple-mobile-web-app-capable" content="yes" />
-	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-	<meta name="apple-mobile-web-app-title" content="Kosten-Tool" />
-	
-	<!-- Apple Touch Icons (multiple sizes for iOS) -->
-	<link rel="apple-touch-icon" href="/icon-192.png" />
-	<link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png" />
-	<link rel="apple-touch-icon" sizes="152x152" href="/icon-192.png" />
-	<link rel="apple-touch-icon" sizes="120x120" href="/icon-192.png" />
-	
-	<!-- Performance: Preload LCP assets -->
-	<link rel="preload" as="image" href="/webtool_logo.webp" type="image/webp" fetchpriority="high" />
 </svelte:head>
 
-{#if isLoginPage}
-	<!-- Login page: no header, just content -->
-	{@render children()}
-{:else}
-	<!-- App shell with header and main container -->
-	<div class="flex min-h-screen flex-col bg-neutral-50">
-		<!-- Modern Header with Gradient & Month Info -->
-		<header
-			class="app-header sticky top-0 z-50 border-b-2 border-primary-300 bg-primary-600 shadow-lg"
-		>
+<div class="flex min-h-screen flex-col bg-neutral-50">
+	<!-- Profile Selector Overlay (only client-side) -->
+	{#if showProfileSelector && data?.profiles}
+		<ProfileSelector profiles={data.profiles} />
+	{:else}
+		<!-- Only show content when profile is selected or on login page -->
+		<!-- Top Header (only if not login page) -->
+		{#if !isLoginPage}
+			<header class="app-header sticky top-0 z-50 border-b-2 border-primary-300 bg-primary-600 shadow-lg">
 			<div class="mx-auto max-w-3xl px-4 py-3">
 				<!-- Top Row: App Title & Actions -->
 				<div class="mb-2 flex items-center justify-between">
@@ -142,7 +70,7 @@
 							<source srcset="/webtool_logo.webp" type="image/webp" />
 							<img 
 								src="/webtool_logo.png" 
-								alt={t('aria.appLogo')}
+								alt="Kosten-Tool Logo"
 								width="64"
 								height="64"
 								class="h-16 w-auto"
@@ -154,17 +82,17 @@
 
 					<!-- Action buttons -->
 					<div class="flex items-center gap-2">
-					<!-- Archive button -->
-					<a
-						href="/archiv"
-						class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-3 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
-						aria-label={t('aria.archive')}
-						data-sveltekit-preload-code="off"
-					>
+						<!-- Archive button -->
+						<a
+							href="/archiv"
+							class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-3 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
+							aria-label="Archiv"
+							data-sveltekit-preload-code="off"
+						>
 							<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
 							</svg>
-							<span>{t('nav.archive')}</span>
+							<span>Archiv</span>
 						</a>
 						
 						<!-- Logout button -->
@@ -180,61 +108,47 @@
 									d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
 								/>
 							</svg>
-							<span>{t('nav.logout')}</span>
+							<span>Logout</span>
 						</a>
 					</div>
 				</div>
 			</div>
 		</header>
+	{/if}
+	
+	<!-- Main Content with Bottom Padding for Nav -->
+	<main class="flex-1 pb-20">
+		<div class="mx-auto max-w-2xl px-4 py-6">
+			{@render children()}
+		</div>
+	</main>
 
-		<main class="app-main flex-1">
-			<div class="mx-auto w-full max-w-3xl px-4 py-6">
-				<div class="page-transition-container">
-					{#key pageKey}
-						<div class="page-content">
-							{@render children()}
-						</div>
-					{/key}
-				</div>
-			</div>
-		</main>
-
-		<!-- Bottom Navigation -->
+	<!-- Bottom Navigation - Always show except on login -->
+	{#if showNav}
 		<BottomNav />
-	</div>
-{/if}
-
-<style>
-	/* Ultra-fast smooth crossfade using CSS */
-	.page-transition-container {
-		position: relative;
-		min-height: 50vh;
-	}
-
-	.page-content {
-		animation: pageIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-	}
-
-	@keyframes pageIn {
-		from {
-			opacity: 0;
-			transform: translateY(8px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	/* Smooth out the transition */
-	@media (prefers-reduced-motion: no-preference) {
-		.page-content {
-			will-change: opacity, transform;
-		}
-	}	/* Disable animations for users who prefer reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.page-content {
-			animation: none;
-		}
-	}
-</style>
+	{/if}
+	
+	<!-- 🔧 DEBUG: Floating Reset Button (TEMPORARY - Remove in production) -->
+	{#if browser && dev}
+		<button
+			onclick={() => {
+				if (confirm('🔧 DEBUG: localStorage + Cookie löschen und neu laden?')) {
+					// Clear localStorage (profile)
+					localStorage.removeItem('myiykyk_profile');
+					// Clear auth cookie (logout)
+					document.cookie = 'auth=; Max-Age=0; path=/; SameSite=Lax';
+					// Wait a bit for cookie deletion, then reload
+					setTimeout(() => {
+						window.location.href = '/login';
+					}, 100);
+				}
+			}}
+			type="button"
+			class="fixed bottom-24 right-4 z-9998 flex h-12 w-12 items-center justify-center rounded-full bg-warning-500 text-white shadow-lg transition-all hover:scale-110 hover:bg-warning-600 active:scale-95"
+			title="DEBUG: Reset Profile + Logout"
+		>
+			🔧
+		</button>
+	{/if}
+	{/if}
+</div>
