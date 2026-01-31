@@ -1,0 +1,36 @@
+<script lang="ts">
+	import type { PageData } from './$types.js';
+	import PullToRefresh from '$lib/components/PullToRefresh.svelte';
+
+	let { data }: { data: PageData } = $props();
+
+	// DEBUG OUTPUT - Remove after testing
+	$effect(() => {
+		console.log('=== DEBUG: Page Data ===');
+		console.log('Month:', data.month);
+		console.log('Private Expenses:', data.privateExpenses);
+		console.log('History:', data.history);
+		if (data.history) {
+			console.log('  - totalCount:', data.history.totalCount);
+			console.log('  - last5:', data.history.last5);
+		}
+	});
+
+	// Memoized formatters (avoid recreating on every call)
+	const euroFormatter = new Intl.NumberFormat('de-DE', {
+		style: 'currency',
+		currency: 'EUR',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	});
+
+	// Currency formatter
+	function formatEuro(amount: number): string {
+		return euroFormatter.format(amount);
+	}
+
+	// Percentage formatter
+	function formatPct(share: number): string {
+		return `${(share * 100).toFixed(0)}%`;
+	}
+</script>

@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import type { PageData, ActionData } from './$types.js';
 	import { t } from '$lib/copy/index.js';
+	import { profileStore } from '$lib/stores/profile.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -46,6 +48,42 @@
 </svelte:head>
 
 <h1 class="mb-6 text-3xl font-black text-neutral-900">Profil & Einstellungen</h1>
+
+<!-- Current Profile Card -->
+{#if profileStore.hasProfile}
+	<div class="mb-6 overflow-hidden rounded-2xl border-2 border-primary-200 bg-white shadow-lg">
+		<div class="bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4">
+			<div class="flex items-center justify-between">
+				<h2 class="flex items-center gap-2 text-lg font-bold text-primary-900">
+					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+					</svg>
+					Aktuelles Profil
+				</h2>
+			</div>
+		</div>
+		<div class="p-5">
+			<div class="flex items-center justify-between">
+				<div>
+					<p class="text-sm text-neutral-600">Eingeloggt als</p>
+					<p class="text-2xl font-bold text-primary-900">{profileStore.currentProfileName}</p>
+				</div>
+				<button
+					onclick={async () => {
+						if (confirm('Profil wechseln? Du wirst zur Profilauswahl weitergeleitet.')) {
+							profileStore.clearProfile();
+							// Use goto with invalidateAll to trigger re-render immediately
+							await goto('/', { invalidateAll: true, replaceState: false });
+						}
+					}}
+					class="rounded-lg bg-primary-100 px-4 py-2 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-200 active:scale-95"
+				>
+					Profil wechseln
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <!-- Einkommen Card -->
 <div class="mb-6 overflow-hidden rounded-2xl border-2 border-success-200 bg-white shadow-lg">

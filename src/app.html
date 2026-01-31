@@ -124,6 +124,33 @@
 			}
 		</style>
 		
-		<div id="app-content" style="display: contents; opacity: 0; visibility: hidden;">%sveltekit.body%</div>
+		<div id="app-content" style="display: contents;">%sveltekit.body%</div>
+		
+		<script>
+			// Remove boot screen after hydration
+			if (typeof window !== 'undefined') {
+				// Wait for SvelteKit hydration or timeout after 3s
+				const removeBootScreen = () => {
+					const bootScreen = document.getElementById('boot-screen');
+					if (bootScreen) {
+						bootScreen.style.transition = 'opacity 300ms ease-out';
+						bootScreen.style.opacity = '0';
+						setTimeout(() => bootScreen.remove(), 300);
+					}
+				};
+				
+				// Try to remove after DOM ready
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', () => {
+						setTimeout(removeBootScreen, 100);
+					});
+				} else {
+					setTimeout(removeBootScreen, 100);
+				}
+				
+				// Fallback: Force remove after 3s
+				setTimeout(removeBootScreen, 3000);
+			}
+		</script>
 	</body>
 </html>

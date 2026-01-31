@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { profileStore } from '$lib/stores/profile.svelte';
 	import { enhance } from '$app/forms';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
@@ -171,6 +172,7 @@
 			</div>
 			<div class="p-5">
 				<input type="hidden" name="monthId" value={data.month.id} />
+				<input type="hidden" name="createdBy" value={profileStore.currentProfileId || ""} />
 				
 				<div class="mb-4">
 					<label class="mb-2 block text-sm font-semibold text-neutral-700" for="newExpenseDate">

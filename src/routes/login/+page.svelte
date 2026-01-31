@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { t } from '$lib/copy/index.js';
 
 	interface Props {
@@ -18,7 +20,17 @@
 	<div class="login-card">
 		<h1>{t('login.title')}</h1>
 
-		<form method="POST" class="login-form">
+		<form 
+			method="POST" 
+			class="login-form"
+			use:enhance={() => {
+				return async ({ result, update }) => {
+					// Invalidate all data to reload layout (profiles, isAuthenticated)
+					await invalidateAll();
+					await update();
+				};
+			}}
+		>
 			<!-- Hidden username field for Apple Keychain / Password Manager integration -->
 			<input
 				type="hidden"

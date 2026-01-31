@@ -3,7 +3,7 @@
  * Handles categories and items for fixed monthly costs.
  */
 
-import { getSupabaseServerClient, getProfileIdByRole } from './supabase.js';
+import { getSupabaseServerClient } from './supabase.js';
 
 // Types for structured return data
 export interface FixedItem {
@@ -155,7 +155,7 @@ export async function deleteFixedCategory(categoryId: string): Promise<void> {
  * Creates a new fixed item in a category.
  * 
  * @param categoryId - The category ID (UUID)
- * @param input - Item data (label, amount, splitMode, optional createdBy)
+ * @param input - Item data (label, amount, splitMode)
  * @returns New item row
  * @throws {Error} If validation fails or database operation fails
  */
@@ -165,7 +165,6 @@ export async function createFixedItem(
 		label: string;
 		amount: number;
 		splitMode: 'income' | 'me' | 'partner' | 'half';
-		createdBy?: string; // Optional: profile ID, defaults to 'me' if not provided
 	}
 ) {
 	const supabase = getSupabaseServerClient();
@@ -184,9 +183,6 @@ export async function createFixedItem(
 		throw new Error(`Invalid split mode: ${input.splitMode}`);
 	}
 
-	// Determine created_by: use provided value or fallback to 'me' profile
-	const createdBy = input.createdBy || await getProfileIdByRole('me');
-
 	// Create item
 	const { data: newItem, error: createError } = await supabase
 		.from('fixed_items')
@@ -194,8 +190,7 @@ export async function createFixedItem(
 			category_id: categoryId,
 			label: trimmedLabel,
 			amount: input.amount,
-			split_mode: input.splitMode,
-			created_by: createdBy
+			split_mode: input.splitMode
 		})
 		.select()
 		.single();
@@ -311,3 +306,4 @@ export async function deleteFixedItem(itemId: string): Promise<void> {
 		throw new Error(`Failed to delete item: ${error.message}`);
 	}
 }
+

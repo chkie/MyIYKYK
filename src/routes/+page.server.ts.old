@@ -7,8 +7,7 @@ import {
 	closeMonth,
 	listClosedMonths,
 	resetOpenMonthForDev,
-	deleteClosedMonth,
-	deleteAllMonths
+	deleteClosedMonth
 } from '$lib/server/months.js';
 import { env } from '$env/dynamic/private';
 import {
@@ -25,7 +24,6 @@ import {
 	deletePrivateExpense,
 	updateMonthTransfer
 } from '$lib/server/private-expenses.js';
-import { getMonthHistory } from '$lib/server/history.js';
 import { calculateMonth } from '$lib/domain/index.js';
 import type { Actions, PageServerLoad } from './$types.js';
 
@@ -34,7 +32,7 @@ import type { Actions, PageServerLoad } from './$types.js';
  *
  * Gets or creates current month and ensures month_incomes exist.
  */
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async () => {
 	try {
 		// Get server-only Supabase client
 		const supabase = getSupabaseServerClient();
@@ -45,16 +43,12 @@ export const load: PageServerLoad = async ({ url }) => {
 		// 2. Ensure month_incomes exist for all profiles (depends on month.id)
 		const incomes = await ensureMonthIncomes(month.id);
 
-		// Check if full history is requested
-		const showFullHistory = url.searchParams.get('history') === 'full';
-
-		// 3-7. PARALLEL QUERIES (all depend on month.id but not on each other)
-		const [profilesResult, fixedCategories, privateExpenses, closedMonths, history] = await Promise.all([
+		// 3-6. PARALLEL QUERIES (all depend on month.id but not on each other)
+		const [profilesResult, fixedCategories, privateExpenses, closedMonths] = await Promise.all([
 			supabase.from('profiles').select('id, role, name').order('role', { ascending: true }),
 			listFixedCategoriesWithItems(month.id),
 			listPrivateExpenses(month.id),
-			listClosedMonths(12),
-			getMonthHistory(month.id, month.year, month.month, { includeFull: showFullHistory })
+			listClosedMonths(12)
 		]);
 
 		// Handle profiles error
@@ -76,7 +70,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			}))
 		});
 
-		// 8. Map DB data to Domain types and calculate
+		// 7. Map DB data to Domain types and calculate
 
 		// Find profiles
 		const meProfile = profiles?.find((p) => p.role === 'me');
@@ -137,8 +131,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			fixedCategories,
 			privateExpenses,
 			computed,
-			closedMonths,
-			history
+			closedMonths
 		};
 	} catch (err) {
 		// Handle unexpected errors
@@ -153,6 +146,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		throw error(500, 'Failed to load month data');
 	}
 };
+
 /**
  * Server actions for the home page.
  */
@@ -370,7 +364,6 @@ export const actions: Actions = {
 			const dateISO = formData.get('dateISO')?.toString();
 			const description = formData.get('description')?.toString();
 			const amount = parseFloat(formData.get('amount')?.toString() || '0');
-			const createdBy = formData.get('createdBy')?.toString(); // ← ADD: Get createdBy from form
 
 			if (!monthId || !dateISO || !description) {
 				return fail(400, { error: 'Month ID, date, and description are required' });
@@ -380,12 +373,7 @@ export const actions: Actions = {
 				return fail(400, { error: 'Invalid amount' });
 			}
 
-			await createPrivateExpense(monthId, { 
-				dateISO, 
-				description, 
-				amount,
-				createdBy // ← ADD: Pass createdBy to function
-			});
+			await createPrivateExpense(monthId, { dateISO, description, amount });
 			return { success: true };
 		} catch (err) {
 			console.error('Error adding expense:', err);
@@ -571,30 +559,6 @@ export const actions: Actions = {
 			console.error('Error deleting archived month:', err);
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Failed to delete archived month'
-			});
-		}
-	},
-
-	/**
-	 * Full Reset: Delete ALL months and data (DEV ONLY).
-	 * After this, the app will start fresh with current calendar month.
-	 */
-	fullResetDev: async () => {
-		// Guard: Only allow in development
-		if (env.NODE_ENV === 'production') {
-			return fail(403, { error: 'Not allowed in production' });
-		}
-
-		try {
-			await deleteAllMonths();
-			throw redirect(303, '/');
-		} catch (err) {
-			if (err && typeof err === 'object' && 'status' in err && err.status === 303) {
-				throw err;
-			}
-			console.error('Error in full reset:', err);
-			return fail(500, {
-				error: err instanceof Error ? err.message : 'Failed to perform full reset'
 			});
 		}
 	}

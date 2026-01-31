@@ -127,6 +127,17 @@ export const de = {
 		// Quick Actions
 		newExpense: 'Neue Ausgabe',
 		income: 'Einkommen',
+		
+		// History Section
+		historyTitle: 'Monats-Historie',
+		historyEntry: 'Eintrag',
+		historyEntries: 'Einträge',
+		historyShowAll: 'Alle {count} anzeigen',
+		historyShowLess: 'Weniger anzeigen',
+		historyEmpty: 'Noch keine Einträge',
+		historyEmptyHint: 'Positionen erscheinen hier nach dem Anlegen',
+		historyPrivate: 'Privat',
+		historyFixed: 'Fix',
 	},
 
 	// ========================================
@@ -167,6 +178,15 @@ export const de = {
 		noExpensesTitle: 'Noch keine Ausgaben vorhanden',
 		noExpensesHint: 'Füge oben eine neue Ausgabe hinzu!',
 	},
+	
+	// ========================================
+	// Profile Selector (ProfileSelector.svelte)
+	// ========================================
+	profileSelector: {
+		welcome: 'Willkommen!',
+		whoIsUsing: 'Wer nutzt die App?',
+		savedOnDevice: 'Diese Einstellung wird auf diesem Gerät gespeichert',
+	},
 
 	// ========================================
 	// Profile Page (profil/+page.svelte)
@@ -187,6 +207,13 @@ export const de = {
 		closeMonthTitle: 'Monat abschließen',
 		closeMonthButton: 'Jetzt abschließen',
 		finalBalanceLabel: 'Endsaldo wird übertragen:',
+		
+		// Profile Selection Card
+		profileSelectionTitle: 'Profil-Einstellung',
+		profileSelectionHint: 'Wer nutzt diese App auf diesem Gerät?',
+		currentlyLoggedInAs: 'Aktuell angemeldet als:',
+		switchProfile: 'Profil wechseln',
+		noProfileSelected: 'Kein Profil ausgewählt',
 		
 		// Dev Tools
 		devToolsTitle: 'Dev Tools',
