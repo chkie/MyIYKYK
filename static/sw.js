@@ -9,7 +9,6 @@ const CACHE_VERSION = 2;
 // ============================================================================
 
 const PWA_ASSETS = [
-	'/',
 	'/manifest.json',
 	'/icon-192.png',
 	'/icon-512.png',
