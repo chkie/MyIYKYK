@@ -4,7 +4,7 @@
  */
 
 import { getSupabaseServerClient } from './supabase.js';
-import { copyTemplatesToMonth } from './fixed-cost-templates.js';
+import { copyTemplatesToMonth, copyFixedCostsFromLastMonth } from './fixed-cost-templates.js';
 
 /**
  * Gets or creates the current month entry.
@@ -43,7 +43,7 @@ export async function getOrCreateCurrentMonth() {
 	// Find last closed month to determine what month to create next
 	const { data: lastClosedMonth, error: lastMonthError } = await supabase
 		.from('months')
-		.select('year, month, private_balance_end')
+		.select('id, year, month, private_balance_end')
 		.eq('status', 'closed')
 		.order('year', { ascending: false })
 		.order('month', { ascending: false })
@@ -101,14 +101,22 @@ export async function getOrCreateCurrentMonth() {
 
 	console.log('✅ New month created:', newMonth.id, `(${nextYear}-${nextMonth})`);
 
-	// 5. Copy templates to this new month
+	// 5. Copy fixed costs from previous month OR templates (for first month)
 	try {
-		console.log('📋 Copying templates to new month...');
-		await copyTemplatesToMonth(newMonth.id);
-		console.log('✅ Templates copied successfully!');
+		if (lastClosedMonth) {
+			// Copy from previous month (preserves all amounts and categories)
+			console.log('📋 Copying fixed costs from previous month...');
+			await copyFixedCostsFromLastMonth(lastClosedMonth.id, newMonth.id);
+			console.log('✅ Fixed costs copied from previous month!');
+		} else {
+			// First month ever: use templates as fallback
+			console.log('📋 First month - copying templates...');
+			await copyTemplatesToMonth(newMonth.id);
+			console.log('✅ Templates copied successfully!');
+		}
 	} catch (err) {
-		console.error('❌ Failed to copy templates to new month:', err);
-		// Don't throw - month creation succeeded, template copy failed (can be retried)
+		console.error('❌ Failed to copy fixed costs to new month:', err);
+		// Don't throw - month creation succeeded, copy failed (can be retried)
 	}
 
 	return newMonth;
