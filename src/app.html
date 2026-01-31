@@ -2,10 +2,26 @@
 <html lang="de">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="description" content="Gemeinsame Kostenverwaltung für Paare – Fixkosten, Ausgaben und Abrechnung im Blick behalten" />
+		<meta
+			name="description"
+			content="Gemeinsame Kostenverwaltung für Paare – Fixkosten, Ausgaben und Abrechnung im Blick behalten"
+		/>
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+		/>
 		<meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
+
+		<!-- PWA Manifest -->
+		<link rel="manifest" href="/manifest.json" />
+
+		<!-- iOS PWA Support -->
+		<link rel="apple-touch-icon" href="/icon-192.png" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="Kosten" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
@@ -24,20 +40,24 @@
 				justify-content: center;
 				background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #818cf8 100%);
 				background-size: 200% 200%;
-				animation: gradientShift 4s ease-in-out infinite, bootFadeIn 500ms 100ms ease-out forwards;
+				animation:
+					gradientShift 4s ease-in-out infinite,
+					bootFadeIn 500ms 100ms ease-out forwards;
 				pointer-events: none;
 				opacity: 0;
 			"
 		>
-			<div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+			<div style="display: flex; flex-direction: column; align-items: center; gap: 1rem">
 				<!-- Logo Container with subtle glow -->
-				<div style="
-					padding: 1.25rem;
-					border-radius: 1.5rem;
-					background: rgba(255, 255, 255, 0.1);
-					backdrop-filter: blur(10px);
-					box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-				">
+				<div
+					style="
+						padding: 1.25rem;
+						border-radius: 1.5rem;
+						background: rgba(255, 255, 255, 0.1);
+						backdrop-filter: blur(10px);
+						box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+					"
+				>
 					<picture>
 						<source srcset="/webtool_logo.webp" type="image/webp" />
 						<img
@@ -46,67 +66,133 @@
 							width="64"
 							height="64"
 							style="
-								width: 64px; 
-								height: 64px; 
-								object-fit: contain; 
+								width: 64px;
+								height: 64px;
+								object-fit: contain;
 								animation: logoFloat 3s ease-in-out infinite;
 								display: block;
 							"
 						/>
 					</picture>
 				</div>
-				
+
 				<!-- Spinner -->
-				<div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;" aria-hidden="true">
-					<div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.9); animation: dotBounce 1.4s ease-in-out infinite 0ms;"></div>
-					<div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.9); animation: dotBounce 1.4s ease-in-out infinite 200ms;"></div>
-					<div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.9); animation: dotBounce 1.4s ease-in-out infinite 400ms;"></div>
+				<div
+					style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem"
+					aria-hidden="true"
+				>
+					<div
+						style="
+							width: 8px;
+							height: 8px;
+							border-radius: 50%;
+							background: rgba(255, 255, 255, 0.9);
+							animation: dotBounce 1.4s ease-in-out infinite 0ms;
+						"
+					></div>
+					<div
+						style="
+							width: 8px;
+							height: 8px;
+							border-radius: 50%;
+							background: rgba(255, 255, 255, 0.9);
+							animation: dotBounce 1.4s ease-in-out infinite 200ms;
+						"
+					></div>
+					<div
+						style="
+							width: 8px;
+							height: 8px;
+							border-radius: 50%;
+							background: rgba(255, 255, 255, 0.9);
+							animation: dotBounce 1.4s ease-in-out infinite 400ms;
+						"
+					></div>
 				</div>
-				
+
 				<!-- Tagline -->
-				<p style="
-					margin-top: 0.75rem;
-					font-size: 0.875rem;
-					font-weight: 500;
-					color: rgba(255, 255, 255, 0.9);
-					letter-spacing: 0.025em;
-					animation: textFadeIn 600ms 400ms ease-out backwards;
-				">
+				<p
+					style="
+						margin-top: 0.75rem;
+						font-size: 0.875rem;
+						font-weight: 500;
+						color: rgba(255, 255, 255, 0.9);
+						letter-spacing: 0.025em;
+						animation: textFadeIn 600ms 400ms ease-out backwards;
+					"
+				>
 					Kosten im Blick
 				</p>
-				
+
 				<!-- Screen reader text -->
-				<span style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Lädt...</span>
+				<span
+					style="
+						position: absolute;
+						width: 1px;
+						height: 1px;
+						padding: 0;
+						margin: -1px;
+						overflow: hidden;
+						clip: rect(0, 0, 0, 0);
+						white-space: nowrap;
+						border-width: 0;
+					"
+					>Lädt...</span
+				>
 			</div>
 		</div>
-		
+
 		<!-- Inline animations for boot screen -->
 		<style>
 			@keyframes bootFadeIn {
-				from { opacity: 0; }
-				to { opacity: 1; }
+				from {
+					opacity: 0;
+				}
+				to {
+					opacity: 1;
+				}
 			}
 			@keyframes gradientShift {
-				0%, 100% { background-position: 0% 50%; }
-				50% { background-position: 100% 50%; }
+				0%,
+				100% {
+					background-position: 0% 50%;
+				}
+				50% {
+					background-position: 100% 50%;
+				}
 			}
 			@keyframes logoFloat {
-				0%, 100% { 
-					transform: translateY(0px) scale(1); 
+				0%,
+				100% {
+					transform: translateY(0px) scale(1);
 				}
-				50% { 
-					transform: translateY(-4px) scale(1.01); 
+				50% {
+					transform: translateY(-4px) scale(1.01);
 				}
 			}
 			@keyframes dotBounce {
-				0%, 80%, 100% { transform: translateY(0); opacity: 0.85; }
-				40% { transform: translateY(-8px); opacity: 1; }
+				0%,
+				80%,
+				100% {
+					transform: translateY(0);
+					opacity: 0.85;
+				}
+				40% {
+					transform: translateY(-8px);
+					opacity: 1;
+				}
 			}
 			@keyframes textFadeIn {
-				from { opacity: 0; transform: translateY(3px); }
-				to { opacity: 1; transform: translateY(0); }
+				from {
+					opacity: 0;
+					transform: translateY(3px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
 			}
-			
+
 			/* Respect reduced motion */
 			@media (prefers-reduced-motion: reduce) {
 				#boot-screen {
@@ -123,21 +209,22 @@
 				}
 			}
 		</style>
-		
-		<div id="app-content" style="display: contents;">%sveltekit.body%</div>
-		
+
+		<div id="app-content" style="display: contents">%sveltekit.body%</div>
+
 		<script>
 			// Remove boot screen after hydration
 			// Only show on FIRST load, not on navigations
 			if (typeof window !== 'undefined') {
 				// Check if this is a navigation (not first load)
-				const isNavigation = window.performance && 
-					window.performance.navigation && 
+				const isNavigation =
+					window.performance &&
+					window.performance.navigation &&
 					window.performance.navigation.type === 1; // TYPE_RELOAD
-				
+
 				// Or check if page was already visited (more reliable)
 				const wasAlreadyLoaded = sessionStorage.getItem('app-hydrated');
-				
+
 				const removeBootScreen = () => {
 					const bootScreen = document.getElementById('boot-screen');
 					if (bootScreen) {
@@ -146,7 +233,7 @@
 						setTimeout(() => bootScreen.remove(), 300);
 					}
 				};
-				
+
 				// If this is a navigation/reload, remove immediately
 				if (isNavigation || wasAlreadyLoaded) {
 					const bootScreen = document.getElementById('boot-screen');
@@ -156,7 +243,7 @@
 				} else {
 					// First load: Show boot screen, then remove after hydration
 					sessionStorage.setItem('app-hydrated', 'true');
-					
+
 					// Try to remove after DOM ready
 					if (document.readyState === 'loading') {
 						document.addEventListener('DOMContentLoaded', () => {
@@ -165,7 +252,7 @@
 					} else {
 						setTimeout(removeBootScreen, 100);
 					}
-					
+
 					// Fallback: Force remove after 3s
 					setTimeout(removeBootScreen, 3000);
 				}

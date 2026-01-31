@@ -268,6 +268,7 @@ export const actions: Actions = {
 			const categoryId = formData.get('categoryId')?.toString();
 			const label = formData.get('label')?.toString();
 			const amount = parseFloat(formData.get('amount')?.toString() || '0');
+			const createdBy = formData.get('createdBy')?.toString();
 			const splitMode = formData.get('splitMode')?.toString() as
 				| 'income'
 				| 'me'
@@ -282,7 +283,7 @@ export const actions: Actions = {
 				return fail(400, { error: 'Invalid amount' });
 			}
 
-			await createFixedItem(categoryId, { label, amount, splitMode });
+			await createFixedItem(categoryId, { label, amount, splitMode, createdBy });
 			return { success: true };
 		} catch (err) {
 			console.error('Error adding item:', err);

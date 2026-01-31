@@ -771,4 +771,76 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 		expect(result.fixedCostDue).toBe(4000.00);
 		expect(result.privateBalanceEnd).toBe(4000.00);
 	});
+
+	/**
+	 * TEST 13 (P0): Workflow Scenario – User Described
+	 * Input:
+	 * - Einkommen: ich=2000, partner=3000 → share: 0.4 / 0.6
+	 * - Fixkosten Position A: 1000€ splitMode=income → 400€ für mich
+	 * - Fixkosten Position B: 200€ splitMode=me → 200€ für mich (100%)
+	 * - Fixkosten Position C: 300€ splitMode=partner → 0€ für mich (0%)
+	 * - Privatausgaben: 50€ (erstellt von mir) → 50€ für mich
+	 * - Vorauszahlung: 100€ → reduziert meine Schuld
+	 * - Carryover: 75€ aus Vormonat
+	 * Expected:
+	 * - Total Fixed Share: 400 + 200 + 0 = 600€
+	 * - Private Due: 50€
+	 * - Total Before Prepayment: 75 + 50 + 600 = 725€
+	 * - Balance End: 725 - 100 = 625€
+	 */
+	it('T13-P0: Workflow Scenario - User Described (splitMode me/partner/income + prepayment + carryover)', () => {
+		const inputs: MonthInputs = {
+			me: createPerson('me', 2000),
+			partner: createPerson('partner', 3000),
+			fixedCategories: [
+				createFixedCategory([
+					createFixedItem(1000, 'income'),  // Position A: 40% = 400€
+					createFixedItem(200, 'me'),       // Position B: 100% = 200€
+					createFixedItem(300, 'partner')   // Position C: 0% = 0€
+				])
+			],
+			privateExpenses: [
+				{
+					id: 'exp-1',
+					amount: 50,
+					label: 'Private Ausgabe',
+					createdBy: 'me' // 100% für mich
+				}
+			],
+			privateBalanceStart: 75,  // Carryover aus Vormonat
+			prepaymentThisMonth: 100  // Vorauszahlung reduziert Schuld
+		};
+
+		const result = calculateMonth(inputs);
+
+		// Income shares
+		expect(result.shareMe).toBeCloseTo(0.4, 5); // 2000 / 5000 = 0.4
+		expect(result.sharePartner).toBeCloseTo(0.6, 5);
+
+		// Fixed costs breakdown
+		// Position A (income): 1000 × 0.4 = 400€
+		// Position B (me): 200 × 1.0 = 200€
+		// Position C (partner): 300 × 0.0 = 0€
+		// Total: 400 + 200 + 0 = 600€
+		expect(result.myFixedShare).toBe(600);
+		expect(result.fixedCostDue).toBe(600);
+
+		// Private expenses (always 100% for creator)
+		expect(result.privateAddedThisMonth).toBe(50);
+
+		// Total calculation
+		// Balance Start: 75€ (carryover)
+		// Private Expenses: 50€
+		// Fixed Costs: 600€
+		// Total Before Prepayment: 75 + 50 + 600 = 725€
+		expect(result.privateTotalDueBeforePrepayment).toBe(725);
+
+		// After prepayment
+		// 725 - 100 = 625€
+		expect(result.prepaymentThisMonth).toBe(100);
+		expect(result.privateBalanceEnd).toBe(625);
+
+		// Verify carryover would be 625 for next month
+		expect(result.privateBalanceEnd).toBe(625);
+	});
 });

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { preserveScroll } from '$lib/utils/scroll-preserve';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
 
@@ -243,7 +242,7 @@
 		<button
 			type="button"
 			onclick={() => toggleCategory(category.id)}
-			class="flex w-full items-center justify-between bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4 text-left transition-colors hover:from-indigo-200 hover:to-indigo-300 active:scale-[0.99]"
+			class="flex w-full items-center justify-between gap-3 bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4 text-left transition-colors hover:from-indigo-200 hover:to-indigo-300 active:scale-[0.99]"
 		>
 			<div class="flex items-center gap-3 min-w-0">
 				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500 text-white">
@@ -257,7 +256,7 @@
 				</div>
 			</div>
 			<div class="flex shrink-0 items-center gap-3">
-				<span class="text-sm font-semibold text-neutral-600">{category.items.length > 0 ? formatEuro(category.items.reduce((sum: number, item: any) => sum + item.amount, 0)) : '0,00 €'}</span>
+				<span class="truncate text-sm font-semibold text-neutral-600">{category.items.length > 0 ? formatEuro(category.items.reduce((sum: number, item: any) => sum + item.amount, 0)) : '0,00 €'}</span>
 				<svg 
 					class="h-5 w-5 text-primary-600 transition-transform duration-200 {collapsedCategories.has(category.id) ? '' : 'rotate-180'}"
 					fill="none" 
