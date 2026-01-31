@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { profileStore } from '$lib/stores/profile.svelte';
 	import { enhance } from '$app/forms';
+	import { preserveScroll } from '$lib/utils/scroll-preserve';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
 
@@ -152,6 +153,7 @@
 			onkeydown={handleFormKeyDown}
 			use:enhance={() => {
 				isSubmitting = true;
+				const scrollY = window.scrollY;
 				return async ({ result, update }) => {
 					await update();
 					isSubmitting = false;
@@ -163,6 +165,8 @@
 						};
 						showNewExpenseForm = false;
 					}
+					// Restore scroll position
+					requestAnimationFrame(() => window.scrollTo(0, scrollY));
 				};
 			}}
 			class="overflow-hidden rounded-2xl border-2 border-warning-200 bg-white shadow-lg"
@@ -277,16 +281,19 @@
 					<form
 						method="POST"
 						action="?/updatePrivateExpense"
-						use:enhance={() => {
-							isSubmittingEdit = true;
-							return async ({ result, update }) => {
-								await update();
-								isSubmittingEdit = false;
-								if (result.type === 'success') {
-									cancelEditExpense();
-								}
-							};
-						}}
+					use:enhance={() => {
+						isSubmittingEdit = true;
+						const scrollY = window.scrollY;
+						return async ({ result, update }) => {
+							await update();
+							isSubmittingEdit = false;
+							if (result.type === 'success') {
+								cancelEditExpense();
+							}
+							// Restore scroll position
+							requestAnimationFrame(() => window.scrollTo(0, scrollY));
+						};
+					}}
 						class="p-4"
 					>
 						<input type="hidden" name="expenseId" value={expense.id} />
@@ -389,8 +396,14 @@
 					<form
 						id="delete-form-{expense.id}"
 						method="POST"
-						action="?/deletePrivateExpense"
-						use:enhance
+					action="?/deletePrivateExpense"
+					use:enhance={() => {
+						const scrollY = window.scrollY;
+						return async ({ update }) => {
+							await update();
+							requestAnimationFrame(() => window.scrollTo(0, scrollY));
+						};
+					}}
 						class="hidden"
 					>
 						<input type="hidden" name="expenseId" value={expense.id} />

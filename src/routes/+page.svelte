@@ -12,6 +12,11 @@
 		maximumFractionDigits: 2
 	});
 
+	const monthNames = [
+		'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+		'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+	];
+
 	// Currency formatter
 	function formatEuro(amount: number): string {
 		return euroFormatter.format(amount);
@@ -20,6 +25,11 @@
 	// Percentage formatter
 	function formatPct(share: number): string {
 		return `${(share * 100).toFixed(0)}%`;
+	}
+
+	// Month name formatter
+	function getMonthName(monthNumber: number): string {
+		return monthNames[monthNumber - 1] || '';
 	}
 </script>
 
@@ -42,7 +52,7 @@
 			<div>
 				<p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Aktueller Monat</p>
 				<p class="text-xl font-bold text-primary-900">
-					{data.month.year}-{String(data.month.month).padStart(2, '0')}
+					{getMonthName(data.month.month)} {data.month.year}
 				</p>
 			</div>
 		</div>

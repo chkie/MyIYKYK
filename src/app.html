@@ -128,8 +128,16 @@
 		
 		<script>
 			// Remove boot screen after hydration
+			// Only show on FIRST load, not on navigations
 			if (typeof window !== 'undefined') {
-				// Wait for SvelteKit hydration or timeout after 3s
+				// Check if this is a navigation (not first load)
+				const isNavigation = window.performance && 
+					window.performance.navigation && 
+					window.performance.navigation.type === 1; // TYPE_RELOAD
+				
+				// Or check if page was already visited (more reliable)
+				const wasAlreadyLoaded = sessionStorage.getItem('app-hydrated');
+				
 				const removeBootScreen = () => {
 					const bootScreen = document.getElementById('boot-screen');
 					if (bootScreen) {
@@ -139,17 +147,28 @@
 					}
 				};
 				
-				// Try to remove after DOM ready
-				if (document.readyState === 'loading') {
-					document.addEventListener('DOMContentLoaded', () => {
-						setTimeout(removeBootScreen, 100);
-					});
+				// If this is a navigation/reload, remove immediately
+				if (isNavigation || wasAlreadyLoaded) {
+					const bootScreen = document.getElementById('boot-screen');
+					if (bootScreen) {
+						bootScreen.remove(); // Remove instantly, no fade
+					}
 				} else {
-					setTimeout(removeBootScreen, 100);
+					// First load: Show boot screen, then remove after hydration
+					sessionStorage.setItem('app-hydrated', 'true');
+					
+					// Try to remove after DOM ready
+					if (document.readyState === 'loading') {
+						document.addEventListener('DOMContentLoaded', () => {
+							setTimeout(removeBootScreen, 100);
+						});
+					} else {
+						setTimeout(removeBootScreen, 100);
+					}
+					
+					// Fallback: Force remove after 3s
+					setTimeout(removeBootScreen, 3000);
 				}
-				
-				// Fallback: Force remove after 3s
-				setTimeout(removeBootScreen, 3000);
 			}
 		</script>
 	</body>

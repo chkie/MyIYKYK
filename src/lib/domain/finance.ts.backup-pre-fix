@@ -195,9 +195,9 @@ export function calculateMyFixedShare(categories: FixedCategory[], shareMe: numb
 }
 
 /**
- * Calculates my share of transfer-relevant fixed costs (excludes splitMode='partner').
+ * Calculates my share of transfer-relevant fixed costs (excludes splitMode='me').
  *
- * Items with splitMode='partner' are Steffi's personal costs (e.g., makeup)
+ * Items with splitMode='me' are personal costs paid directly from my account
  * and should not contribute to the transfer balance with the partner.
  *
  * @param categories - Array of fixed cost categories
@@ -206,9 +206,9 @@ export function calculateMyFixedShare(categories: FixedCategory[], shareMe: numb
  *
  * @example
  * calculateMyTransferFixedShare(
- *   [{ items: [{ amount: 1000, splitMode: 'income', ... }, { amount: 100, splitMode: 'partner', ... }] }],
+ *   [{ items: [{ amount: 1000, splitMode: 'income', ... }, { amount: 100, splitMode: 'me', ... }] }],
  *   0.4
- * ) // 400 (only the 'income' item, 'partner' is excluded)
+ * ) // 400 (only the 'income' item, 'me' is excluded)
  */
 export function calculateMyTransferFixedShare(
 	categories: FixedCategory[],
@@ -216,8 +216,8 @@ export function calculateMyTransferFixedShare(
 ): number {
 	const total = categories.reduce((sum, category) => {
 		const categorySum = category.items.reduce((itemSum, item) => {
-			// Skip partner's personal costs (splitMode='partner') as they don't create debt
-			if (item.splitMode === 'partner') {
+			// Skip personal costs (splitMode='me') as they don't contribute to partner balance
+			if (item.splitMode === 'me') {
 				return itemSum;
 			}
 			return itemSum + calculateMyShareForFixedItem(item, shareMe);
@@ -269,7 +269,7 @@ export function calculateMonth(inputs: MonthInputs): MonthComputed {
 	// c) Calculate my fixed share (total including 'me' items for display)
 	const myFixedShare = calculateMyFixedShare(inputs.fixedCategories, shareMe);
 
-	// c2) Calculate transfer-relevant fixed share (excludes splitMode='partner')
+	// c2) Calculate transfer-relevant fixed share (excludes splitMode='me')
 	// This is what I actually owe to partner for shared costs
 	const myTransferFixedShare = calculateMyTransferFixedShare(inputs.fixedCategories, shareMe);
 

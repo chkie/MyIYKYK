@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { preserveScroll } from '$lib/utils/scroll-preserve';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
 
@@ -171,6 +172,7 @@
 			onkeydown={handleCategoryFormKeyDown}
 			use:enhance={() => {
 				isSubmitting = true;
+				const scrollY = window.scrollY;
 				return async ({ result, update }) => {
 					await update();
 					isSubmitting = false;
@@ -178,6 +180,8 @@
 						newCategoryLabel = '';
 						showNewCategoryForm = false;
 					}
+					// Restore scroll position
+					requestAnimationFrame(() => window.scrollTo(0, scrollY));
 				};
 			}}
 			class="rounded-xl border-2 border-primary-200 bg-white p-4"
@@ -275,16 +279,19 @@
 						<form
 							method="POST"
 							action="?/updateItem"
-							use:enhance={() => {
-								isSubmittingEditItem = true;
-								return async ({ result, update }) => {
-									await update();
-									isSubmittingEditItem = false;
-									if (result.type === 'success') {
-										cancelEditItem();
-									}
-								};
-							}}
+						use:enhance={() => {
+							isSubmittingEditItem = true;
+							const scrollY = window.scrollY;
+							return async ({ result, update }) => {
+								await update();
+								isSubmittingEditItem = false;
+								if (result.type === 'success') {
+									cancelEditItem();
+								}
+								// Restore scroll position
+								requestAnimationFrame(() => window.scrollTo(0, scrollY));
+							};
+						}}
 						>
 							<input type="hidden" name="itemId" value={item.id} />
 							<div class="mb-3">
@@ -394,8 +401,14 @@
 							<form
 								id="delete-item-{item.id}"
 								method="POST"
-								action="?/deleteItem"
-								use:enhance
+					action="?/deleteItem"
+					use:enhance={() => {
+						const scrollY = window.scrollY;
+						return async ({ update }) => {
+							await update();
+							requestAnimationFrame(() => window.scrollTo(0, scrollY));
+						};
+					}}
 								class="hidden"
 							>
 								<input type="hidden" name="itemId" value={item.id} />
@@ -428,6 +441,7 @@
 					onkeydown={(e) => handleItemFormKeyDown(e, category.id)}
 					use:enhance={() => {
 						isSubmittingItem = { ...isSubmittingItem, [category.id]: true };
+						const scrollY = window.scrollY;
 						return async ({ result, update }) => {
 							await update();
 							isSubmittingItem = { ...isSubmittingItem, [category.id]: false };
@@ -435,6 +449,8 @@
 								newItems = { ...newItems, [category.id]: { label: '', amount: '', splitMode: 'income' } };
 								closeItemForm(category.id);
 							}
+							// Restore scroll position
+							requestAnimationFrame(() => window.scrollTo(0, scrollY));
 						};
 					}}
 				>
@@ -534,9 +550,15 @@
 			<!-- Delete Category Button (at bottom when expanded) -->
 			<div class="border-t-2 border-neutral-100 bg-neutral-50 px-5 py-3">
 				<form
-					method="POST"
-					action="?/deleteCategory"
-					use:enhance
+				method="POST"
+				action="?/deleteCategory"
+				use:enhance={() => {
+					const scrollY = window.scrollY;
+					return async ({ update }) => {
+						await update();
+						requestAnimationFrame(() => window.scrollTo(0, scrollY));
+					};
+				}}
 					class="flex justify-end"
 				>
 					<input type="hidden" name="categoryId" value={category.id} />

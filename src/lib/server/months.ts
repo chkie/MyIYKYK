@@ -43,10 +43,9 @@ export async function getOrCreateCurrentMonth() {
 	// Find last closed month to determine what month to create next
 	const { data: lastClosedMonth, error: lastMonthError } = await supabase
 		.from('months')
-		.select('id, year, month, private_balance_end')
+		.select('id, year, month, private_balance_end, closed_at')
 		.eq('status', 'closed')
-		.order('year', { ascending: false })
-		.order('month', { ascending: false })
+		.order('closed_at', { ascending: false, nullsFirst: false })
 		.limit(1)
 		.single();
 
