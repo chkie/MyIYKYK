@@ -1,5 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { dev } from '$app/environment';
 import type { Actions } from './$types.js';
 
 /**
@@ -42,10 +43,10 @@ export const actions: Actions = {
 		// Password is correct - set auth cookie
 		cookies.set('auth', 'ok', {
 			httpOnly: true,
-			secure: env.NODE_ENV === 'production',
+			secure: !dev,
 			sameSite: 'lax',
 			path: '/',
-			maxAge: 60 * 60 * 24 * 30 // 30 days
+			maxAge: 60 * 60 * 24 * 90 // 90 days - persistent until explicit logout
 		});
 
 		// Redirect to home page
