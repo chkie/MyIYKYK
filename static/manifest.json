@@ -15,28 +15,16 @@
 	"prefer_related_applications": false,
 	"icons": [
 		{
-			"src": "/icon-192.png",
-			"sizes": "192x192",
-			"type": "image/png",
-			"purpose": "any maskable"
-		},
-		{
-			"src": "/icon-512.png",
+			"src": "/webtool_logo.png",
 			"sizes": "512x512",
 			"type": "image/png",
 			"purpose": "any maskable"
 		},
 		{
-			"src": "/icon-192.svg",
-			"sizes": "192x192",
-			"type": "image/svg+xml",
-			"purpose": "any"
-		},
-		{
-			"src": "/icon-512.svg",
+			"src": "/webtool_logo.webp",
 			"sizes": "512x512",
-			"type": "image/svg+xml",
-			"purpose": "any"
+			"type": "image/webp",
+			"purpose": "any maskable"
 		}
 	],
 	"shortcuts": [
@@ -45,14 +33,14 @@
 			"short_name": "Ausgabe",
 			"description": "Schnell neue Ausgabe erfassen",
 			"url": "/ausgaben",
-			"icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+			"icons": [{ "src": "/webtool_logo.png", "sizes": "512x512" }]
 		},
 		{
 			"name": "Fixkosten",
 			"short_name": "Fixkosten",
 			"description": "Fixkosten verwalten",
 			"url": "/fixkosten",
-			"icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+			"icons": [{ "src": "/webtool_logo.png", "sizes": "512x512" }]
 		}
 	]
 }
