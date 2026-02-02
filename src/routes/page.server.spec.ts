@@ -28,6 +28,12 @@ vi.mock('$lib/server/private-expenses.js', () => ({
 	listPrivateExpenses: vi.fn()
 }));
 
+// Mock transfers module
+vi.mock('$lib/server/transfers.js', () => ({
+	listTransfers: vi.fn(),
+	getTotalTransfers: vi.fn()
+}));
+
 // Mock history module
 vi.mock('$lib/server/history.js', () => ({
 	getMonthHistory: vi.fn()
@@ -39,6 +45,7 @@ import * as supabaseModule from '$lib/server/supabase.js';
 import * as monthsModule from '$lib/server/months.js';
 import * as fixedCostsModule from '$lib/server/fixed-costs.js';
 import * as privateExpensesModule from '$lib/server/private-expenses.js';
+import * as transfersModule from '$lib/server/transfers.js';
 import * as historyModule from '$lib/server/history.js';
 
 // ============================================================================
@@ -77,6 +84,8 @@ const FIXTURES = {
 	],
 	
 	privateExpenses: [],
+	
+	transfers: [],
 	
 	closedMonths: [],
 	

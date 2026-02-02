@@ -10,7 +10,7 @@ import {
 	calculateMyShareForFixedItem,
 	roundMoney
 } from './finance.js';
-import type { FixedCategory, FixedItem, MonthInputs, Person } from './types.js';
+import type { FixedCategory, FixedItem, MonthInputs, Person, PrivateExpense } from './types.js';
 
 // ============================================================================
 // Helper Functions for Test Data
@@ -842,5 +842,95 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 
 		// Verify carryover would be 625 for next month
 		expect(result.privateBalanceEnd).toBe(625);
+	});
+
+	/**
+	 * T14-P0: Negative Starting Balance (Steffi owes me from previous month)
+	 */
+	it('T14-P0: Should handle negative starting balance correctly (Steffi owes Christian)', () => {
+		const inputs: MonthInputs = {
+			me: createPerson('me', 2000),
+			partner: createPerson('partner', 2000),
+			fixedCategories: [
+				createFixedCategory([
+					createFixedItem(500, 'income')  // 50% split = 250€ each
+				])
+			],
+			privateExpenses: [
+				{
+					id: 'exp-1',
+					amount: 100,
+					dateISO: '2026-01-15',
+					description: 'Private expense'
+				}
+			],
+			privateBalanceStart: -150,  // Steffi owes me 150€ from last month
+			prepaymentThisMonth: 200
+		};
+
+		const result = calculateMonth(inputs);
+
+		// Income shares should be equal (50/50)
+		expect(result.shareMe).toBe(0.5);
+		expect(result.sharePartner).toBe(0.5);
+
+		// Fixed costs: 500 × 0.5 = 250€
+		expect(result.myFixedShare).toBe(250);
+		expect(result.fixedCostDue).toBe(250);
+
+		// Private expenses: 100€
+		expect(result.privateAddedThisMonth).toBe(100);
+
+		// Balance start: -150€ (Steffi owes me)
+		expect(result.privateBalanceStart).toBe(-150);
+
+		// Total before prepayment: -150 + 100 + 250 = 200€
+		expect(result.privateTotalDueBeforePrepayment).toBe(200);
+
+		// After prepayment: 200 - 200 = 0€ (balanced!)
+		expect(result.privateBalanceEnd).toBe(0);
+	});
+
+	/**
+	 * T15-P0: Starting with debt (Christian owes Steffi from day one)
+	 */
+	it('T15-P0: Should handle positive starting balance in first month (Christian owes Steffi)', () => {
+		const inputs: MonthInputs = {
+			me: createPerson('me', 3000),
+			partner: createPerson('partner', 2000),
+			fixedCategories: [
+				createFixedCategory([
+					createFixedItem(1000, 'income')  // 60/40 split = 600€ for me
+				])
+			],
+			privateExpenses: [],  // No private expenses this month
+			privateBalanceStart: 200,  // I owe Steffi 200€ from before we started tracking
+			prepaymentThisMonth: 500
+		};
+
+		const result = calculateMonth(inputs);
+
+		// Income shares: 3000/(3000+2000) = 0.6
+		expect(result.shareMe).toBe(0.6);
+		expect(result.sharePartner).toBe(0.4);
+
+		// Fixed costs: 1000 × 0.6 = 600€
+		expect(result.myFixedShare).toBe(600);
+		expect(result.fixedCostDue).toBe(600);
+
+		// No private expenses
+		expect(result.privateAddedThisMonth).toBe(0);
+
+		// Balance start: 200€ (I owe Steffi)
+		expect(result.privateBalanceStart).toBe(200);
+
+		// Total before prepayment: 200 + 0 + 600 = 800€
+		expect(result.privateTotalDueBeforePrepayment).toBe(800);
+
+		// After prepayment: 800 - 500 = 300€ (still owe 300€)
+		expect(result.privateBalanceEnd).toBe(300);
+
+		// Recommended prepayment should be 600€ (just the fixed costs)
+		expect(result.recommendedPrepayment).toBe(600);
 	});
 });

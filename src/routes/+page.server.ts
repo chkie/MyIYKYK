@@ -4,6 +4,7 @@ import {
 	getOrCreateCurrentMonth,
 	ensureMonthIncomes,
 	updateMonthIncomes,
+	updateMonthBalanceStart,
 	closeMonth,
 	listClosedMonths,
 	resetOpenMonthForDev,
@@ -25,6 +26,12 @@ import {
 	deletePrivateExpense,
 	updateMonthTransfer
 } from '$lib/server/private-expenses.js';
+import {
+	listTransfers,
+	createTransfer,
+	deleteTransfer,
+	getTotalTransfers
+} from '$lib/server/transfers.js';
 import { getMonthHistory } from '$lib/server/history.js';
 import { calculateMonth } from '$lib/domain/index.js';
 import type { Actions, PageServerLoad } from './$types.js';
@@ -48,11 +55,12 @@ export const load: PageServerLoad = async ({ url }) => {
 		// Check if full history is requested
 		const showFullHistory = url.searchParams.get('history') === 'full';
 
-		// 3-7. PARALLEL QUERIES (all depend on month.id but not on each other)
-		const [profilesResult, fixedCategories, privateExpenses, closedMonths, history] = await Promise.all([
+		// 3-8. PARALLEL QUERIES (all depend on month.id but not on each other)
+		const [profilesResult, fixedCategories, privateExpenses, transfers, closedMonths, history] = await Promise.all([
 			supabase.from('profiles').select('id, role, name').order('role', { ascending: true }),
 			listFixedCategoriesWithItems(month.id),
 			listPrivateExpenses(month.id),
+			listTransfers(month.id),
 			listClosedMonths(12),
 			getMonthHistory(month.id, month.year, month.month, { includeFull: showFullHistory })
 		]);
@@ -86,6 +94,9 @@ export const load: PageServerLoad = async ({ url }) => {
 		const meIncome = incomes.find((i) => i.profile_id === meProfile?.id);
 		const partnerIncome = incomes.find((i) => i.profile_id === partnerProfile?.id);
 
+		// Calculate total transfers (sum of all transfer records)
+		const totalTransfersAmount = (transfers || []).reduce((sum, t) => sum + t.amount, 0);
+
 		// Build MonthInputs for domain calculation
 		const monthInputs = {
 			me: {
@@ -116,7 +127,7 @@ export const load: PageServerLoad = async ({ url }) => {
 				amount: Number(exp.amount)
 			})),
 			privateBalanceStart: Number(month.private_balance_start || 0),
-			prepaymentThisMonth: Number(month.total_transfer_this_month) || 0
+			prepaymentThisMonth: totalTransfersAmount // Use sum of transfers instead of single field
 		};
 
 		// Calculate month
@@ -136,6 +147,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			profiles: profiles || [],
 			fixedCategories,
 			privateExpenses,
+			transfers,
 			computed,
 			closedMonths,
 			history
@@ -484,6 +496,84 @@ export const actions: Actions = {
 			console.error('Error saving prepayment:', err);
 			return fail(500, {
 				error: err instanceof Error ? err.message : 'Failed to save prepayment'
+			});
+		}
+	},
+
+	/**
+	 * Save month starting balance (typically for the first month).
+	 */
+	saveBalanceStart: async ({ request }) => {
+		try {
+			const formData = await request.formData();
+			const monthId = formData.get('monthId')?.toString();
+			const balanceStart = parseFloat(formData.get('balanceStart')?.toString() || '0');
+
+			if (!monthId) {
+				return fail(400, { error: 'Month ID is required' });
+			}
+
+			if (isNaN(balanceStart)) {
+				return fail(400, { error: 'Invalid balance start amount' });
+			}
+
+			await updateMonthBalanceStart(monthId, balanceStart);
+			return { success: true };
+		} catch (err) {
+			console.error('Error saving balance start:', err);
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to save balance start'
+			});
+		}
+	},
+
+	/**
+	 * Add a new transfer/payment.
+	 */
+	addTransfer: async ({ request }) => {
+		try {
+			const formData = await request.formData();
+			const monthId = formData.get('monthId')?.toString();
+			const amount = parseFloat(formData.get('amount')?.toString() || '0');
+			const description = formData.get('description')?.toString();
+			const createdBy = formData.get('createdBy')?.toString();
+
+			if (!monthId) {
+				return fail(400, { error: 'Month ID is required' });
+			}
+
+			if (isNaN(amount) || amount < 0) {
+				return fail(400, { error: 'Invalid amount' });
+			}
+
+			await createTransfer(monthId, { amount, description, createdBy });
+			return { success: true };
+		} catch (err) {
+			console.error('Error adding transfer:', err);
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to add transfer'
+			});
+		}
+	},
+
+	/**
+	 * Delete a transfer.
+	 */
+	deleteTransfer: async ({ request }) => {
+		try {
+			const formData = await request.formData();
+			const transferId = formData.get('transferId')?.toString();
+
+			if (!transferId) {
+				return fail(400, { error: 'Transfer ID is required' });
+			}
+
+			await deleteTransfer(transferId);
+			return { success: true };
+		} catch (err) {
+			console.error('Error deleting transfer:', err);
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to delete transfer'
 			});
 		}
 	},

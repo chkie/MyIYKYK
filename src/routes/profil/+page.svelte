@@ -30,10 +30,17 @@
 	let savingPrepayment = $state(false);
 	let closingMonth = $state(false);
 	let resettingMonth = $state(false);
+	let addingTransfer = $state(false);
+	let deletingTransferId = $state<string | null>(null);
 
 	// Edit mode states
 	let editingIncomes = $state(false);
 	let editingPrepayment = $state(false);
+	let showAddTransfer = $state(false);
+
+	// Transfer form state
+	let newTransferAmount = $state(0);
+	let newTransferDescription = $state('');
 
 	// Get profiles
 	const meProfile = $derived(data.profiles?.find((p: any) => p.role === 'me'));
@@ -237,7 +244,7 @@
 	</div>
 </div>
 
-<!-- Vorauszahlung Card -->
+<!-- Zahlungen Card -->
 <div class="mb-6 overflow-hidden rounded-2xl border-2 border-accent-200 bg-white shadow-lg">
 	<div class="bg-linear-to-r from-pink-100 to-pink-200 px-5 py-4">
 		<div class="flex items-center justify-between">
@@ -245,15 +252,18 @@
 				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
 				</svg>
-				Vorauszahlung
+				Zahlungen
 			</h2>
-			{#if !editingPrepayment}
+			{#if !showAddTransfer}
 				<button
-					onclick={() => { editingPrepayment = true; }}
+					onclick={() => { 
+						showAddTransfer = true;
+						newTransferAmount = 0;
+						newTransferDescription = '';
+					}}
 					class="rounded-lg px-3 py-1.5 text-sm font-medium text-accent-700 transition-colors hover:bg-accent-200/50"
-					aria-label={t('aria.editPrepayment')}
 				>
-					{t('common.edit')}
+					+ Zahlung
 				</button>
 			{/if}
 		</div>
@@ -265,71 +275,151 @@
 			<p class="text-2xl font-black text-accent-600">{formatEuro(data.computed.recommendedPrepayment)}</p>
 		</div>
 
-		{#if editingPrepayment}
+		<!-- Add Transfer Form -->
+		{#if showAddTransfer}
 			<form
 				method="POST"
-				action="?/savePrepayment"
-			use:enhance={() => {
-				savingPrepayment = true;
-				const scrollY = window.scrollY;
-				return async ({ result, update }) => {
-					await update();
-					savingPrepayment = false;
-					if (result.type === 'success') {
-						editingPrepayment = false;
-					}
-					// Restore scroll position
-					requestAnimationFrame(() => window.scrollTo(0, scrollY));
-				};
-			}}
+				action="?/addTransfer"
+				use:enhance={() => {
+					addingTransfer = true;
+					const scrollY = window.scrollY;
+					return async ({ result, update }) => {
+						await update();
+						addingTransfer = false;
+						if (result.type === 'success') {
+							showAddTransfer = false;
+							newTransferAmount = 0;
+							newTransferDescription = '';
+						}
+						requestAnimationFrame(() => window.scrollTo(0, scrollY));
+					};
+				}}
 			>
 				<input type="hidden" name="monthId" value={data.month.id} />
+				<input type="hidden" name="createdBy" value={meProfile?.id} />
 				
-				<div class="mb-3">
-					<label class="mb-2 block text-sm font-semibold text-neutral-700" for="prepayment">
-						Bereits überwiesen
-					</label>
-					<div class="flex items-center gap-2">
+				<div class="mb-3 space-y-3 rounded-lg border-2 border-accent-300 bg-accent-50 p-4">
+					<div>
+						<label class="mb-1 block text-sm font-semibold text-neutral-700" for="newTransferAmount">
+							Betrag
+						</label>
+						<div class="flex items-center gap-2">
+							<input
+								id="newTransferAmount"
+								type="number"
+								name="amount"
+								bind:value={newTransferAmount}
+								inputmode="decimal"
+								enterkeyhint="next"
+								autocomplete="off"
+								step="0.01"
+								min="0"
+								placeholder="0.00"
+								class="flex-1 rounded-lg border-2 border-neutral-300 px-4 py-2 text-lg font-semibold transition-all focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200"
+								required
+							/>
+							<span class="font-semibold text-neutral-600">€</span>
+						</div>
+					</div>
+
+					<div>
+						<label class="mb-1 block text-sm font-semibold text-neutral-700" for="newTransferDescription">
+							Beschreibung (optional)
+						</label>
 						<input
-							id="prepayment"
-							type="number"
-							name="prepayment"
-							value={data.month.total_transfer_this_month}
-							inputmode="decimal"
+							id="newTransferDescription"
+							type="text"
+							name="description"
+							bind:value={newTransferDescription}
 							enterkeyhint="done"
 							autocomplete="off"
-							step="0.01"
-							min="0"
-							placeholder="0.00"
-							class="flex-1 rounded-lg border-2 border-neutral-300 px-4 py-3 text-lg font-semibold transition-all focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200"
-							required
+							placeholder="z.B. Vorauszahlung Januar"
+							class="w-full rounded-lg border-2 border-neutral-300 px-4 py-2 text-sm transition-all focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200"
 						/>
-						<span class="font-semibold text-neutral-600">€</span>
+					</div>
+
+					<div class="flex gap-2">
+						<button
+							type="button"
+							onclick={() => { showAddTransfer = false; }}
+							class="flex-1 rounded-lg border-2 border-neutral-300 bg-white px-3 py-2 text-sm font-bold text-neutral-700 transition-all hover:bg-neutral-50 active:scale-95"
+						>
+							Abbrechen
+						</button>
+						<button
+							type="submit"
+							disabled={addingTransfer}
+							class="flex-1 rounded-lg bg-accent-600 px-3 py-2 text-sm font-bold text-white transition-all hover:bg-accent-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+						>
+							{addingTransfer ? 'Speichere...' : '+ Hinzufügen'}
+						</button>
 					</div>
 				</div>
-
-				<div class="flex gap-2">
-					<button
-						type="button"
-						onclick={() => { editingPrepayment = false; }}
-						class="flex-1 rounded-xl border-2 border-neutral-300 bg-white px-4 py-3 font-bold text-neutral-700 transition-all hover:bg-neutral-50 active:scale-95"
-					>
-						{t('common.cancel')}
-					</button>
-					<button
-						type="submit"
-						disabled={savingPrepayment}
-						class="flex-1 rounded-xl bg-accent-600 px-4 py-3 font-bold text-white transition-all hover:bg-accent-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						{savingPrepayment ? t('common.saving') : t('common.save')}
-					</button>
-				</div>
 			</form>
-		{:else}
-			<!-- Read mode -->
-			<div class="flex items-center justify-between rounded-lg bg-neutral-50 px-4 py-3">
-				<span class="text-sm font-semibold text-neutral-700">Bereits überwiesen</span>
-				<span class="text-lg font-bold text-neutral-900">{formatEuro(data.month.total_transfer_this_month)}</span>
+		{/if}
+
+		<!-- Transfers List -->
+		{#if data.transfers && data.transfers.length > 0}
+			<div class="space-y-2">
+				<p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Überweisungen</p>
+				{#each data.transfers as transfer}
+					<div class="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3">
+						<div class="flex-1">
+							<p class="text-sm font-medium text-neutral-900">
+								{transfer.description || 'Zahlung'}
+							</p>
+							<p class="text-xs text-neutral-500">
+								{new Date(transfer.createdAt).toLocaleString('de-DE', { 
+									day: '2-digit', 
+									month: '2-digit',
+									year: 'numeric',
+									hour: '2-digit', 
+									minute: '2-digit' 
+								})}
+							</p>
+						</div>
+						<div class="flex items-center gap-3">
+							<span class="text-lg font-bold text-neutral-900">{formatEuro(transfer.amount)}</span>
+							<form
+								method="POST"
+								action="?/deleteTransfer"
+								use:enhance={() => {
+									deletingTransferId = transfer.id;
+									const scrollY = window.scrollY;
+									return async ({ result, update }) => {
+										await update();
+										deletingTransferId = null;
+										requestAnimationFrame(() => window.scrollTo(0, scrollY));
+									};
+								}}
+							>
+								<input type="hidden" name="transferId" value={transfer.id} />
+								<button
+									type="submit"
+									disabled={deletingTransferId === transfer.id}
+									onclick={() => confirm('Zahlung wirklich löschen?')}
+									class="rounded-lg p-2 text-danger-600 transition-colors hover:bg-danger-50 active:scale-95 disabled:opacity-50"
+									aria-label="Zahlung löschen"
+								>
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									</svg>
+								</button>
+							</form>
+						</div>
+					</div>
+				{/each}
+			</div>
+			
+			<!-- Total -->
+			<div class="mt-4 flex items-center justify-between rounded-lg bg-accent-100 px-4 py-3">
+				<span class="text-sm font-bold uppercase tracking-wide text-accent-700">Gesamt überwiesen</span>
+				<span class="text-xl font-black text-accent-900">{formatEuro(data.computed.prepaymentThisMonth)}</span>
+			</div>
+		{:else if !showAddTransfer}
+			<div class="rounded-lg border-2 border-dashed border-neutral-200 bg-neutral-50 px-4 py-6 text-center">
+				<p class="text-sm text-neutral-600">Noch keine Zahlungen erfasst</p>
+				<p class="mt-1 text-xs text-neutral-500">Klicke auf "+ Zahlung" um eine Überweisung hinzuzufügen</p>
 			</div>
 		{/if}
 	</div>

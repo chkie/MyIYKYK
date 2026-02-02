@@ -5,7 +5,7 @@ import { getSupabaseServerClient } from './supabase.js';
 
 export interface HistoryPosition {
 	id: string;
-	type: 'private_expense' | 'fixed_item';
+	type: 'private_expense' | 'fixed_item' | 'transfer';
 	description: string;
 	amount: number;
 	createdAt: string;
@@ -64,7 +64,20 @@ export async function getMonthHistory(
 		items = itemsData || [];
 	}
 
-	// 4. Map to HistoryPosition with creator names
+	// 4. Fetch transfers with created_by
+	const { data: transfersData, error: transfersError } = await supabase
+		.from('transfers')
+		.select('id, amount, description, created_at, created_by')
+		.eq('month_id', monthId)
+		.order('created_at', { ascending: false });
+
+	if (transfersError) {
+		throw new Error(`Failed to fetch transfers: ${transfersError.message}`);
+	}
+
+	const transfers = transfersData || [];
+
+	// 5. Map to HistoryPosition with creator names
 	const expensePositions: HistoryPosition[] = (expenses || []).map((exp) => ({
 		id: exp.id,
 		type: 'private_expense' as const,
@@ -85,7 +98,17 @@ export async function getMonthHistory(
 		createdByName: item.created_by ? profileMap.get(item.created_by) || null : null
 	}));
 
-	const allPositions = [...expensePositions, ...itemPositions].sort(
+	const transferPositions: HistoryPosition[] = transfers.map((transfer) => ({
+		id: transfer.id,
+		type: 'transfer' as const,
+		description: transfer.description || 'Zahlung',
+		amount: Number(transfer.amount),
+		createdAt: transfer.created_at,
+		createdBy: transfer.created_by,
+		createdByName: transfer.created_by ? profileMap.get(transfer.created_by) || null : null
+	}));
+
+	const allPositions = [...expensePositions, ...itemPositions, ...transferPositions].sort(
 		(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 	);
 
