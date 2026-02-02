@@ -31,6 +31,49 @@
 	function getMonthName(monthNumber: number): string {
 		return monthNames[monthNumber - 1] || '';
 	}
+
+	// Edit mode for balance start
+	let editingBalanceStart = $state(false);
+	let balanceStartInput = $state(data.computed.privateBalanceStart);
+	let savingBalanceStart = $state(false);
+
+	function startEditBalanceStart() {
+		balanceStartInput = data.computed.privateBalanceStart;
+		editingBalanceStart = true;
+	}
+
+	function cancelEditBalanceStart() {
+		editingBalanceStart = false;
+		balanceStartInput = data.computed.privateBalanceStart;
+	}
+
+	async function saveBalanceStart() {
+		savingBalanceStart = true;
+		try {
+			const formData = new FormData();
+			formData.append('monthId', data.month.id);
+			formData.append('balanceStart', balanceStartInput.toString());
+
+			const response = await fetch('?/saveBalanceStart', {
+				method: 'POST',
+				body: formData
+			});
+
+			if (response.ok) {
+				editingBalanceStart = false;
+				// Reload page data
+				window.location.reload();
+			} else {
+				const result = await response.json();
+				alert(result?.error || 'Fehler beim Speichern');
+			}
+		} catch (err) {
+			console.error('Error saving balance start:', err);
+			alert('Fehler beim Speichern');
+		} finally {
+			savingBalanceStart = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -126,14 +169,64 @@
 
 	<!-- Vom Vormonat -->
 	<div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
-		<div class="px-4 py-3">
+		<div class="px-4 py-3 flex items-center justify-between">
 			<p class="text-sm font-semibold uppercase tracking-wide text-neutral-700">Vormonat</p>
+			{#if !editingBalanceStart}
+				<button
+					onclick={startEditBalanceStart}
+					class="text-neutral-400 hover:text-primary-600 transition-colors"
+					aria-label="Startsaldo bearbeiten"
+				>
+					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+					</svg>
+				</button>
+			{/if}
 		</div>
 		<div class="px-4 pb-4">
-			<p class="text-2xl font-bold {data.computed.privateBalanceStart > 0 ? 'text-danger-600' : data.computed.privateBalanceStart < 0 ? 'text-success-600' : 'text-neutral-600'}">
-				{formatEuro(data.computed.privateBalanceStart)}
-			</p>
-			<p class="mt-1 text-xs text-neutral-600">Startsaldo</p>
+			{#if editingBalanceStart}
+				<!-- Edit Mode -->
+				<div class="space-y-3">
+					<div>
+						<label for="balanceStartInput" class="block text-xs font-medium text-neutral-700 mb-1">
+							Startsaldo festlegen
+						</label>
+						<input
+							id="balanceStartInput"
+							type="number"
+							step="0.01"
+							bind:value={balanceStartInput}
+							class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+							placeholder="0.00"
+						/>
+						<p class="mt-1 text-xs text-neutral-500">
+							Positiv = Du schuldest Steffi • Negativ = Steffi schuldet Dir
+						</p>
+					</div>
+					<div class="flex gap-2">
+						<button
+							onclick={saveBalanceStart}
+							disabled={savingBalanceStart}
+							class="flex-1 rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+						>
+							{savingBalanceStart ? 'Speichere...' : '✓ Speichern'}
+						</button>
+						<button
+							onclick={cancelEditBalanceStart}
+							disabled={savingBalanceStart}
+							class="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 active:scale-95 disabled:opacity-50 transition-all"
+						>
+							Abbrechen
+						</button>
+					</div>
+				</div>
+			{:else}
+				<!-- Display Mode -->
+				<p class="text-2xl font-bold {data.computed.privateBalanceStart > 0 ? 'text-danger-600' : data.computed.privateBalanceStart < 0 ? 'text-success-600' : 'text-neutral-600'}">
+					{formatEuro(data.computed.privateBalanceStart)}
+				</p>
+				<p class="mt-1 text-xs text-neutral-600">Startsaldo</p>
+			{/if}
 		</div>
 	</div>
 </div>
@@ -229,6 +322,12 @@
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 									</svg>
 								</div>
+							{:else if position.type === 'transfer'}
+								<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 text-green-600 shrink-0">
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+									</svg>
+								</div>
 							{:else}
 								<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 shrink-0">
 									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,7 +367,7 @@
 						<div class="text-right ml-3 shrink-0">
 							<p class="text-sm font-bold text-neutral-900">{formatEuro(position.amount)}</p>
 							<p class="text-xs text-neutral-500">
-								{position.type === 'private_expense' ? 'Privat' : 'Fix'}
+								{position.type === 'private_expense' ? 'Privat' : position.type === 'transfer' ? 'Zahlung' : 'Fix'}
 							</p>
 						</div>
 					</div>

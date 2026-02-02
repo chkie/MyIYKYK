@@ -248,6 +248,38 @@ export async function updateMonthIncomes(
 }
 
 /**
+ * Updates the private balance start for a month.
+ * This is typically used to set an initial balance for the first month.
+ *
+ * @param monthId - The month ID (UUID)
+ * @param privateBalanceStart - The starting balance (can be positive or negative)
+ * @throws {Error} If validation fails or database operation fails
+ */
+export async function updateMonthBalanceStart(
+	monthId: string,
+	privateBalanceStart: number
+): Promise<void> {
+	const supabase = getSupabaseServerClient();
+
+	// Validation
+	if (!Number.isFinite(privateBalanceStart)) {
+		throw new Error('Private balance start must be a valid number');
+	}
+
+	// Round to 2 decimals
+	const roundedBalance = Math.round(privateBalanceStart * 100) / 100;
+
+	const { error } = await supabase
+		.from('months')
+		.update({ private_balance_start: roundedBalance })
+		.eq('id', monthId);
+
+	if (error) {
+		throw new Error(`Failed to update month balance start: ${error.message}`);
+	}
+}
+
+/**
  * Closes a month by setting status to 'closed' and recording the final balance.
  *
  * @param monthId - The month ID (UUID)
