@@ -26,7 +26,7 @@ export async function listTransfers(monthId: string): Promise<Transfer[]> {
 
 	const { data: transfers, error } = await supabase
 		.from('transfers')
-		.select('*')
+		.select('id, month_id, amount, description, created_at, created_by')
 		.eq('month_id', monthId)
 		.order('created_at', { ascending: false });
 

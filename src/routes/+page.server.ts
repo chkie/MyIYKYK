@@ -36,10 +36,11 @@ import type { Actions, PageServerLoad } from './$types.js';
  *
  * Gets or creates current month and ensures month_incomes exist.
  */
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, parent, depends }) => {
 	try {
-		// Get server-only Supabase client
-		const supabase = getSupabaseServerClient();
+		// Allow targeted re-runs via invalidate('app:month') (mutating actions)
+		// without re-running the layout load (profiles don't change per mutation).
+		depends('app:month');
 
 		// 1. Get or create current month (MUST be first - needed for month.id)
 		const month = await getOrCreateCurrentMonth();
@@ -47,27 +48,24 @@ export const load: PageServerLoad = async ({ url }) => {
 		// 2. Ensure month_incomes exist for all profiles (depends on month.id)
 		const incomes = await ensureMonthIncomes(month.id);
 
+		// Profiles come from the layout load (deduped) — never refetched here.
+		const { profiles } = await parent();
+
 		// Check if full history is requested
 		const showFullHistory = url.searchParams.get('history') === 'full';
 
 		// 3-8. PARALLEL QUERIES (all depend on month.id but not on each other)
-		const [profilesResult, fixedCategories, privateExpenses, transfers, closedMonths, history] =
-			await Promise.all([
-				supabase.from('profiles').select('id, role, name').order('role', { ascending: true }),
+		const [fixedCategories, privateExpenses, transfers, closedMonths, history] = await Promise.all(
+			[
 				listFixedCategoriesWithItems(month.id),
 				listPrivateExpenses(month.id),
 				listTransfers(month.id),
 				listClosedMonths(12),
-				getMonthHistory(month.id, month.year, month.month, { includeFull: showFullHistory })
-			]);
-
-		// Handle profiles error
-		if (profilesResult.error) {
-			console.error('Supabase error:', profilesResult.error);
-			throw error(500, `Database error: ${profilesResult.error.message}`);
-		}
-
-		const profiles = profilesResult.data;
+				getMonthHistory(month.id, month.year, month.month, profiles, {
+					includeFull: showFullHistory
+				})
+			]
+		);
 
 		// DEBUG: Log what we got
 		console.log('🔍 DEBUG - Fixed Categories loaded:', {

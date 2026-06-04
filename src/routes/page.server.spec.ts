@@ -134,6 +134,18 @@ function setupMocks(overrides: any = {}) {
 	vi.mocked(historyModule.getMonthHistory).mockResolvedValue(fixtures.history as any);
 }
 
+/**
+ * Calls the home-page load with mocked SvelteKit load args.
+ * `parent()` supplies profiles (deduped from the layout load); `depends()` is a noop.
+ */
+function callLoad(profiles: any = FIXTURES.profiles, url = 'http://localhost:5173') {
+	return load({
+		url: new URL(url),
+		parent: async () => ({ isAuthenticated: true, profiles }),
+		depends: () => {}
+	} as unknown as Parameters<typeof load>[0]);
+}
+
 // ============================================================================
 // Tests: Integration – Server Load
 // ============================================================================
@@ -172,9 +184,7 @@ describe('Integration: Home Page Server Load', () => {
 			}
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
-			typeof load
-		>[0]);
+		const result = await callLoad();
 		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify computed values
@@ -214,9 +224,7 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
-			typeof load
-		>[0]);
+		const result = await callLoad();
 		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify prepayment is applied
@@ -253,9 +261,7 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
-			typeof load
-		>[0]);
+		const result = await callLoad();
 		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify overpayment creates credit (negative balance)
@@ -285,9 +291,7 @@ describe('Integration: Home Page Server Load', () => {
 			}
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
-			typeof load
-		>[0]);
+		const result = await callLoad();
 		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify carryover is included
@@ -330,9 +334,7 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
-			typeof load
-		>[0]);
+		const result = await callLoad();
 		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Anteil: 3000 / 5000 = 0.6 (60%)
@@ -376,9 +378,7 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
-			typeof load
-		>[0]);
+		const result = await callLoad();
 		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify complete calculation
@@ -407,9 +407,7 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
-			typeof load
-		>[0]);
+		const result = await callLoad();
 		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Fallback: 50/50
@@ -443,9 +441,7 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
-			typeof load
-		>[0]);
+		const result = await callLoad();
 		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify Number() conversion works

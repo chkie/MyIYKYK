@@ -20,7 +20,7 @@ export async function listPrivateExpenses(monthId: string) {
 
 	const { data: expenses, error } = await supabase
 		.from('private_expenses')
-		.select('*')
+		.select('id, month_id, date, description, amount')
 		.eq('month_id', monthId)
 		.order('date', { ascending: false })
 		.order('created_at', { ascending: false });
