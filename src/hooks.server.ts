@@ -12,9 +12,15 @@ import type { Handle } from '@sveltejs/kit';
 export const handle: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
+	// Preload latin woff2 fonts (in addition to SvelteKit's default js/css)
+	// → emits <link rel="preload" as="font" crossorigin> with correct hashed paths.
+	const opts: Parameters<typeof resolve>[1] = {
+		preload: ({ type }) => type === 'js' || type === 'css' || type === 'font'
+	};
+
 	// Allow access to /login without authentication
 	if (pathname.startsWith('/login')) {
-		return resolve(event);
+		return resolve(event, opts);
 	}
 
 	// Check for auth cookie
@@ -26,5 +32,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	// User is authenticated, proceed
-	return resolve(event);
+	return resolve(event, opts);
 };
