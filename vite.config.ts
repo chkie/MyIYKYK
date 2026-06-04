@@ -28,17 +28,10 @@ export default defineConfig({
 						if (id.includes('@sveltejs') || id.includes('svelte')) {
 							return 'vendor-svelte';
 						}
-						// Fonts (large, rarely changes)
-						if (id.includes('@fontsource')) {
-							return 'vendor-fonts';
-						}
 						// Other vendor code
 						return 'vendor';
 					}
-				},
-				// Optimize chunk names for better caching
-				chunkFileNames: '_app/immutable/chunks/[name]-[hash].js',
-				assetFileNames: '_app/immutable/assets/[name]-[hash][extname]'
+				}
 			}
 		}
 	},

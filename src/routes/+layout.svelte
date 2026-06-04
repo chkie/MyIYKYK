@@ -6,7 +6,7 @@
 	import ConfirmSheet from '$lib/components/ConfirmSheet.svelte';
 	import { askConfirm } from '$lib/utils/confirm.svelte.js';
 	import { profileStore } from '$lib/stores/profile.svelte';
-	import { page, navigating } from '$app/stores';
+	import { page, navigating } from '$app/state';
 	import { onNavigate } from '$app/navigation';
 	import { browser, dev } from '$app/environment';
 	import { onMount, type Snippet } from 'svelte';
@@ -70,7 +70,7 @@
 	});
 
 	// Check if we're on login page - SSR safe
-	let currentPath = $derived($page.url.pathname);
+	let currentPath = $derived(page.url.pathname);
 	let isLoginPage = $derived(currentPath === '/login');
 
 	// Show profile selector ONLY if:
@@ -88,21 +88,6 @@
 			data?.profiles?.length > 0
 	);
 
-	// 🔍 DEBUG: Log all conditions
-	$effect(() => {
-		if (browser && dev) {
-			console.log('=== ProfileSelector Conditions ===');
-			console.log('browser:', browser);
-			console.log('isAuthenticated:', data.isAuthenticated);
-			console.log('isInitialized:', profileStore.isInitialized);
-			console.log('hasProfile:', profileStore.hasProfile);
-			console.log('isLoginPage:', isLoginPage);
-			console.log('profiles.length:', data?.profiles?.length);
-			console.log('→ showProfileSelector:', showProfileSelector);
-			console.log('localStorage:', localStorage.getItem('myiykyk_profile'));
-		}
-	});
-
 	// Always show nav except on login page
 	let showNav = $derived(!isLoginPage);
 </script>
@@ -113,7 +98,7 @@
 
 <div class="flex min-h-screen flex-col bg-neutral-50">
 	<!-- Navigations-Fortschrittsbalken (beseitigt "dead tap"-Gefühl) -->
-	{#if $navigating}
+	{#if navigating.to}
 		<div class="nav-progress" role="status" aria-label="Seite wird geladen"></div>
 	{/if}
 

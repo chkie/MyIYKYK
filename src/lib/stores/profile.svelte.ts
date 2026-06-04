@@ -5,7 +5,7 @@
 
 let currentProfileId = $state<string | null>(null);
 let currentProfileName = $state<string | null>(null);
-const isInitialized = $state(typeof window !== 'undefined'); // SSR-safe: true on client, false on server
+let isInitialized = $state(false); // SSR-safe: bleibt false bis localStorage gelesen ist
 
 // Load from localStorage on client
 if (typeof window !== 'undefined') {
@@ -19,6 +19,7 @@ if (typeof window !== 'undefined') {
 			console.error('Failed to parse stored profile:', e);
 		}
 	}
+	isInitialized = true; // localStorage read complete → profile-gated UI darf evaluieren
 }
 
 export const profileStore = {
