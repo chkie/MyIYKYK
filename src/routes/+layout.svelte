@@ -4,7 +4,8 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ProfileSelector from '$lib/components/ProfileSelector.svelte';
 	import { profileStore } from '$lib/stores/profile.svelte';
-	import { page } from '$app/stores';
+	import { page, navigating } from '$app/stores';
+	import { onNavigate } from '$app/navigation';
 	import { browser, dev } from '$app/environment';
 	import { onMount, type Snippet } from 'svelte';
 
@@ -55,6 +56,17 @@
 		}
 	});
 
+	// Cross-Fade zwischen Seiten via View Transitions (Browser-Support vorausgesetzt)
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
+
 	// Check if we're on login page - SSR safe
 	let currentPath = $derived($page.url.pathname);
 	let isLoginPage = $derived(currentPath === '/login');
@@ -98,6 +110,11 @@
 </svelte:head>
 
 <div class="flex min-h-screen flex-col bg-neutral-50">
+	<!-- Navigations-Fortschrittsbalken (beseitigt "dead tap"-Gefühl) -->
+	{#if $navigating}
+		<div class="nav-progress" role="status" aria-label="Seite wird geladen"></div>
+	{/if}
+
 	<!-- Profile Selector Overlay (only client-side) -->
 	{#if showProfileSelector && data?.profiles}
 		<ProfileSelector profiles={data.profiles} />
@@ -137,7 +154,7 @@
 								href="/archiv"
 								class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-3 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
 								aria-label="Archiv"
-								data-sveltekit-preload-code="off"
+								data-sveltekit-preload-code="viewport"
 							>
 								<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path

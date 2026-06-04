@@ -59,7 +59,7 @@
 					)
 						? 'text-primary-600'
 						: 'text-neutral-600 hover:text-neutral-700'}"
-					data-sveltekit-preload-data="hover"
+					data-sveltekit-preload-data="tap"
 					data-sveltekit-preload-code="viewport"
 					data-sveltekit-noscroll
 					onclick={() => hapticSelection()}
