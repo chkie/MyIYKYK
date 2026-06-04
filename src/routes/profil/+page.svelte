@@ -12,6 +12,11 @@
 	type TransferRow = PageData['transfers'][number];
 	const optimistic = new OptimisticList<TransferRow & { pending?: boolean }>();
 	const displayedTransfers = $derived(optimistic.merge(data.transfers ?? []));
+	// Total tracks the optimistic list so it updates instantly too
+	// (prepaymentThisMonth is server-side just the sum of transfer amounts).
+	const optimisticTransferTotal = $derived(
+		Math.round(displayedTransfers.reduce((sum, transfer) => sum + transfer.amount, 0) * 100) / 100
+	);
 
 	// Currency formatter (cached — avoid re-instantiating Intl on every call)
 	const euroFormatter = new Intl.NumberFormat('de-DE', {
@@ -498,8 +503,7 @@
 				<span class="text-accent-700 text-sm font-bold tracking-wide uppercase"
 					>Gesamt überwiesen</span
 				>
-				<span class="text-accent-900 text-xl font-black"
-					>{formatEuro(data.computed.prepaymentThisMonth)}</span
+				<span class="text-accent-900 text-xl font-black">{formatEuro(optimisticTransferTotal)}</span
 				>
 			</div>
 		{:else if !showAddTransfer}

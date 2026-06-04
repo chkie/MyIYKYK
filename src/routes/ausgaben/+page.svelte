@@ -123,6 +123,12 @@
 			return dateB - dateA;
 		})
 	);
+
+	// Summary tracks the optimistic list so the total/count update instantly too
+	// (privateAddedThisMonth is server-side just the sum of expense amounts).
+	const optimisticAddedThisMonth = $derived(
+		Math.round(sortedExpenses.reduce((sum, e) => sum + e.amount, 0) * 100) / 100
+	);
 </script>
 
 <svelte:head>
@@ -138,11 +144,11 @@
 	</div>
 	<div class="p-5">
 		<p class="text-warning-600 text-4xl font-black">
-			{formatEuro(data.computed.privateAddedThisMonth)}
+			{formatEuro(optimisticAddedThisMonth)}
 		</p>
 		<p class="mt-2 text-sm font-medium text-neutral-600">
-			{data.privateExpenses.length}
-			{data.privateExpenses.length === 1 ? 'Ausgabe' : 'Ausgaben'}
+			{sortedExpenses.length}
+			{sortedExpenses.length === 1 ? 'Ausgabe' : 'Ausgaben'}
 		</p>
 	</div>
 </div>
