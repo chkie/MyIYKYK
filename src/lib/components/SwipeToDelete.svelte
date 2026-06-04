@@ -71,7 +71,9 @@
 	<!-- Content (swipeable) -->
 	<div
 		class="relative transition-transform {isSwiping ? 'duration-0' : 'duration-300 ease-out'}"
-		style="transform: {transform}"
+		style="transform: {transform}; touch-action: pan-y; will-change: {isSwiping
+			? 'transform'
+			: 'auto'};"
 		ontouchstart={handleTouchStart}
 		ontouchmove={handleTouchMove}
 		ontouchend={handleTouchEnd}

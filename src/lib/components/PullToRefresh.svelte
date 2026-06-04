@@ -28,10 +28,11 @@
 		if (!isPulling || isRefreshing) return;
 		currentY = e.touches[0].clientY;
 
-		// Prevent default scroll if pulling down at top
-		if (pullDistance > 0) {
-			e.preventDefault();
-		}
+		// Kein e.preventDefault() hier: Svelte 5 hängt `ontouchmove` IMMER als
+		// passiven Listener an (delegated, PASSIVE_EVENTS = ['touchstart','touchmove'])
+		// → preventDefault wäre ein No-op. Das hält den Scroll-Thread ohnehin frei
+		// (= gewünschtes Native-Verhalten). Native Overscroll-Bounce verhindert
+		// `overscroll-behavior-y: none` am <body> (layout.css). Siehe LL-2026-06-04-01.
 	}
 
 	async function handleTouchEnd() {
