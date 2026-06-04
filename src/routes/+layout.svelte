@@ -10,13 +10,44 @@
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
+	// Service-Worker-Update-Flow: Toast anzeigen, wenn eine neue Version wartet
+	let updateReady = $state(false);
+	let waitingWorker: ServiceWorker | null = null;
+
+	function applyUpdate() {
+		updateReady = false;
+		// SW übernimmt nach SKIP_WAITING → controllerchange triggert Reload
+		(waitingWorker ?? navigator.serviceWorker.controller)?.postMessage('SKIP_WAITING');
+	}
+
 	// Register Service Worker (only in production)
 	onMount(() => {
 		if (browser && import.meta.env.PROD && 'serviceWorker' in navigator) {
+			let refreshing = false;
+			navigator.serviceWorker.addEventListener('controllerchange', () => {
+				if (refreshing) return;
+				refreshing = true;
+				window.location.reload();
+			});
+
 			navigator.serviceWorker
 				.register('/sw.js')
 				.then((registration) => {
 					console.log('SW registered:', registration.scope);
+					// Falls beim Laden bereits ein neuer SW wartet
+					if (registration.waiting && navigator.serviceWorker.controller) {
+						waitingWorker = registration.waiting;
+						updateReady = true;
+					}
+					registration.addEventListener('updatefound', () => {
+						const nw = registration.installing;
+						nw?.addEventListener('statechange', () => {
+							if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+								waitingWorker = registration.waiting;
+								updateReady = true;
+							}
+						});
+					});
 				})
 				.catch((error) => {
 					console.warn('SW registration failed:', error);
@@ -141,7 +172,7 @@
 		{/if}
 
 		<!-- Main Content with Bottom Padding for Nav -->
-		<main class="flex-1 pb-20">
+		<main class="app-main flex-1">
 			<div class="mx-auto max-w-2xl px-4 py-6">
 				{@render children()}
 			</div>
@@ -150,6 +181,16 @@
 		<!-- Bottom Navigation - Always show except on login -->
 		{#if showNav}
 			<BottomNav />
+		{/if}
+
+		<!-- Service-Worker-Update verfügbar -->
+		{#if updateReady}
+			<div class="sw-update-toast" role="status" aria-live="polite">
+				<span class="sw-update-toast__text">Update verfügbar</span>
+				<button type="button" class="sw-update-toast__btn" onclick={applyUpdate}>
+					Neu laden
+				</button>
+			</div>
 		{/if}
 
 		<!-- 🔧 DEBUG: Floating Reset Button (TEMPORARY - Remove in production) -->
