@@ -523,12 +523,11 @@
 				action="?/closeMonth"
 				use:enhance={() => {
 					closingMonth = true;
-					return async ({ result, update }) => {
+					return async ({ update }) => {
+						// update() re-runs load → der neue offene Monat erscheint in-place,
+						// kein window.location.reload() (das verursachte einen Seiten-Blink).
 						await update();
 						closingMonth = false;
-						if (result.type === 'success') {
-							window.location.reload();
-						}
 					};
 				}}
 			>
