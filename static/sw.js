@@ -72,7 +72,7 @@ self.addEventListener('install', (event) => {
 				console.log('[SW] Pre-caching PWA assets');
 				return cache.addAll(PWA_ASSETS);
 			})
-			.catch(() => {
+			.catch((error) => {
 				console.error('[SW] Pre-cache failed:', error);
 				// Don't fail installation if pre-cache fails
 			})
