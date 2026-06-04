@@ -472,7 +472,9 @@
 								<button
 									type="submit"
 									disabled={optimistic.removing.has(transfer.id)}
-									onclick={() => confirm('Zahlung wirklich löschen?')}
+									onclick={(e) => {
+										if (!confirm('Zahlung wirklich löschen?')) e.preventDefault();
+									}}
 									class="text-danger-600 hover:bg-danger-50 rounded-lg p-2 transition-colors active:scale-95 disabled:opacity-50"
 									aria-label="Zahlung löschen"
 								>
@@ -562,7 +564,9 @@
 				<button
 					type="submit"
 					disabled={closingMonth}
-					onclick={() => confirm(t('confirm.closeMonth'))}
+					onclick={(e) => {
+						if (!confirm(t('confirm.closeMonth'))) e.preventDefault();
+					}}
 					class="bg-primary-600 hover:bg-primary-700 w-full rounded-xl px-4 py-3 font-bold text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{closingMonth ? t('common.closing') : t('profile.closeMonthButton')}
@@ -610,7 +614,10 @@
 				<button
 					type="submit"
 					disabled={resettingMonth}
-					onclick={() => confirm('ACHTUNG: Alle Daten dieses Monats werden gelöscht! Fortfahren?')}
+					onclick={(e) => {
+						if (!confirm('ACHTUNG: Alle Daten dieses Monats werden gelöscht! Fortfahren?'))
+							e.preventDefault();
+					}}
 					class="border-danger-600 bg-danger-600 hover:bg-danger-700 w-full rounded-lg border-2 px-4 py-2 font-bold text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{resettingMonth ? 'Zurücksetzen...' : '🗑️ Monat zurücksetzen'}

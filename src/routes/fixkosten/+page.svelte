@@ -664,8 +664,10 @@
 					<button
 						type="submit"
 						class="border-danger-200 bg-danger-50 text-danger-700 hover:bg-danger-100 rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all active:scale-95"
-						onclick={() =>
-							confirm(`Kategorie '${category.label}' und alle Positionen wirklich löschen?`)}
+						onclick={(e) => {
+							if (!confirm(`Kategorie '${category.label}' und alle Positionen wirklich löschen?`))
+								e.preventDefault();
+						}}
 					>
 						<svg
 							class="mr-2 inline-block h-4 w-4"
