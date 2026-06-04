@@ -3,8 +3,13 @@
 	import { enhance } from '$app/forms';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
+	import { OptimisticList } from '$lib/utils/optimistic.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Optimistic overlay for instant add/delete (reconciled in enhance callbacks).
+	type ExpenseRow = PageData['privateExpenses'][number];
+	const optimistic = new OptimisticList<ExpenseRow & { pending?: boolean }>();
 
 	// Edit state
 	let editingExpense = $state<string | null>(null);
@@ -112,11 +117,17 @@
 
 	// Sort expenses by date (newest first)
 	let sortedExpenses = $derived(
-		[...data.privateExpenses].sort((a, b) => {
-			const dateA = new Date(a.dateISO || 0).getTime();
-			const dateB = new Date(b.dateISO || 0).getTime();
+		optimistic.merge(data.privateExpenses).sort((a, b) => {
+			const dateA = new Date(a.date || 0).getTime();
+			const dateB = new Date(b.date || 0).getTime();
 			return dateB - dateA;
 		})
+	);
+
+	// Summary tracks the optimistic list so the total/count update instantly too
+	// (privateAddedThisMonth is server-side just the sum of expense amounts).
+	const optimisticAddedThisMonth = $derived(
+		Math.round(sortedExpenses.reduce((sum, e) => sum + e.amount, 0) * 100) / 100
 	);
 </script>
 
@@ -133,11 +144,11 @@
 	</div>
 	<div class="p-5">
 		<p class="text-warning-600 text-4xl font-black">
-			{formatEuro(data.computed.privateAddedThisMonth)}
+			{formatEuro(optimisticAddedThisMonth)}
 		</p>
 		<p class="mt-2 text-sm font-medium text-neutral-600">
-			{data.privateExpenses.length}
-			{data.privateExpenses.length === 1 ? 'Ausgabe' : 'Ausgaben'}
+			{sortedExpenses.length}
+			{sortedExpenses.length === 1 ? 'Ausgabe' : 'Ausgaben'}
 		</p>
 	</div>
 </div>
@@ -164,16 +175,31 @@
 			use:enhance={() => {
 				isSubmitting = true;
 				const scrollY = window.scrollY;
+				// Optimistic insert: show the new row instantly, reset + close the form.
+				const snapshot = { ...newExpenseData };
+				const tempId = crypto.randomUUID();
+				optimistic.add({
+					id: tempId,
+					monthId: data.month.id,
+					date: snapshot.dateISO,
+					description: snapshot.description,
+					amount: Number(snapshot.amount) || 0,
+					pending: true
+				});
+				newExpenseData = {
+					dateISO: new Date().toISOString().split('T')[0],
+					description: '',
+					amount: ''
+				};
+				showNewExpenseForm = false;
 				return async ({ result, update }) => {
-					await update();
+					await update({ reset: false });
 					isSubmitting = false;
-					if (result.type === 'success') {
-						newExpenseData = {
-							dateISO: new Date().toISOString().split('T')[0],
-							description: '',
-							amount: ''
-						};
-						showNewExpenseForm = false;
+					optimistic.dropPending(tempId);
+					if (result.type !== 'success') {
+						// Rollback: reopen the form with the entered values.
+						newExpenseData = snapshot;
+						showNewExpenseForm = true;
 					}
 					// Restore scroll position
 					requestAnimationFrame(() => window.scrollTo(0, scrollY));
@@ -410,7 +436,11 @@
 						}
 					}}
 				>
-					<div class="overflow-hidden rounded-xl border-2 border-neutral-200 bg-white shadow-sm">
+					<div
+						class="overflow-hidden rounded-xl border-2 border-neutral-200 bg-white shadow-sm {expense.pending
+							? 'opacity-60'
+							: ''}"
+					>
 						<div class="flex items-center justify-between p-4">
 							<div class="min-w-0 flex-1">
 								<h3 class="truncate text-lg font-semibold text-neutral-900">
@@ -430,7 +460,7 @@
 											d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
 										/>
 									</svg>
-									<span class="truncate">{formatDate(expense.dateISO)}</span>
+									<span class="truncate">{formatDate(expense.date)}</span>
 								</div>
 							</div>
 							<div class="ml-4 shrink-0 text-right">
@@ -446,8 +476,11 @@
 						action="?/deletePrivateExpense"
 						use:enhance={() => {
 							const scrollY = window.scrollY;
+							// Optimistic delete: hide the row instantly, restore on failure.
+							optimistic.markRemoving(expense.id);
 							return async ({ update }) => {
-								await update();
+								await update({ reset: false });
+								optimistic.unmarkRemoving(expense.id);
 								requestAnimationFrame(() => window.scrollTo(0, scrollY));
 							};
 						}}
