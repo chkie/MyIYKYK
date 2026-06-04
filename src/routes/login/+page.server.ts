@@ -5,7 +5,7 @@ import type { Actions } from './$types.js';
 
 /**
  * Login action handler.
- * 
+ *
  * Validates password against ADMIN_PASSWORD environment variable.
  * Sets httpOnly auth cookie on success.
  */
@@ -53,4 +53,3 @@ export const actions: Actions = {
 		throw redirect(303, '/');
 	}
 };
-

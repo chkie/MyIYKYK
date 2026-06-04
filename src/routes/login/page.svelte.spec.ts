@@ -65,4 +65,3 @@ describe('Login Page - Apple Keychain/Touch ID Integration (Source Code)', () =>
 		expect(pageSource).toContain('Anmelden');
 	});
 });
-

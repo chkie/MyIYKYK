@@ -16,7 +16,7 @@ import { calculateMonth } from '$lib/domain/finance';
 describe('Workflow Integration: Complete Month Lifecycle', () => {
 	/**
 	 * WORKFLOW TEST W1-P0: Vollständiger 2-Monats-Zyklus mit Carryover
-	 * 
+	 *
 	 * Szenario:
 	 * - Monat 1: Gehälter 3000/2000, Fixkosten 1000€ (income), Privatausgaben 200€, Vorauszahlung 400€
 	 * - Erwartung: Balance -400€ (Carryover für Monat 2)
@@ -73,7 +73,7 @@ describe('Workflow Integration: Complete Month Lifecycle', () => {
 		expect(month1Result.myFixedShare).toBe(600); // 1000 × 0.6
 		expect(month1Result.fixedCostDue).toBe(600); // Income-Mode: 60%
 		expect(month1Result.privateTotalDueBeforePrepayment).toBe(800); // 0 + 200 + 600
-		
+
 		// Vorauszahlung 400€ → Shortfall 400€
 		expect(month1Result.fixedCostShortfall).toBe(200); // 600 - 400
 		expect(month1Result.privateBalanceEnd).toBe(400); // 0 + 200 + 600 - 400
@@ -122,7 +122,7 @@ describe('Workflow Integration: Complete Month Lifecycle', () => {
 		expect(month2Result.shareMe).toBeCloseTo(0.6, 5);
 		expect(month2Result.myFixedShare).toBe(600);
 		expect(month2Result.fixedCostDue).toBe(600);
-		
+
 		// Gesamtschuld: 400 (Carryover) + 0 (keine priv. Ausgaben) + 600 (Fixkosten) - 600 (Vorauszahlung)
 		expect(month2Result.privateTotalDueBeforePrepayment).toBe(1000); // 400 + 600
 		expect(month2Result.privateBalanceEnd).toBe(400); // 400 + 600 - 600
@@ -133,7 +133,7 @@ describe('Workflow Integration: Complete Month Lifecycle', () => {
 
 	/**
 	 * WORKFLOW TEST W2-P0: splitMode='me' in Lifecycle
-	 * 
+	 *
 	 * Testet, dass 'me'-Kosten korrekt als 100% Schuld gewertet werden über 2 Monate
 	 */
 	it('W2-P0: splitMode=me creates full debt in multi-month cycle', () => {
@@ -190,7 +190,7 @@ describe('Workflow Integration: Complete Month Lifecycle', () => {
 
 	/**
 	 * WORKFLOW TEST W3-P1: Mixed Split-Modes über 2 Monate
-	 * 
+	 *
 	 * Kombination: income + me + partner über Lifecycle
 	 */
 	it('W3-P1: Mixed split-modes across months with carryover', () => {
@@ -210,9 +210,7 @@ describe('Workflow Integration: Complete Month Lifecycle', () => {
 					]
 				}
 			],
-			privateExpenses: [
-				{ id: 'p1', label: 'Einkauf', amount: 100, createdBy: 'me' }
-			],
+			privateExpenses: [{ id: 'p1', label: 'Einkauf', amount: 100, createdBy: 'me' }],
 			privateBalanceStart: 0,
 			prepaymentThisMonth: 500
 		};
@@ -261,7 +259,7 @@ describe('Workflow Integration: Complete Month Lifecycle', () => {
 
 	/**
 	 * WORKFLOW TEST W4-P1: Overpayment Lifecycle
-	 * 
+	 *
 	 * Christian zahlt zu viel vor → Guthaben im nächsten Monat
 	 */
 	it('W4-P1: Overpayment creates negative balance (credit) in next month', () => {
@@ -274,9 +272,7 @@ describe('Workflow Integration: Complete Month Lifecycle', () => {
 					id: 'c1',
 					label: 'Wohnen',
 					sortOrder: 0,
-					items: [
-						{ id: 'i1', label: 'Miete', amount: 1000, splitMode: 'income', isDefault: true }
-					]
+					items: [{ id: 'i1', label: 'Miete', amount: 1000, splitMode: 'income', isDefault: true }]
 				}
 			],
 			privateExpenses: [],

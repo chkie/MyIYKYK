@@ -233,9 +233,7 @@ export async function copyTemplatesToMonth(monthId: string): Promise<void> {
 				template_item_id: item.id
 			}));
 
-			const { error: itemsError } = await supabase
-				.from('fixed_items')
-				.insert(itemsToInsert);
+			const { error: itemsError } = await supabase.from('fixed_items').insert(itemsToInsert);
 
 			if (itemsError) {
 				throw new Error(`Failed to copy template items: ${itemsError.message}`);
@@ -247,7 +245,7 @@ export async function copyTemplatesToMonth(monthId: string): Promise<void> {
 /**
  * Copy all fixed costs (categories + items) from previous month to new month
  * This preserves all manually entered amounts and categories
- * 
+ *
  * @param previousMonthId - The previous (closed) month ID to copy from
  * @param newMonthId - The new month ID to copy to
  * @throws {Error} If database operation fails
@@ -258,7 +256,9 @@ export async function copyFixedCostsFromLastMonth(
 ): Promise<void> {
 	const supabase = getSupabaseServerClient();
 
-	console.log(`📋 Copying fixed costs from previous month (${previousMonthId}) to new month (${newMonthId})...`);
+	console.log(
+		`📋 Copying fixed costs from previous month (${previousMonthId}) to new month (${newMonthId})...`
+	);
 
 	// 1. Get ONLY template-based categories from previous month (not manually created ones)
 	const { data: previousCategories, error: categoriesError } = await supabase
@@ -311,7 +311,9 @@ export async function copyFixedCostsFromLastMonth(
 			.single();
 
 		if (newCategoryError || !newCategory) {
-			throw new Error(`Failed to copy category "${previousCategory.label}": ${newCategoryError?.message}`);
+			throw new Error(
+				`Failed to copy category "${previousCategory.label}": ${newCategoryError?.message}`
+			);
 		}
 
 		// Get items for this category
@@ -331,18 +333,19 @@ export async function copyFixedCostsFromLastMonth(
 				created_by: item.created_by
 			}));
 
-			const { error: insertItemsError } = await supabase
-				.from('fixed_items')
-				.insert(itemsToInsert);
+			const { error: insertItemsError } = await supabase.from('fixed_items').insert(itemsToInsert);
 
 			if (insertItemsError) {
-				throw new Error(`Failed to copy items for category "${previousCategory.label}": ${insertItemsError.message}`);
+				throw new Error(
+					`Failed to copy items for category "${previousCategory.label}": ${insertItemsError.message}`
+				);
 			}
 
-			console.log(`✅ Copied ${categoryItems.length} items for category "${previousCategory.label}"`);
+			console.log(
+				`✅ Copied ${categoryItems.length} items for category "${previousCategory.label}"`
+			);
 		}
 	}
 
 	console.log(`✅ Successfully copied all fixed costs from previous month!`);
 }
-

@@ -34,7 +34,7 @@ export const profileStore = {
 	get hasProfile() {
 		return !!currentProfileId;
 	},
-	
+
 	setProfile(id: string, name: string) {
 		currentProfileId = id;
 		currentProfileName = name;
@@ -42,7 +42,7 @@ export const profileStore = {
 			localStorage.setItem('myiykyk_profile', JSON.stringify({ id, name }));
 		}
 	},
-	
+
 	clearProfile() {
 		currentProfileId = null;
 		currentProfileName = null;

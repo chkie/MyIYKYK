@@ -56,14 +56,15 @@ export const load: PageServerLoad = async ({ url }) => {
 		const showFullHistory = url.searchParams.get('history') === 'full';
 
 		// 3-8. PARALLEL QUERIES (all depend on month.id but not on each other)
-		const [profilesResult, fixedCategories, privateExpenses, transfers, closedMonths, history] = await Promise.all([
-			supabase.from('profiles').select('id, role, name').order('role', { ascending: true }),
-			listFixedCategoriesWithItems(month.id),
-			listPrivateExpenses(month.id),
-			listTransfers(month.id),
-			listClosedMonths(12),
-			getMonthHistory(month.id, month.year, month.month, { includeFull: showFullHistory })
-		]);
+		const [profilesResult, fixedCategories, privateExpenses, transfers, closedMonths, history] =
+			await Promise.all([
+				supabase.from('profiles').select('id, role, name').order('role', { ascending: true }),
+				listFixedCategoriesWithItems(month.id),
+				listPrivateExpenses(month.id),
+				listTransfers(month.id),
+				listClosedMonths(12),
+				getMonthHistory(month.id, month.year, month.month, { includeFull: showFullHistory })
+			]);
 
 		// Handle profiles error
 		if (profilesResult.error) {
@@ -72,15 +73,15 @@ export const load: PageServerLoad = async ({ url }) => {
 		}
 
 		const profiles = profilesResult.data;
-		
+
 		// DEBUG: Log what we got
 		console.log('🔍 DEBUG - Fixed Categories loaded:', {
 			monthId: month.id,
 			categoriesCount: fixedCategories.length,
-			categories: fixedCategories.map(c => ({
+			categories: fixedCategories.map((c) => ({
 				label: c.label,
 				itemsCount: c.items.length,
-				items: c.items.map(i => i.label)
+				items: c.items.map((i) => i.label)
 			}))
 		});
 
@@ -117,7 +118,10 @@ export const load: PageServerLoad = async ({ url }) => {
 					label: item.label,
 					amount: Number(item.amount),
 					// Legacy: convert 'half' to 'income' (half mode was removed)
-					splitMode: (item.splitMode === 'half' ? 'income' : item.splitMode) as 'income' | 'me' | 'partner'
+					splitMode: (item.splitMode === 'half' ? 'income' : item.splitMode) as
+						| 'income'
+						| 'me'
+						| 'partner'
 				}))
 			})),
 			privateExpenses: privateExpenses.map((exp) => ({
@@ -393,9 +397,9 @@ export const actions: Actions = {
 				return fail(400, { error: 'Invalid amount' });
 			}
 
-			await createPrivateExpense(monthId, { 
-				dateISO, 
-				description, 
+			await createPrivateExpense(monthId, {
+				dateISO,
+				description,
 				amount,
 				createdBy // ← ADD: Pass createdBy to function
 			});
@@ -595,15 +599,15 @@ export const actions: Actions = {
 				return fail(400, { error: 'Invalid balance end value' });
 			}
 
-		await closeMonth(monthId, privateBalanceEnd);
-		// Return success - user can manually reload to see next month
-		return { success: true, monthClosed: true };
-	} catch (err) {
-		console.error('Error closing month:', err);
-		return fail(500, {
-			error: err instanceof Error ? err.message : 'Failed to close month'
-		});
-	}
+			await closeMonth(monthId, privateBalanceEnd);
+			// Return success - user can manually reload to see next month
+			return { success: true, monthClosed: true };
+		} catch (err) {
+			console.error('Error closing month:', err);
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to close month'
+			});
+		}
 	},
 
 	/**

@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * Boot/Loading Screen Component
-	 * 
+	 *
 	 * Minimal, accessible loading screen shown during initial app hydration.
 	 * Respects prefers-reduced-motion for animations.
 	 */
@@ -50,7 +50,7 @@
 		justify-content: center;
 		background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
 		pointer-events: none;
-		
+
 		/* Anti-flicker: Only show after 150ms */
 		opacity: 0;
 		animation: bootFadeIn 200ms 150ms forwards;
@@ -80,7 +80,8 @@
 	}
 
 	@keyframes logoPulse {
-		0%, 100% {
+		0%,
+		100% {
 			transform: scale(1);
 			opacity: 1;
 		}
@@ -118,7 +119,9 @@
 	}
 
 	@keyframes dotBounce {
-		0%, 80%, 100% {
+		0%,
+		80%,
+		100% {
 			transform: translateY(0);
 			opacity: 0.8;
 		}
@@ -166,7 +169,9 @@
 
 	/* Fallback: Auto-remove after 5s */
 	.boot-screen {
-		animation: bootFadeIn 200ms 150ms forwards, bootFadeOut 300ms 5s forwards;
+		animation:
+			bootFadeIn 200ms 150ms forwards,
+			bootFadeOut 300ms 5s forwards;
 	}
 
 	@keyframes bootFadeOut {

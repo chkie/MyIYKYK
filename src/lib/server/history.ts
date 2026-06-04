@@ -28,12 +28,10 @@ export async function getMonthHistory(
 	const supabase = getSupabaseServerClient();
 
 	// 1. Fetch all profiles for name mapping
-	const { data: profiles } = await supabase
-		.from('profiles')
-		.select('id, name');
-	
+	const { data: profiles } = await supabase.from('profiles').select('id, name');
+
 	const profileMap = new Map<string, string>();
-	(profiles || []).forEach(p => profileMap.set(p.id, p.name));
+	(profiles || []).forEach((p) => profileMap.set(p.id, p.name));
 
 	// 2. Fetch expenses with created_by
 	const { data: expenses, error: expensesError } = await supabase

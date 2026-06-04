@@ -52,7 +52,7 @@ export const actions = {
 	createMonth: async ({ request }) => {
 		const supabase = getSupabaseServerClient();
 		const formData = await request.formData();
-		
+
 		const year = parseInt(formData.get('year') as string);
 		const month = parseInt(formData.get('month') as string);
 
@@ -72,10 +72,7 @@ export const actions = {
 			// Month exists - close all others and open this one
 			if (existing.status !== 'open') {
 				// Close all open months
-				await supabase
-					.from('months')
-					.update({ status: 'closed' })
-					.eq('status', 'open');
+				await supabase.from('months').update({ status: 'closed' }).eq('status', 'open');
 
 				// Open this month
 				await supabase
@@ -84,14 +81,14 @@ export const actions = {
 					.eq('year', year)
 					.eq('month', month);
 			}
-			
+
 			return { success: true, monthId: existing.id };
 		}
 
 		// Month doesn't exist - create it
 		// Get private_balance_start from previous month
 		let privateBalanceStart = 0;
-		
+
 		const { data: previousMonths } = await supabase
 			.from('months')
 			.select('private_balance_end, year, month')
@@ -104,7 +101,7 @@ export const actions = {
 			for (const prevMonth of previousMonths) {
 				const prevDate = new Date(prevMonth.year, prevMonth.month - 1);
 				const targetDate = new Date(year, month - 1);
-				
+
 				if (prevDate < targetDate) {
 					privateBalanceStart = prevMonth.private_balance_end ?? 0;
 					break;
@@ -113,10 +110,7 @@ export const actions = {
 		}
 
 		// Close all open months
-		await supabase
-			.from('months')
-			.update({ status: 'closed' })
-			.eq('status', 'open');
+		await supabase.from('months').update({ status: 'closed' }).eq('status', 'open');
 
 		// Create new month
 		const { data: newMonth, error: createError } = await supabase
@@ -147,7 +141,7 @@ export const actions = {
 	switchMonth: async ({ request }) => {
 		const supabase = getSupabaseServerClient();
 		const formData = await request.formData();
-		
+
 		const monthId = formData.get('monthId') as string;
 
 		if (!monthId) {
@@ -155,16 +149,10 @@ export const actions = {
 		}
 
 		// Close all open months
-		await supabase
-			.from('months')
-			.update({ status: 'closed' })
-			.eq('status', 'open');
+		await supabase.from('months').update({ status: 'closed' }).eq('status', 'open');
 
 		// Open target month
-		const { error } = await supabase
-			.from('months')
-			.update({ status: 'open' })
-			.eq('id', monthId);
+		const { error } = await supabase.from('months').update({ status: 'open' }).eq('id', monthId);
 
 		if (error) {
 			return fail(500, { error: `Monat konnte nicht geöffnet werden: ${error.message}` });

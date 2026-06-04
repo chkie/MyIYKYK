@@ -228,7 +228,7 @@
 				// Minimum duration for boot screen (respect reduced motion)
 				const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 				const MIN_DURATION = prefersReducedMotion ? 0 : 2000; // 2s or instant
-				
+
 				// Track start time
 				const bootStartTime = Date.now();
 				let fallbackTimer = null;
@@ -250,7 +250,7 @@
 				const removeWithMinDuration = () => {
 					const elapsed = Date.now() - bootStartTime;
 					const remaining = Math.max(0, MIN_DURATION - elapsed);
-					
+
 					if (remaining > 0) {
 						// Wait remaining time before removing
 						setTimeout(removeBootScreen, remaining);

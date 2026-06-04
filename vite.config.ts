@@ -18,7 +18,7 @@ export default defineConfig({
 		minify: 'esbuild',
 		cssMinify: 'lightningcss',
 		cssCodeSplit: true,
-		
+
 		rollupOptions: {
 			output: {
 				// Aggressive code-splitting for better caching

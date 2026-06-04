@@ -1,13 +1,13 @@
 /**
  * Scroll Position Preservation for SvelteKit Forms
- * 
+ *
  * Prevents page from jumping to top after form submissions.
  * Critical for PWA UX where users scroll through lists and submit forms.
- * 
+ *
  * Usage:
  * ```svelte
  * import { enhanceWithScrollPreserve } from '$lib/utils/scroll-preserve';
- * 
+ *
  * <form use:enhance={enhanceWithScrollPreserve(() => {
  *   // Your existing enhance logic
  *   isSubmitting = true;

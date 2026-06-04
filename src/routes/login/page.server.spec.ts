@@ -114,4 +114,3 @@ describe('Login Action - Server-side validation', () => {
 		// The logic is simple and can be verified manually or in E2E tests
 	});
 });
-

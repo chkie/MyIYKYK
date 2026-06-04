@@ -33,7 +33,7 @@ describe('updateMonthBalanceStart', () => {
 
 	it('should accept positive, negative, and zero values', () => {
 		// These should all be valid
-		expect(Number.isFinite(100.50)).toBe(true);
+		expect(Number.isFinite(100.5)).toBe(true);
 		expect(Number.isFinite(-200.75)).toBe(true);
 		expect(Number.isFinite(0)).toBe(true);
 	});
@@ -42,8 +42,8 @@ describe('updateMonthBalanceStart', () => {
 		const testValues = [
 			{ input: 100.123, expected: 100.12 },
 			{ input: -200.456, expected: -200.46 },
-			{ input: 50.999, expected: 51.00 },
-			{ input: 0.001, expected: 0.00 }
+			{ input: 50.999, expected: 51.0 },
+			{ input: 0.001, expected: 0.0 }
 		];
 
 		testValues.forEach(({ input, expected }) => {

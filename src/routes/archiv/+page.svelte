@@ -38,7 +38,9 @@
 {#if data.closedMonths.length > 0}
 	<div class="space-y-3">
 		{#each data.closedMonths as closedMonth}
-			<div class="overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+			<div
+				class="overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+			>
 				<div class="flex items-center justify-between p-5">
 					<div class="flex-1">
 						<h3 class="text-xl font-bold text-neutral-900">
@@ -46,27 +48,35 @@
 						</h3>
 						<div class="mt-2 flex items-center gap-2">
 							<span class="text-sm text-neutral-600">{t('archive.finalBalance')}</span>
-							<span class="text-lg font-bold {closedMonth.private_balance_end > 0 ? 'text-danger-600' : closedMonth.private_balance_end < 0 ? 'text-success-600' : 'text-neutral-600'}">
+							<span
+								class="text-lg font-bold {closedMonth.private_balance_end > 0
+									? 'text-danger-600'
+									: closedMonth.private_balance_end < 0
+										? 'text-success-600'
+										: 'text-neutral-600'}"
+							>
 								{formatEuro(closedMonth.private_balance_end || 0)}
 							</span>
 						</div>
 						<div class="mt-1 flex items-center gap-2">
 							<span class="text-xs text-neutral-500">
-								{t('archive.closedAt')} {new Date(closedMonth.closed_at).toLocaleDateString('de-DE')}
+								{t('archive.closedAt')}
+								{new Date(closedMonth.closed_at).toLocaleDateString('de-DE')}
 							</span>
 						</div>
 					</div>
-					
-					<form
-						method="POST"
-						action="?/deleteArchivedMonth"
-						use:enhance
-					>
+
+					<form method="POST" action="?/deleteArchivedMonth" use:enhance>
 						<input type="hidden" name="monthId" value={closedMonth.id} />
 						<button
 							type="submit"
-							class="rounded-lg border-2 border-danger-200 bg-danger-50 px-4 py-2.5 text-sm font-semibold text-danger-700 transition-all hover:bg-danger-100 active:scale-95"
-							onclick={() => confirm(t('confirm.deleteMonth', { month: formatMonthYear(closedMonth.year, closedMonth.month) }))}
+							class="border-danger-200 bg-danger-50 text-danger-700 hover:bg-danger-100 rounded-lg border-2 px-4 py-2.5 text-sm font-semibold transition-all active:scale-95"
+							onclick={() =>
+								confirm(
+									t('confirm.deleteMonth', {
+										month: formatMonthYear(closedMonth.year, closedMonth.month)
+									})
+								)}
 						>
 							{t('common.delete')}
 						</button>
@@ -77,8 +87,18 @@
 	</div>
 {:else}
 	<div class="rounded-2xl border-2 border-dashed border-neutral-300 bg-neutral-50 p-12 text-center">
-		<svg class="mx-auto mb-4 h-16 w-16 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+		<svg
+			class="mx-auto mb-4 h-16 w-16 text-neutral-400"
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+			/>
 		</svg>
 		<h2 class="mb-2 text-xl font-bold text-neutral-700">{t('archive.noArchiveTitle')}</h2>
 		<p class="text-neutral-500">

@@ -123,7 +123,6 @@ describe('calculateMyShareForFixedItem', () => {
 
 		expect(result).toBe(60); // I pay 60% when mode is "income"
 	});
-
 });
 
 // ============================================================================
@@ -204,7 +203,7 @@ describe('calculateMonth - Prepayment Model', () => {
 		expect(result.privateAddedThisMonth).toBe(200); // 100 + 100
 		expect(result.fixedCostShortfall).toBe(0); // No underpayment (1100 >= 900)
 		expect(result.fixedCostOverpayment).toBe(200); // Overpaid by 200
-		
+
 		// Debt calculation: oldDebt + privateExpenses + fixedCosts - prepayment
 		// = 300 + 200 + 900 - 1100 = 300
 		expect(result.privateTotalDueBeforePrepayment).toBe(1400); // 300 + 200 + 900
@@ -240,7 +239,7 @@ describe('calculateMonth - Prepayment Model', () => {
 		expect(result.privateAddedThisMonth).toBe(50);
 		expect(result.fixedCostShortfall).toBe(600); // All fixed costs unpaid
 		expect(result.fixedCostOverpayment).toBe(0);
-		
+
 		// Debt: 200 + 50 + 600 - 0 = 850
 		expect(result.privateTotalDueBeforePrepayment).toBe(850);
 		expect(result.privateBalanceEnd).toBe(850);
@@ -266,7 +265,7 @@ describe('calculateMonth - Prepayment Model', () => {
 		expect(result.fixedCostDue).toBe(500);
 		expect(result.fixedCostShortfall).toBe(0);
 		expect(result.fixedCostOverpayment).toBe(0);
-		
+
 		// Debt: 0 + 0 + 500 - 500 = 0
 		expect(result.privateTotalDueBeforePrepayment).toBe(500);
 		expect(result.privateBalanceEnd).toBe(0);
@@ -292,7 +291,7 @@ describe('calculateMonth - Prepayment Model', () => {
 		expect(result.fixedCostDue).toBe(100);
 		expect(result.fixedCostShortfall).toBe(0);
 		expect(result.fixedCostOverpayment).toBe(0);
-		
+
 		// Debt: -50 + 0 + 100 - 100 = -50 (still in my favor)
 		expect(result.privateTotalDueBeforePrepayment).toBe(50); // -50 + 0 + 100
 		expect(result.privateBalanceEnd).toBe(-50); // 50 - 100
@@ -332,7 +331,7 @@ describe('calculateMonth - Prepayment Model', () => {
 		// myFixedShare includes 'me' items for display
 		expect(result.totalFixedCosts).toBe(100);
 		expect(result.myFixedShare).toBe(100);
-		
+
 		// Transfer logic: 'me' items create FULL debt (Steffi pays, Christian owes)
 		expect(result.fixedCostDue).toBe(100); // 'me' = 100% debt
 		expect(result.fixedCostShortfall).toBe(100);
@@ -362,7 +361,7 @@ describe('calculateMonth - Prepayment Model', () => {
 		expect(result.fixedCostDue).toBe(600); // 500 (income) + 100 (me)
 		expect(result.fixedCostShortfall).toBe(200); // 600 - 400
 		expect(result.fixedCostOverpayment).toBe(0);
-		
+
 		// Debt: 0 + 0 + 600 - 400 = 200
 		expect(result.privateTotalDueBeforePrepayment).toBe(600);
 		expect(result.privateBalanceEnd).toBe(200);
@@ -375,9 +374,7 @@ describe('calculateMonth - Prepayment Model', () => {
 			fixedCategories: [
 				createFixedCategory([createFixedItem(1000, 'income')]) // My share: 500
 			],
-			privateExpenses: [
-				{ id: 'exp1', dateISO: '2024-01-15', description: 'Test', amount: 100 }
-			],
+			privateExpenses: [{ id: 'exp1', dateISO: '2024-01-15', description: 'Test', amount: 100 }],
 			privateBalanceStart: 200,
 			prepaymentThisMonth: 800 // Overpaid by 300€
 		};
@@ -388,7 +385,7 @@ describe('calculateMonth - Prepayment Model', () => {
 		expect(result.fixedCostShortfall).toBe(0);
 		expect(result.fixedCostOverpayment).toBe(300); // 800 - 500
 		expect(result.privateAddedThisMonth).toBe(100);
-		
+
 		// Debt: 200 + 100 + 500 - 800 = 0
 		expect(result.privateTotalDueBeforePrepayment).toBe(800);
 		expect(result.privateBalanceEnd).toBe(0);
@@ -463,9 +460,7 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(100, 'income')])
-			],
+			fixedCategories: [createFixedCategory([createFixedItem(100, 'income')])],
 			privateExpenses: [],
 			privateBalanceStart: 0,
 			prepaymentThisMonth: 0
@@ -497,9 +492,7 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(100, 'me')])
-			],
+			fixedCategories: [createFixedCategory([createFixedItem(100, 'me')])],
 			privateExpenses: [],
 			privateBalanceStart: 0,
 			prepaymentThisMonth: 0
@@ -528,9 +521,7 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(100, 'partner')])
-			],
+			fixedCategories: [createFixedCategory([createFixedItem(100, 'partner')])],
 			privateExpenses: [],
 			privateBalanceStart: 0,
 			prepaymentThisMonth: 0
@@ -559,11 +550,11 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 			fixedCategories: [
 				createFixedCategory([
 					createFixedItem(1000, 'income'), // Miete
-					createFixedItem(150, 'income')    // Strom
+					createFixedItem(150, 'income') // Strom
 				]),
 				createFixedCategory([
-					createFixedItem(50, 'me'),        // Christian Handy
-					createFixedItem(30, 'partner')    // Steffi Gym
+					createFixedItem(50, 'me'), // Christian Handy
+					createFixedItem(30, 'partner') // Steffi Gym
 				])
 			],
 			privateExpenses: [],
@@ -601,9 +592,7 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(1000, 'income')])
-			],
+			fixedCategories: [createFixedCategory([createFixedItem(1000, 'income')])],
 			privateExpenses: [],
 			privateBalanceStart: 0,
 			prepaymentThisMonth: 300 // Zu wenig!
@@ -634,9 +623,7 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(1000, 'income')])
-			],
+			fixedCategories: [createFixedCategory([createFixedItem(1000, 'income')])],
 			privateExpenses: [],
 			privateBalanceStart: 0,
 			prepaymentThisMonth: 500 // Zu viel!
@@ -667,9 +654,7 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 		const month1: MonthInputs = {
 			me: createPerson('me', 2000),
 			partner: createPerson('partner', 3000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(1000, 'income')])
-			],
+			fixedCategories: [createFixedCategory([createFixedItem(1000, 'income')])],
 			privateExpenses: [],
 			privateBalanceStart: 0,
 			prepaymentThisMonth: 300
@@ -684,7 +669,7 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 			fixedCategories: [
 				createFixedCategory([
 					createFixedItem(1000, 'income'), // Aus Vormonat kopiert
-					createFixedItem(200, 'income')   // Neue Position
+					createFixedItem(200, 'income') // Neue Position
 				])
 			],
 			privateExpenses: [],
@@ -754,9 +739,7 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 		const inputs: MonthInputs = {
 			me: createPerson('me', 8000),
 			partner: createPerson('partner', 12000),
-			fixedCategories: [
-				createFixedCategory([createFixedItem(9999.99, 'income')])
-			],
+			fixedCategories: [createFixedCategory([createFixedItem(9999.99, 'income')])],
 			privateExpenses: [],
 			privateBalanceStart: 0,
 			prepaymentThisMonth: 0
@@ -768,8 +751,8 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 		expect(result.shareMe).toBe(0.4);
 
 		// Fixkosten: 9999.99 × 0.4 = 3999.996 → 4000.00€
-		expect(result.fixedCostDue).toBe(4000.00);
-		expect(result.privateBalanceEnd).toBe(4000.00);
+		expect(result.fixedCostDue).toBe(4000.0);
+		expect(result.privateBalanceEnd).toBe(4000.0);
 	});
 
 	/**
@@ -794,9 +777,9 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 			partner: createPerson('partner', 3000),
 			fixedCategories: [
 				createFixedCategory([
-					createFixedItem(1000, 'income'),  // Position A: 40% = 400€
-					createFixedItem(200, 'me'),       // Position B: 100% = 200€
-					createFixedItem(300, 'partner')   // Position C: 0% = 0€
+					createFixedItem(1000, 'income'), // Position A: 40% = 400€
+					createFixedItem(200, 'me'), // Position B: 100% = 200€
+					createFixedItem(300, 'partner') // Position C: 0% = 0€
 				])
 			],
 			privateExpenses: [
@@ -807,8 +790,8 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 					createdBy: 'me' // 100% für mich
 				}
 			],
-			privateBalanceStart: 75,  // Carryover aus Vormonat
-			prepaymentThisMonth: 100  // Vorauszahlung reduziert Schuld
+			privateBalanceStart: 75, // Carryover aus Vormonat
+			prepaymentThisMonth: 100 // Vorauszahlung reduziert Schuld
 		};
 
 		const result = calculateMonth(inputs);
@@ -853,7 +836,7 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 			partner: createPerson('partner', 2000),
 			fixedCategories: [
 				createFixedCategory([
-					createFixedItem(500, 'income')  // 50% split = 250€ each
+					createFixedItem(500, 'income') // 50% split = 250€ each
 				])
 			],
 			privateExpenses: [
@@ -864,7 +847,7 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 					description: 'Private expense'
 				}
 			],
-			privateBalanceStart: -150,  // Steffi owes me 150€ from last month
+			privateBalanceStart: -150, // Steffi owes me 150€ from last month
 			prepaymentThisMonth: 200
 		};
 
@@ -900,11 +883,11 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 			partner: createPerson('partner', 2000),
 			fixedCategories: [
 				createFixedCategory([
-					createFixedItem(1000, 'income')  // 60/40 split = 600€ for me
+					createFixedItem(1000, 'income') // 60/40 split = 600€ for me
 				])
 			],
-			privateExpenses: [],  // No private expenses this month
-			privateBalanceStart: 200,  // I owe Steffi 200€ from before we started tracking
+			privateExpenses: [], // No private expenses this month
+			privateBalanceStart: 200, // I owe Steffi 200€ from before we started tracking
 			prepaymentThisMonth: 500
 		};
 

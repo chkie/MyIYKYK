@@ -1,12 +1,12 @@
 /**
  * Copy System - Centralized UI Text Management
- * 
+ *
  * Usage:
  *   import { t } from '$lib/copy';
- *   
+ *
  *   // Simple key
  *   t('common.save') → 'Speichern'
- *   
+ *
  *   // With parameters
  *   t('confirm.deleteExpense', { name: 'Brot' }) → "'Brot' wirklich löschen?"
  */
@@ -19,11 +19,11 @@ let currentLocale = de;
 
 /**
  * Get translated text by key
- * 
+ *
  * @param key - Dot-notation key (e.g. 'nav.overview')
  * @param params - Optional parameters for template interpolation
  * @returns Translated string
- * 
+ *
  * @example
  * t('common.save') // → 'Speichern'
  * t('confirm.deleteExpense', { name: 'Brot' }) // → "'Brot' wirklich löschen?"
@@ -58,7 +58,7 @@ export function t(key: CopyKeys, params?: Params): string {
 
 /**
  * Get nested value from object by dot-notation path
- * 
+ *
  * @example
  * getNestedValue({ nav: { overview: 'X' } }, 'nav.overview') → 'X'
  */
@@ -68,7 +68,7 @@ function getNestedValue(obj: any, path: string): unknown {
 
 /**
  * Future: Set active locale
- * 
+ *
  * @param locale - Locale code (e.g. 'en', 'de')
  */
 export function setLocale(locale: string): void {

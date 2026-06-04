@@ -27,4 +27,3 @@ describe('createFixedItem - createdBy parameter', () => {
 		expect(validInput.createdBy).toBeUndefined();
 	});
 });
-
