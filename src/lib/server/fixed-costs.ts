@@ -24,7 +24,7 @@ const ALLOWED_SPLIT_MODES = ['income', 'me', 'partner', 'half'] as const;
 
 /**
  * Lists all fixed categories with their items for a given month.
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @returns Array of categories with nested items
  * @throws {Error} If database operation fails
@@ -88,7 +88,7 @@ export async function listFixedCategoriesWithItems(
 /**
  * Creates a new fixed category for a month.
  * Automatically assigns the next sort_order value.
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @param label - Category label
  * @returns New category row
@@ -137,7 +137,7 @@ export async function createFixedCategory(monthId: string, label: string) {
 
 /**
  * Deletes a fixed category (cascade deletes items).
- * 
+ *
  * @param categoryId - The category ID (UUID)
  * @throws {Error} If database operation fails
  */
@@ -153,7 +153,7 @@ export async function deleteFixedCategory(categoryId: string): Promise<void> {
 
 /**
  * Creates a new fixed item in a category.
- * 
+ *
  * @param categoryId - The category ID (UUID)
  * @param input - Item data (label, amount, splitMode, optional createdBy)
  * @returns New item row
@@ -185,7 +185,7 @@ export async function createFixedItem(
 	}
 
 	// Determine created_by: use provided value or fallback to 'me' profile
-	const createdBy = input.createdBy || await getProfileIdByRole('me');
+	const createdBy = input.createdBy || (await getProfileIdByRole('me'));
 
 	// Create item
 	const { data: newItem, error: createError } = await supabase
@@ -214,7 +214,7 @@ export async function createFixedItem(
 
 /**
  * Updates a fixed item (partial update).
- * 
+ *
  * @param itemId - The item ID (UUID)
  * @param patch - Partial item data to update
  * @returns Updated item row
@@ -231,7 +231,7 @@ export async function updateFixedItem(
 	const supabase = getSupabaseServerClient();
 
 	// Build update object with validation
-	const updates: Record<string, any> = {};
+	const updates: Record<string, unknown> = {};
 
 	if (patch.label !== undefined) {
 		const trimmedLabel = patch.label.trim();
@@ -298,7 +298,7 @@ export async function updateFixedItem(
 
 /**
  * Deletes a fixed item.
- * 
+ *
  * @param itemId - The item ID (UUID)
  * @throws {Error} If database operation fails
  */

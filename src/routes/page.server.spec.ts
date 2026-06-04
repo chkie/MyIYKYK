@@ -3,7 +3,6 @@
 // ============================================================================
 
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import type { PageServerLoad } from './$types.js';
 
 // Mock Supabase module
 vi.mock('$lib/server/supabase.js', () => ({
@@ -57,7 +56,7 @@ const FIXTURES = {
 		{ id: 'profile-me-id', role: 'me', name: 'Christian' },
 		{ id: 'profile-partner-id', role: 'partner', name: 'Steffi' }
 	],
-	
+
 	month: {
 		id: 'month-2026-01',
 		year: 2026,
@@ -66,29 +65,32 @@ const FIXTURES = {
 		private_balance_start: 0,
 		total_transfer_this_month: 0
 	},
-	
+
 	incomes: [
 		{ id: 'income-me', month_id: 'month-2026-01', profile_id: 'profile-me-id', net_income: 2000 },
-		{ id: 'income-partner', month_id: 'month-2026-01', profile_id: 'profile-partner-id', net_income: 3000 }
+		{
+			id: 'income-partner',
+			month_id: 'month-2026-01',
+			profile_id: 'profile-partner-id',
+			net_income: 3000
+		}
 	],
-	
+
 	fixedCategories: [
 		{
 			id: 'cat-1',
 			label: 'Wohnen',
 			sortOrder: 0,
-			items: [
-				{ id: 'item-1', label: 'Miete', amount: 1000, splitMode: 'income' }
-			]
+			items: [{ id: 'item-1', label: 'Miete', amount: 1000, splitMode: 'income' }]
 		}
 	],
-	
+
 	privateExpenses: [],
-	
+
 	transfers: [],
-	
+
 	closedMonths: [],
-	
+
 	history: { entries: [] }
 };
 
@@ -98,7 +100,7 @@ const FIXTURES = {
 
 function setupMocks(overrides: any = {}) {
 	const fixtures = { ...FIXTURES, ...overrides };
-	
+
 	// Mock Supabase client
 	const mockSupabaseClient = {
 		from: vi.fn((table: string) => {
@@ -117,13 +119,18 @@ function setupMocks(overrides: any = {}) {
 			};
 		})
 	};
-	
+
 	vi.mocked(supabaseModule.getSupabaseServerClient).mockReturnValue(mockSupabaseClient as any);
 	vi.mocked(monthsModule.getOrCreateCurrentMonth).mockResolvedValue(fixtures.month as any);
 	vi.mocked(monthsModule.ensureMonthIncomes).mockResolvedValue(fixtures.incomes as any);
 	vi.mocked(monthsModule.listClosedMonths).mockResolvedValue(fixtures.closedMonths as any);
-	vi.mocked(fixedCostsModule.listFixedCategoriesWithItems).mockResolvedValue(fixtures.fixedCategories as any);
-	vi.mocked(privateExpensesModule.listPrivateExpenses).mockResolvedValue(fixtures.privateExpenses as any);
+	vi.mocked(fixedCostsModule.listFixedCategoriesWithItems).mockResolvedValue(
+		fixtures.fixedCategories as any
+	);
+	vi.mocked(privateExpensesModule.listPrivateExpenses).mockResolvedValue(
+		fixtures.privateExpenses as any
+	);
+	vi.mocked(transfersModule.listTransfers).mockResolvedValue(fixtures.transfers as any);
 	vi.mocked(historyModule.getMonthHistory).mockResolvedValue(fixtures.history as any);
 }
 
@@ -152,9 +159,7 @@ describe('Integration: Home Page Server Load', () => {
 					id: 'cat-1',
 					label: 'Wohnen',
 					sortOrder: 0,
-					items: [
-						{ id: 'item-1', label: 'Miete', amount: 1000, splitMode: 'income' }
-					]
+					items: [{ id: 'item-1', label: 'Miete', amount: 1000, splitMode: 'income' }]
 				}
 			],
 			month: {
@@ -167,14 +172,17 @@ describe('Integration: Home Page Server Load', () => {
 			}
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify computed values
 		expect(result.computed).toBeDefined();
 		expect(result.computed.shareMe).toBeCloseTo(0.4, 5); // 2000 / 5000 = 0.4
 		expect(result.computed.fixedCostDue).toBe(400); // 1000 × 0.4
 		expect(result.computed.privateBalanceEnd).toBe(400); // 0 + 0 + 400 - 0
-		
+
 		// Verify direction: Christian schuldet Steffi
 		expect(result.computed.privateBalanceEnd).toBeGreaterThan(0);
 	});
@@ -192,11 +200,24 @@ describe('Integration: Home Page Server Load', () => {
 				month: 1,
 				status: 'open',
 				private_balance_start: 0,
-				total_transfer_this_month: 300 // Vorauszahlung!
-			}
+				total_transfer_this_month: 300 // Legacy-Feld, von load nicht mehr gelesen
+			},
+			transfers: [
+				{
+					id: 't1',
+					month_id: 'month-2026-01',
+					amount: 300, // Vorauszahlung via transfers-Tabelle
+					description: 'Vorauszahlung',
+					created_at: '2026-01-01T00:00:00Z',
+					created_by: 'profile-me-id'
+				}
+			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify prepayment is applied
 		expect(result.computed.prepaymentThisMonth).toBe(300);
@@ -218,18 +239,31 @@ describe('Integration: Home Page Server Load', () => {
 				month: 1,
 				status: 'open',
 				private_balance_start: 0,
-				total_transfer_this_month: 500 // Zu viel!
-			}
+				total_transfer_this_month: 500 // Legacy-Feld, von load nicht mehr gelesen
+			},
+			transfers: [
+				{
+					id: 't1',
+					month_id: 'month-2026-01',
+					amount: 500, // Vorauszahlung (Overpayment) via transfers-Tabelle
+					description: 'Vorauszahlung',
+					created_at: '2026-01-01T00:00:00Z',
+					created_by: 'profile-me-id'
+				}
+			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify overpayment creates credit (negative balance)
 		expect(result.computed.prepaymentThisMonth).toBe(500);
 		expect(result.computed.fixedCostDue).toBe(400);
 		expect(result.computed.privateBalanceEnd).toBe(-100); // 400 - 500 = -100
 		expect(result.computed.fixedCostOverpayment).toBe(100);
-		
+
 		// Verify direction: Steffi schuldet Christian
 		expect(result.computed.privateBalanceEnd).toBeLessThan(0);
 	});
@@ -251,7 +285,10 @@ describe('Integration: Home Page Server Load', () => {
 			}
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify carryover is included
 		expect(result.computed.privateBalanceStart).toBe(200);
@@ -293,7 +330,10 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Anteil: 3000 / 5000 = 0.6 (60%)
 		expect(result.computed.shareMe).toBeCloseTo(0.6, 5);
@@ -322,21 +362,34 @@ describe('Integration: Home Page Server Load', () => {
 				month: 1,
 				status: 'open',
 				private_balance_start: 150, // Altschuld
-				total_transfer_this_month: 250 // Vorauszahlung
-			}
+				total_transfer_this_month: 250 // Legacy-Feld, von load nicht mehr gelesen
+			},
+			transfers: [
+				{
+					id: 't1',
+					month_id: 'month-2026-01',
+					amount: 250, // Vorauszahlung via transfers-Tabelle
+					description: 'Vorauszahlung',
+					created_at: '2026-01-01T00:00:00Z',
+					created_by: 'profile-me-id'
+				}
+			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify complete calculation
 		expect(result.computed.privateBalanceStart).toBe(150);
 		expect(result.computed.fixedCostDue).toBe(400);
 		expect(result.computed.prepaymentThisMonth).toBe(250);
-		
+
 		// Rechnung: 150 (alt) + 0 (private) + 400 (fixed) - 250 (prepay) = 300
 		expect(result.computed.privateTotalDueBeforePrepayment).toBe(550);
 		expect(result.computed.privateBalanceEnd).toBe(300);
-		
+
 		// Underpayment: 400 - 250 = 150
 		expect(result.computed.fixedCostShortfall).toBe(150);
 	});
@@ -354,12 +407,15 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Fallback: 50/50
 		expect(result.computed.shareMe).toBe(0.5);
 		expect(result.computed.sharePartner).toBe(0.5);
-		
+
 		// Fixkosten: 1000 × 0.5 = 500
 		expect(result.computed.fixedCostDue).toBe(500);
 		expect(result.computed.privateBalanceEnd).toBe(500);
@@ -387,7 +443,10 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify Number() conversion works
 		expect(result.computed.shareMe).toBeCloseTo(0.4, 2); // 2000.5 / 5001.25

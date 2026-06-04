@@ -72,7 +72,7 @@ self.addEventListener('install', (event) => {
 				console.log('[SW] Pre-caching PWA assets');
 				return cache.addAll(PWA_ASSETS);
 			})
-			.catch((error) => {
+			.catch(() => {
 				console.error('[SW] Pre-cache failed:', error);
 				// Don't fail installation if pre-cache fails
 			})
@@ -169,7 +169,7 @@ self.addEventListener('fetch', (event) => {
 					});
 					return response;
 				})
-				.catch((error) => {
+				.catch(() => {
 					console.log('[SW] VERSION CHECK - Failed (offline)');
 					// Return minimal JSON on failure
 					return new Response(

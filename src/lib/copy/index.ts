@@ -1,12 +1,12 @@
 /**
  * Copy System - Centralized UI Text Management
- * 
+ *
  * Usage:
  *   import { t } from '$lib/copy';
- *   
+ *
  *   // Simple key
  *   t('common.save') → 'Speichern'
- *   
+ *
  *   // With parameters
  *   t('confirm.deleteExpense', { name: 'Brot' }) → "'Brot' wirklich löschen?"
  */
@@ -15,15 +15,15 @@ import type { CopyKeys, Params } from './types.js';
 
 // Current locale (default: German)
 // Future: support locale switching via setLocale('en')
-let currentLocale = de;
+const currentLocale = de;
 
 /**
  * Get translated text by key
- * 
+ *
  * @param key - Dot-notation key (e.g. 'nav.overview')
  * @param params - Optional parameters for template interpolation
  * @returns Translated string
- * 
+ *
  * @example
  * t('common.save') // → 'Speichern'
  * t('confirm.deleteExpense', { name: 'Brot' }) // → "'Brot' wirklich löschen?"
@@ -58,17 +58,19 @@ export function t(key: CopyKeys, params?: Params): string {
 
 /**
  * Get nested value from object by dot-notation path
- * 
+ *
  * @example
  * getNestedValue({ nav: { overview: 'X' } }, 'nav.overview') → 'X'
  */
-function getNestedValue(obj: any, path: string): unknown {
-	return path.split('.').reduce((acc, part) => acc?.[part], obj);
+function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+	return path
+		.split('.')
+		.reduce<unknown>((acc, part) => (acc as Record<string, unknown> | undefined)?.[part], obj);
 }
 
 /**
  * Future: Set active locale
- * 
+ *
  * @param locale - Locale code (e.g. 'en', 'de')
  */
 export function setLocale(locale: string): void {

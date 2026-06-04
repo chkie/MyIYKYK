@@ -6,9 +6,9 @@
 	import { profileStore } from '$lib/stores/profile.svelte';
 	import { page } from '$app/stores';
 	import { browser, dev } from '$app/environment';
-	import { onMount } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
 
-	let { data, children }: { data: LayoutData; children: any } = $props();
+	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
 	// Register Service Worker (only in production)
 	onMount(() => {

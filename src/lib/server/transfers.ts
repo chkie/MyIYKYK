@@ -16,7 +16,7 @@ export interface Transfer {
 
 /**
  * Lists all transfers for a given month.
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @returns Array of transfers, sorted by created_at (desc)
  * @throws {Error} If database operation fails
@@ -47,7 +47,7 @@ export async function listTransfers(monthId: string): Promise<Transfer[]> {
 
 /**
  * Creates a new transfer.
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @param input - Transfer data (amount, optional description, optional createdBy)
  * @returns Created transfer
@@ -73,7 +73,7 @@ export async function createTransfer(
 	}
 
 	// Determine created_by: use provided value or fallback to 'me' profile
-	const createdBy = input.createdBy || await getProfileIdByRole('me');
+	const createdBy = input.createdBy || (await getProfileIdByRole('me'));
 
 	// Round amount to 2 decimals
 	const roundedAmount = Math.round(input.amount * 100) / 100;
@@ -106,7 +106,7 @@ export async function createTransfer(
 
 /**
  * Deletes a transfer.
- * 
+ *
  * @param transferId - The transfer ID (UUID)
  * @throws {Error} If database operation fails
  */
@@ -122,7 +122,7 @@ export async function deleteTransfer(transferId: string): Promise<void> {
 
 /**
  * Calculates the total of all transfers for a month.
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @returns Total transfer amount (rounded to 2 decimals)
  * @throws {Error} If database operation fails

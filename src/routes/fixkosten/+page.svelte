@@ -20,7 +20,7 @@
 	let showNewCategoryForm = $state(false);
 	let isSubmitting = $state(false);
 	let isSubmittingItem = $state<Record<string, boolean>>({});
-	
+
 	// Per-category state for new items
 	let newItems = $state<Record<string, { label: string; amount: string; splitMode: string }>>({});
 	let openItemForms = $state<Set<string>>(new Set());
@@ -28,20 +28,22 @@
 	// Focus management for add category form (DOM reference, not reactive)
 	// svelte-ignore non_reactive_update
 	let addCategoryFormContainer: HTMLFormElement;
-	
+
 	function openNewCategoryForm() {
 		showNewCategoryForm = true;
 		setTimeout(() => {
-			const firstInput = addCategoryFormContainer?.querySelector('input:not([type="hidden"])') as HTMLInputElement;
+			const firstInput = addCategoryFormContainer?.querySelector(
+				'input:not([type="hidden"])'
+			) as HTMLInputElement;
 			firstInput?.focus();
 		}, 0);
 	}
-	
+
 	function closeNewCategoryForm() {
 		showNewCategoryForm = false;
 		newCategoryLabel = '';
 	}
-	
+
 	// Focus management for add item forms
 	function openItemForm(categoryId: string) {
 		openItemForms = new Set([...openItemForms, categoryId]);
@@ -50,13 +52,14 @@
 			firstInput?.focus();
 		}, 0);
 	}
-	
+
 	function closeItemForm(categoryId: string) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- transiente Kopie fuer immutable-Update, Reaktivitaet via Reassignment
 		const newSet = new Set(openItemForms);
 		newSet.delete(categoryId);
 		openItemForms = newSet;
 	}
-	
+
 	// Keyboard navigation
 	function handleCategoryFormKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Escape' && !isSubmitting) {
@@ -66,13 +69,13 @@
 			(e.target as HTMLElement).closest('form')?.requestSubmit();
 		}
 	}
-	
+
 	function handleItemFormKeyDown(e: KeyboardEvent, categoryId: string) {
 		if (e.key === 'Escape' && !isSubmittingItem[categoryId]) {
 			closeItemForm(categoryId);
 		}
 	}
-	
+
 	function handleItemFieldKeyDown(e: KeyboardEvent, categoryId: string, nextFieldId?: string) {
 		if (e.key === 'Enter') {
 			e.preventDefault();
@@ -95,7 +98,11 @@
 	// Edit state for items
 	let editingItem = $state<string | null>(null);
 	let isSubmittingEditItem = $state(false);
-	let editItemData = $state<{ label: string; amount: string; splitMode: string }>({ label: '', amount: '', splitMode: 'income' });
+	let editItemData = $state<{ label: string; amount: string; splitMode: string }>({
+		label: '',
+		amount: '',
+		splitMode: 'income'
+	});
 
 	function startEditItem(itemId: string, label: string, amount: number, splitMode: string) {
 		editingItem = itemId;
@@ -120,6 +127,7 @@
 	let collapsedCategories = $state<Set<string>>(new Set());
 
 	function toggleCategory(categoryId: string) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- transiente Kopie fuer immutable-Update, Reaktivitaet via Reassignment
 		const newSet = new Set(collapsedCategories);
 		if (newSet.has(categoryId)) {
 			newSet.delete(categoryId);
@@ -134,15 +142,15 @@
 	<title>Fixkosten - Kosten-Tool</title>
 </svelte:head>
 
-<h1 class="mb-6 text-3xl font-black text-primary-900">Fixkosten</h1>
+<h1 class="text-primary-900 mb-6 text-3xl font-black">Fixkosten</h1>
 
 <!-- Summary Card -->
-<div class="mb-6 overflow-hidden rounded-2xl border-2 border-primary-200 bg-white shadow-lg">
+<div class="border-primary-200 mb-6 overflow-hidden rounded-2xl border-2 bg-white shadow-lg">
 	<div class="bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4">
-		<p class="text-sm font-semibold uppercase tracking-wide text-primary-700">Christians Anteil</p>
+		<p class="text-primary-700 text-sm font-semibold tracking-wide uppercase">Christians Anteil</p>
 	</div>
 	<div class="p-5">
-		<p class="text-4xl font-black text-primary-600">{formatEuro(data.computed.myFixedShare)}</p>
+		<p class="text-primary-600 text-4xl font-black">{formatEuro(data.computed.myFixedShare)}</p>
 		<p class="mt-2 text-sm font-medium text-neutral-600">
 			Gesamt: {formatEuro(data.computed.totalFixedCosts)}
 		</p>
@@ -155,7 +163,7 @@
 		<button
 			type="button"
 			onclick={openNewCategoryForm}
-			class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary-300 bg-primary-50 px-4 py-3 font-semibold text-primary-700 transition-all hover:border-primary-400 hover:bg-primary-100 active:scale-95"
+			class="border-primary-300 bg-primary-50 text-primary-700 hover:border-primary-400 hover:bg-primary-100 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-3 font-semibold transition-all active:scale-95"
 		>
 			<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -183,7 +191,7 @@
 					requestAnimationFrame(() => window.scrollTo(0, scrollY));
 				};
 			}}
-			class="rounded-xl border-2 border-primary-200 bg-white p-4"
+			class="border-primary-200 rounded-xl border-2 bg-white p-4"
 		>
 			<input type="hidden" name="monthId" value={data.month.id} />
 			<div class="mb-3">
@@ -200,7 +208,7 @@
 					autocomplete="off"
 					autocapitalize="sentences"
 					placeholder="z.B. Wohnung, Auto, Versicherungen..."
-					class="w-full rounded-lg border-2 border-neutral-300 px-4 py-2 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
+					class="focus:border-primary-500 focus:ring-primary-200 w-full rounded-lg border-2 border-neutral-300 px-4 py-2 transition-all focus:ring-2 focus:outline-none"
 					required
 				/>
 			</div>
@@ -208,13 +216,24 @@
 				<button
 					type="submit"
 					disabled={isSubmitting}
-					class="flex-1 rounded-lg bg-primary-600 px-4 py-2 font-semibold text-white transition-all hover:bg-primary-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+					class="bg-primary-600 hover:bg-primary-700 flex-1 rounded-lg px-4 py-2 font-semibold text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{#if isSubmitting}
 						<span class="inline-flex items-center gap-2">
 							<svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								<circle
+									class="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									stroke-width="4"
+								></circle>
+								<path
+									class="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								></path>
 							</svg>
 							Speichert...
 						</span>
@@ -226,7 +245,7 @@
 					type="button"
 					disabled={isSubmitting}
 					onclick={closeNewCategoryForm}
-					class="rounded-lg border-2 border-neutral-300 px-4 py-2 font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+					class="rounded-lg border-2 border-neutral-300 px-4 py-2 font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					Abbrechen
 				</button>
@@ -236,34 +255,64 @@
 </div>
 
 <!-- Categories List -->
-{#each data.fixedCategories as category}
-	<div class="mb-4 overflow-hidden rounded-2xl border-2 border-primary-200 bg-white shadow-lg transition-all hover:shadow-xl">
+{#each data.fixedCategories as category (category.id)}
+	<div
+		class="border-primary-200 mb-4 overflow-hidden rounded-2xl border-2 bg-white shadow-lg transition-all hover:shadow-xl"
+	>
 		<!-- Category Header - Clickable -->
 		<button
 			type="button"
 			onclick={() => toggleCategory(category.id)}
 			class="flex w-full items-center justify-between gap-3 bg-linear-to-r from-indigo-100 to-indigo-200 px-5 py-4 text-left transition-colors hover:from-indigo-200 hover:to-indigo-300 active:scale-[0.99]"
 		>
-			<div class="flex items-center gap-3 min-w-0">
-				<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500 text-white">
+			<div class="flex min-w-0 items-center gap-3">
+				<div
+					class="bg-primary-500 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white"
+				>
 					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+						/>
 					</svg>
 				</div>
 				<div class="min-w-0">
-					<h2 class="truncate text-lg font-bold text-primary-900">{category.label}</h2>
-					<p class="text-xs text-neutral-600">{category.items.length} {category.items.length === 1 ? 'Position' : 'Positionen'}</p>
+					<h2 class="text-primary-900 truncate text-lg font-bold">{category.label}</h2>
+					<p class="text-xs text-neutral-600">
+						{category.items.length}
+						{category.items.length === 1 ? 'Position' : 'Positionen'}
+					</p>
 				</div>
 			</div>
 			<div class="flex shrink-0 items-center gap-3">
-				<span class="truncate text-sm font-semibold text-neutral-600">{category.items.length > 0 ? formatEuro(category.items.reduce((sum: number, item: any) => sum + item.amount, 0)) : '0,00 €'}</span>
-				<svg 
-					class="h-5 w-5 text-primary-600 transition-transform duration-200 {collapsedCategories.has(category.id) ? '' : 'rotate-180'}"
-					fill="none" 
-					stroke="currentColor" 
+				<span class="truncate text-sm font-semibold text-neutral-600"
+					>{category.items.length > 0
+						? formatEuro(
+								category.items.reduce(
+									(sum: number, item: { amount: number }) => sum + item.amount,
+									0
+								)
+							)
+						: '0,00 €'}</span
+				>
+				<svg
+					class="text-primary-600 h-5 w-5 transition-transform duration-200 {collapsedCategories.has(
+						category.id
+					)
+						? ''
+						: 'rotate-180'}"
+					fill="none"
+					stroke="currentColor"
 					viewBox="0 0 24 24"
 				>
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M19 9l-7 7-7-7"
+					/>
 				</svg>
 			</div>
 		</button>
@@ -271,136 +320,328 @@
 		<!-- Items (Collapsible) -->
 		{#if !collapsedCategories.has(category.id)}
 			<div class="divide-y divide-neutral-100">
-			{#each category.items as item}
-				<div class="p-4">
-					{#if editingItem === item.id}
-						<!-- Edit Mode -->
-						<form
-							method="POST"
-							action="?/updateItem"
+				{#each category.items as item (item.id)}
+					<div class="p-4">
+						{#if editingItem === item.id}
+							<!-- Edit Mode -->
+							<form
+								method="POST"
+								action="?/updateItem"
+								use:enhance={() => {
+									isSubmittingEditItem = true;
+									const scrollY = window.scrollY;
+									return async ({ result, update }) => {
+										await update();
+										isSubmittingEditItem = false;
+										if (result.type === 'success') {
+											cancelEditItem();
+										}
+										// Restore scroll position
+										requestAnimationFrame(() => window.scrollTo(0, scrollY));
+									};
+								}}
+							>
+								<input type="hidden" name="itemId" value={item.id} />
+								<div class="mb-3">
+									<label
+										class="mb-1 block text-xs font-semibold text-neutral-600"
+										for="editLabel_{item.id}"
+									>
+										Bezeichnung
+									</label>
+									<input
+										id="editLabel_{item.id}"
+										type="text"
+										name="label"
+										bind:value={editItemData.label}
+										onfocus={(e) =>
+											e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+										enterkeyhint="next"
+										autocomplete="off"
+										autocapitalize="sentences"
+										disabled={isSubmittingEditItem}
+										class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:cursor-not-allowed disabled:opacity-50"
+										required
+									/>
+								</div>
+								<div class="mb-3 grid grid-cols-2 gap-3 overflow-hidden">
+									<div class="min-w-0">
+										<label
+											class="mb-1 block text-xs font-semibold text-neutral-600"
+											for="editAmount_{item.id}"
+										>
+											Betrag
+										</label>
+										<input
+											id="editAmount_{item.id}"
+											type="number"
+											name="amount"
+											bind:value={editItemData.amount}
+											onfocus={(e) =>
+												e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+											inputmode="decimal"
+											enterkeyhint="next"
+											autocomplete="off"
+											disabled={isSubmittingEditItem}
+											step="0.01"
+											min="0"
+											class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:cursor-not-allowed disabled:opacity-50"
+											required
+										/>
+									</div>
+									<div class="min-w-0">
+										<label
+											class="mb-1 block text-xs font-semibold text-neutral-600"
+											for="editSplitMode_{item.id}"
+										>
+											Aufteilung
+										</label>
+										<select
+											id="editSplitMode_{item.id}"
+											name="splitMode"
+											bind:value={editItemData.splitMode}
+											aria-label="Aufteilungsmodus wählen"
+											disabled={isSubmittingEditItem}
+											class="w-full truncate rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:cursor-not-allowed disabled:opacity-50"
+										>
+											<option value="income">Einkommen</option>
+											<option value="half">50/50</option>
+											<option value="me">Christian</option>
+											<option value="partner">Steffi</option>
+										</select>
+									</div>
+								</div>
+								<div class="flex gap-2">
+									<button
+										type="submit"
+										disabled={isSubmittingEditItem}
+										class="bg-success-600 hover:bg-success-700 flex-1 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+									>
+										{isSubmittingEditItem ? 'Speichert...' : 'Speichern'}
+									</button>
+									<button
+										type="button"
+										disabled={isSubmittingEditItem}
+										onclick={() => cancelEditItem()}
+										class="rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+									>
+										Abbrechen
+									</button>
+								</div>
+							</form>
+						{:else}
+							<!-- Display Mode with Swipe Actions -->
+							<SwipeActions
+								onEdit={() => startEditItem(item.id, item.label, item.amount, item.splitMode)}
+								onDelete={() => {
+									if (confirm(`'${item.label}' wirklich löschen?`)) {
+										const form = document.getElementById(
+											`delete-item-${item.id}`
+										) as HTMLFormElement;
+										if (form) form.requestSubmit();
+									}
+								}}
+							>
+								<div class="flex items-center justify-between gap-4">
+									<div class="min-w-0 flex-1">
+										<h3 class="truncate font-semibold text-neutral-900">{item.label}</h3>
+										<div class="mt-2 flex items-center gap-2 overflow-hidden">
+											<span
+												class="bg-primary-50 text-primary-700 inline-flex shrink-0 items-center gap-1 rounded-lg px-3 py-1 text-xs font-semibold"
+											>
+												{splitModeLabels[item.splitMode]}
+											</span>
+										</div>
+									</div>
+									<div class="shrink-0">
+										<span class="text-primary-600 text-xl font-black whitespace-nowrap">
+											{formatEuro(item.amount)}
+										</span>
+									</div>
+								</div>
+
+								<!-- Hidden form for deletion -->
+								<form
+									id="delete-item-{item.id}"
+									method="POST"
+									action="?/deleteItem"
+									use:enhance={() => {
+										const scrollY = window.scrollY;
+										return async ({ update }) => {
+											await update();
+											requestAnimationFrame(() => window.scrollTo(0, scrollY));
+										};
+									}}
+									class="hidden"
+								>
+									<input type="hidden" name="itemId" value={item.id} />
+								</form>
+							</SwipeActions>
+						{/if}
+					</div>
+				{/each}
+			</div>
+
+			<!-- Add Item -->
+			<div class="border-t-2 border-neutral-100 bg-neutral-50 p-4">
+				{#if !openItemForms.has(category.id)}
+					<button
+						type="button"
+						onclick={() => openItemForm(category.id)}
+						class="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-neutral-300 bg-white px-3 py-3 text-sm font-semibold text-neutral-700 transition-all hover:border-neutral-400 hover:bg-neutral-50 active:scale-95"
+					>
+						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 4v16m8-8H4"
+							/>
+						</svg>
+						Position hinzufügen
+					</button>
+				{:else}
+					{@const itemState = getItemState(category.id)}
+					<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+					<form
+						method="POST"
+						action="?/addItem"
+						onkeydown={(e) => handleItemFormKeyDown(e, category.id)}
 						use:enhance={() => {
-							isSubmittingEditItem = true;
+							isSubmittingItem = { ...isSubmittingItem, [category.id]: true };
 							const scrollY = window.scrollY;
 							return async ({ result, update }) => {
 								await update();
-								isSubmittingEditItem = false;
+								isSubmittingItem = { ...isSubmittingItem, [category.id]: false };
 								if (result.type === 'success') {
-									cancelEditItem();
+									newItems = {
+										...newItems,
+										[category.id]: { label: '', amount: '', splitMode: 'income' }
+									};
+									closeItemForm(category.id);
 								}
 								// Restore scroll position
 								requestAnimationFrame(() => window.scrollTo(0, scrollY));
 							};
 						}}
-						>
-							<input type="hidden" name="itemId" value={item.id} />
-							<div class="mb-3">
-								<label class="mb-1 block text-xs font-semibold text-neutral-600" for="editLabel_{item.id}">
-									Bezeichnung
+					>
+						<input type="hidden" name="categoryId" value={category.id} />
+						<div class="mb-3">
+							<label
+								class="mb-1 block text-xs font-semibold text-neutral-600"
+								for="newItemLabel_{category.id}"
+							>
+								Bezeichnung
+							</label>
+							<input
+								id="newItemLabel_{category.id}"
+								type="text"
+								name="label"
+								value={itemState.label}
+								onkeydown={(e) =>
+									handleItemFieldKeyDown(e, category.id, `newItemAmount_${category.id}`)}
+								oninput={(e) => {
+									const target = e.target as HTMLInputElement;
+									newItems = { ...newItems, [category.id]: { ...itemState, label: target.value } };
+								}}
+								onfocus={(e) =>
+									e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+								enterkeyhint="next"
+								autocomplete="off"
+								autocapitalize="sentences"
+								placeholder="z.B. Miete, Strom..."
+								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base"
+								required
+							/>
+						</div>
+						<div class="mb-3 grid grid-cols-2 gap-3 overflow-hidden">
+							<div class="min-w-0">
+								<label
+									class="mb-1 block text-xs font-semibold text-neutral-600"
+									for="newItemAmount_{category.id}"
+								>
+									Betrag (€)
 								</label>
 								<input
-									id="editLabel_{item.id}"
-									type="text"
-									name="label"
-									bind:value={editItemData.label}
-									onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+									id="newItemAmount_{category.id}"
+									type="number"
+									name="amount"
+									value={itemState.amount}
+									onkeydown={(e) =>
+										handleItemFieldKeyDown(e, category.id, `newItemSplitMode_${category.id}`)}
+									oninput={(e) => {
+										const target = e.target as HTMLInputElement;
+										newItems = {
+											...newItems,
+											[category.id]: { ...itemState, amount: target.value }
+										};
+									}}
+									onfocus={(e) =>
+										e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+									inputmode="decimal"
 									enterkeyhint="next"
 									autocomplete="off"
-									autocapitalize="sentences"
-									disabled={isSubmittingEditItem}
-									class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+									step="0.01"
+									min="0"
+									placeholder="0.00"
+									class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base"
 									required
 								/>
 							</div>
-							<div class="mb-3 grid grid-cols-2 gap-3 overflow-hidden">
-								<div class="min-w-0">
-									<label class="mb-1 block text-xs font-semibold text-neutral-600" for="editAmount_{item.id}">
-										Betrag
-									</label>
-									<input
-										id="editAmount_{item.id}"
-										type="number"
-										name="amount"
-										bind:value={editItemData.amount}
-										onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-										inputmode="decimal"
-										enterkeyhint="next"
-										autocomplete="off"
-										disabled={isSubmittingEditItem}
-										step="0.01"
-										min="0"
-										class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-										required
-									/>
-								</div>
-								<div class="min-w-0">
-									<label class="mb-1 block text-xs font-semibold text-neutral-600" for="editSplitMode_{item.id}">
-										Aufteilung
-									</label>
-									<select
-										id="editSplitMode_{item.id}"
-										name="splitMode"
-										bind:value={editItemData.splitMode}
-										aria-label="Aufteilungsmodus wählen"
-										disabled={isSubmittingEditItem}
-										class="w-full truncate rounded-lg border-2 border-neutral-300 px-3 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										<option value="income">Einkommen</option>
-										<option value="half">50/50</option>
-										<option value="me">Christian</option>
-										<option value="partner">Steffi</option>
-									</select>
-								</div>
-							</div>
-							<div class="flex gap-2">
-								<button
-									type="submit"
-									disabled={isSubmittingEditItem}
-									class="flex-1 rounded-lg bg-success-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-success-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+							<div class="min-w-0">
+								<label
+									class="mb-1 block text-xs font-semibold text-neutral-600"
+									for="newItemSplitMode_{category.id}"
 								>
-									{isSubmittingEditItem ? 'Speichert...' : 'Speichern'}
-								</button>
-								<button
-									type="button"
-									disabled={isSubmittingEditItem}
-									onclick={() => cancelEditItem()}
-									class="rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+									Aufteilung
+								</label>
+								<select
+									id="newItemSplitMode_{category.id}"
+									name="splitMode"
+									value={itemState.splitMode}
+									onchange={(e) => {
+										const target = e.target as HTMLSelectElement;
+										newItems = {
+											...newItems,
+											[category.id]: { ...itemState, splitMode: target.value }
+										};
+									}}
+									aria-label="Aufteilungsmodus wählen"
+									class="w-full truncate rounded-lg border-2 border-neutral-300 px-3 py-2 text-base"
 								>
-									Abbrechen
-								</button>
+									<option value="income">Einkommen</option>
+									<option value="half">50/50</option>
+									<option value="me">Christian</option>
+									<option value="partner">Steffi</option>
+								</select>
 							</div>
-						</form>
-					{:else}
-						<!-- Display Mode with Swipe Actions -->
-						<SwipeActions
-							onEdit={() => startEditItem(item.id, item.label, item.amount, item.splitMode)}
-							onDelete={() => {
-								if (confirm(`'${item.label}' wirklich löschen?`)) {
-									const form = document.getElementById(`delete-item-${item.id}`) as HTMLFormElement;
-									if (form) form.requestSubmit();
-								}
-							}}
-						>
-							<div class="flex items-center justify-between gap-4">
-								<div class="flex-1 min-w-0">
-									<h3 class="truncate font-semibold text-neutral-900">{item.label}</h3>
-									<div class="mt-2 flex items-center gap-2 overflow-hidden">
-										<span class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
-											{splitModeLabels[item.splitMode]}
-										</span>
-									</div>
-								</div>
-								<div class="shrink-0">
-									<span class="whitespace-nowrap text-xl font-black text-primary-600">
-										{formatEuro(item.amount)}
-									</span>
-								</div>
-							</div>
+						</div>
+						<div class="flex gap-2">
+							<button
+								type="submit"
+								disabled={isSubmittingItem[category.id]}
+								class="bg-success-600 hover:bg-success-700 flex-1 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								{isSubmittingItem[category.id] ? 'Hinzufügt...' : 'Hinzufügen'}
+							</button>
+							<button
+								type="button"
+								disabled={isSubmittingItem[category.id]}
+								onclick={() => closeItemForm(category.id)}
+								class="rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								Abbrechen
+							</button>
+						</div>
+					</form>
+				{/if}
+			</div>
 
-							<!-- Hidden form for deletion -->
-							<form
-								id="delete-item-{item.id}"
-								method="POST"
-					action="?/deleteItem"
+			<!-- Delete Category Button (at bottom when expanded) -->
+			<div class="border-t-2 border-neutral-100 bg-neutral-50 px-5 py-3">
+				<form
+					method="POST"
+					action="?/deleteCategory"
 					use:enhance={() => {
 						const scrollY = window.scrollY;
 						return async ({ update }) => {
@@ -408,166 +649,27 @@
 							requestAnimationFrame(() => window.scrollTo(0, scrollY));
 						};
 					}}
-								class="hidden"
-							>
-								<input type="hidden" name="itemId" value={item.id} />
-							</form>
-						</SwipeActions>
-					{/if}
-				</div>
-			{/each}
-		</div>
-
-		<!-- Add Item -->
-		<div class="border-t-2 border-neutral-100 bg-neutral-50 p-4">
-			{#if !openItemForms.has(category.id)}
-				<button
-					type="button"
-					onclick={() => openItemForm(category.id)}
-					class="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-neutral-300 bg-white px-3 py-3 text-sm font-semibold text-neutral-700 transition-all hover:border-neutral-400 hover:bg-neutral-50 active:scale-95"
-				>
-					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-					</svg>
-					Position hinzufügen
-				</button>
-			{:else}
-				{@const itemState = getItemState(category.id)}
-				<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-				<form
-					method="POST"
-					action="?/addItem"
-					onkeydown={(e) => handleItemFormKeyDown(e, category.id)}
-					use:enhance={() => {
-						isSubmittingItem = { ...isSubmittingItem, [category.id]: true };
-						const scrollY = window.scrollY;
-						return async ({ result, update }) => {
-							await update();
-							isSubmittingItem = { ...isSubmittingItem, [category.id]: false };
-							if (result.type === 'success') {
-								newItems = { ...newItems, [category.id]: { label: '', amount: '', splitMode: 'income' } };
-								closeItemForm(category.id);
-							}
-							// Restore scroll position
-							requestAnimationFrame(() => window.scrollTo(0, scrollY));
-						};
-					}}
-				>
-					<input type="hidden" name="categoryId" value={category.id} />
-					<div class="mb-3">
-						<label class="mb-1 block text-xs font-semibold text-neutral-600" for="newItemLabel_{category.id}">
-							Bezeichnung
-						</label>
-						<input
-							id="newItemLabel_{category.id}"
-							type="text"
-							name="label"
-							value={itemState.label}
-							onkeydown={(e) => handleItemFieldKeyDown(e, category.id, `newItemAmount_${category.id}`)}
-							oninput={(e) => {
-								const target = e.target as HTMLInputElement;
-								newItems = { ...newItems, [category.id]: { ...itemState, label: target.value } };
-							}}
-							onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-							enterkeyhint="next"
-							autocomplete="off"
-							autocapitalize="sentences"
-							placeholder="z.B. Miete, Strom..."
-							class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base"
-							required
-						/>
-					</div>
-					<div class="mb-3 grid grid-cols-2 gap-3 overflow-hidden">
-						<div class="min-w-0">
-							<label class="mb-1 block text-xs font-semibold text-neutral-600" for="newItemAmount_{category.id}">
-								Betrag (€)
-							</label>
-							<input
-								id="newItemAmount_{category.id}"
-								type="number"
-								name="amount"
-								value={itemState.amount}
-								onkeydown={(e) => handleItemFieldKeyDown(e, category.id, `newItemSplitMode_${category.id}`)}
-								oninput={(e) => {
-									const target = e.target as HTMLInputElement;
-									newItems = { ...newItems, [category.id]: { ...itemState, amount: target.value } };
-								}}
-								onfocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-								inputmode="decimal"
-								enterkeyhint="next"
-								autocomplete="off"
-								step="0.01"
-								min="0"
-								placeholder="0.00"
-								class="w-full rounded-lg border-2 border-neutral-300 px-3 py-2 text-base"
-								required
-							/>
-						</div>
-						<div class="min-w-0">
-							<label class="mb-1 block text-xs font-semibold text-neutral-600" for="newItemSplitMode_{category.id}">
-								Aufteilung
-							</label>
-							<select
-								id="newItemSplitMode_{category.id}"
-								name="splitMode"
-								value={itemState.splitMode}
-								onchange={(e) => {
-									const target = e.target as HTMLSelectElement;
-									newItems = { ...newItems, [category.id]: { ...itemState, splitMode: target.value } };
-								}}
-								aria-label="Aufteilungsmodus wählen"
-								class="w-full truncate rounded-lg border-2 border-neutral-300 px-3 py-2 text-base"
-							>
-								<option value="income">Einkommen</option>
-								<option value="half">50/50</option>
-								<option value="me">Christian</option>
-								<option value="partner">Steffi</option>
-							</select>
-						</div>
-					</div>
-					<div class="flex gap-2">
-						<button
-							type="submit"
-							disabled={isSubmittingItem[category.id]}
-							class="flex-1 rounded-lg bg-success-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-success-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{isSubmittingItem[category.id] ? 'Hinzufügt...' : 'Hinzufügen'}
-						</button>
-						<button
-							type="button"
-							disabled={isSubmittingItem[category.id]}
-							onclick={() => closeItemForm(category.id)}
-							class="rounded-lg border-2 border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-100 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							Abbrechen
-						</button>
-					</div>
-				</form>
-			{/if}
-		</div>
-			
-			<!-- Delete Category Button (at bottom when expanded) -->
-			<div class="border-t-2 border-neutral-100 bg-neutral-50 px-5 py-3">
-				<form
-				method="POST"
-				action="?/deleteCategory"
-				use:enhance={() => {
-					const scrollY = window.scrollY;
-					return async ({ update }) => {
-						await update();
-						requestAnimationFrame(() => window.scrollTo(0, scrollY));
-					};
-				}}
 					class="flex justify-end"
 				>
 					<input type="hidden" name="categoryId" value={category.id} />
 					<button
 						type="submit"
-						class="rounded-lg border-2 border-danger-200 bg-danger-50 px-4 py-2 text-sm font-semibold text-danger-700 transition-all hover:bg-danger-100 active:scale-95"
-						onclick={() => confirm(`Kategorie '${category.label}' und alle Positionen wirklich löschen?`)}
+						class="border-danger-200 bg-danger-50 text-danger-700 hover:bg-danger-100 rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all active:scale-95"
+						onclick={() =>
+							confirm(`Kategorie '${category.label}' und alle Positionen wirklich löschen?`)}
 					>
-						<svg class="mr-2 inline-block h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+						<svg
+							class="mr-2 inline-block h-4 w-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+							/>
 						</svg>
 						Kategorie löschen
 					</button>
@@ -581,4 +683,3 @@
 		<p class="mt-2 text-sm text-neutral-500">Füge oben eine neue Kategorie hinzu!</p>
 	</div>
 {/each}
-

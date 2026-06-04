@@ -20,11 +20,11 @@
 	<div class="login-card">
 		<h1>{t('login.title')}</h1>
 
-		<form 
-			method="POST" 
+		<form
+			method="POST"
 			class="login-form"
 			use:enhance={() => {
-				return async ({ result, update }) => {
+				return async ({ update }) => {
 					// Invalidate all data to reload layout (profiles, isAuthenticated)
 					await invalidateAll();
 					await update();
@@ -32,21 +32,18 @@
 			}}
 		>
 			<!-- Hidden username field for Apple Keychain / Password Manager integration -->
-			<input
-				type="hidden"
-				name="username"
-				value="admin"
-				autocomplete="username"
-			/>
+			<input type="hidden" name="username" value="admin" autocomplete="username" />
 
 			<div class="form-group">
 				<label for="password">{t('login.passwordLabel')}</label>
+				<!-- svelte-ignore a11y_autofocus -->
 				<input
 					type="password"
 					id="password"
 					name="password"
 					enterkeyhint="done"
 					autocomplete="current-password webauthn"
+					autofocus
 					required
 				/>
 			</div>
@@ -161,4 +158,3 @@
 		}
 	}
 </style>
-

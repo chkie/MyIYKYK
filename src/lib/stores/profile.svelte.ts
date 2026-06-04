@@ -5,7 +5,7 @@
 
 let currentProfileId = $state<string | null>(null);
 let currentProfileName = $state<string | null>(null);
-let isInitialized = $state(typeof window !== 'undefined'); // SSR-safe: true on client, false on server
+const isInitialized = $state(typeof window !== 'undefined'); // SSR-safe: true on client, false on server
 
 // Load from localStorage on client
 if (typeof window !== 'undefined') {
@@ -34,7 +34,7 @@ export const profileStore = {
 	get hasProfile() {
 		return !!currentProfileId;
 	},
-	
+
 	setProfile(id: string, name: string) {
 		currentProfileId = id;
 		currentProfileName = name;
@@ -42,7 +42,7 @@ export const profileStore = {
 			localStorage.setItem('myiykyk_profile', JSON.stringify({ id, name }));
 		}
 	},
-	
+
 	clearProfile() {
 		currentProfileId = null;
 		currentProfileName = null;

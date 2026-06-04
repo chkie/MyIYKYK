@@ -7,11 +7,9 @@ import { join } from 'path';
  * We test the source code directly since browser-based tests require Playwright setup.
  */
 describe('Login Page - Apple Keychain/Touch ID Integration (Source Code)', () => {
-	let pageSource: string;
-
 	// Read the +page.svelte source code
 	const pagePath = join(__dirname, '+page.svelte');
-	pageSource = readFileSync(pagePath, 'utf-8');
+	const pageSource = readFileSync(pagePath, 'utf-8');
 
 	it('should have hidden username field with autocomplete="username" for Keychain', () => {
 		// Apple Keychain needs a username field to associate credentials
@@ -62,7 +60,7 @@ describe('Login Page - Apple Keychain/Touch ID Integration (Source Code)', () =>
 
 	it('should have submit button', () => {
 		expect(pageSource).toContain('type="submit"');
-		expect(pageSource).toContain('Anmelden');
+		// Button-Label kommt aus dem Copy-System (i18n); Literal liegt in copy/de.ts
+		expect(pageSource).toContain("t('login.submitButton')");
 	});
 });
-

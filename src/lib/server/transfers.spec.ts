@@ -31,8 +31,8 @@ describe('Transfer Validation', () => {
 		const testValues = [
 			{ input: 100.123, expected: 100.12 },
 			{ input: 50.456, expected: 50.46 },
-			{ input: 25.999, expected: 26.00 },
-			{ input: 0.001, expected: 0.00 }
+			{ input: 25.999, expected: 26.0 },
+			{ input: 0.001, expected: 0.0 }
 		];
 
 		testValues.forEach(({ input, expected }) => {
@@ -48,11 +48,7 @@ describe('Transfer Validation', () => {
 
 describe('Transfer Total Calculation', () => {
 	it('should correctly sum multiple transfers', () => {
-		const transfers = [
-			{ amount: 100.50 },
-			{ amount: 200.25 },
-			{ amount: 50.00 }
-		];
+		const transfers = [{ amount: 100.5 }, { amount: 200.25 }, { amount: 50.0 }];
 
 		const total = transfers.reduce((sum, t) => sum + t.amount, 0);
 		expect(total).toBe(350.75);
@@ -79,9 +75,9 @@ describe('Transfers in Month Calculation', () => {
 	it('should use sum of transfers as prepayment', () => {
 		// Scenario: Multiple payments throughout the month
 		const transfers = [
-			{ amount: 200 },  // Initial prepayment
-			{ amount: 100 },  // Additional payment
-			{ amount: 50 }    // Final payment
+			{ amount: 200 }, // Initial prepayment
+			{ amount: 100 }, // Additional payment
+			{ amount: 50 } // Final payment
 		];
 
 		const totalTransfers = transfers.reduce((sum, t) => sum + t.amount, 0);
@@ -104,7 +100,7 @@ describe('Transfers in Month Calculation', () => {
 	it('should handle partial payments correctly', () => {
 		// Scenario: Not enough payments yet
 		const transfers = [
-			{ amount: 100 },  // Only initial payment
+			{ amount: 100 } // Only initial payment
 		];
 
 		const totalTransfers = transfers.reduce((sum, t) => sum + t.amount, 0);

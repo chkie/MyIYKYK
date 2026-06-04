@@ -18,7 +18,7 @@ export type PersonRole = 'me' | 'partner';
  * - 'income': Split proportional to net income (fair split for shared costs)
  * - 'me': Paid entirely by me
  * - 'partner': Paid entirely by partner
- * 
+ *
  * Note: 'half' was removed - all shared costs use income-based split for fairness
  */
 export type SplitMode = 'income' | 'me' | 'partner';

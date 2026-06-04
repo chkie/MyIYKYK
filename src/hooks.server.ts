@@ -3,10 +3,10 @@ import type { Handle } from '@sveltejs/kit';
 
 /**
  * Global hook for authentication.
- * 
+ *
  * Public routes:
  * - /login (and all sub-paths)
- * 
+ *
  * All other routes require authentication via 'auth' cookie.
  */
 export const handle: Handle = async ({ event, resolve }) => {
@@ -28,4 +28,3 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// User is authenticated, proceed
 	return resolve(event);
 };
-
