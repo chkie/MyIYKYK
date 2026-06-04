@@ -3,6 +3,8 @@
 	import type { LayoutData } from './$types.js';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ProfileSelector from '$lib/components/ProfileSelector.svelte';
+	import ConfirmSheet from '$lib/components/ConfirmSheet.svelte';
+	import { askConfirm } from '$lib/utils/confirm.svelte.js';
 	import { profileStore } from '$lib/stores/profile.svelte';
 	import { page, navigating } from '$app/stores';
 	import { onNavigate } from '$app/navigation';
@@ -213,8 +215,13 @@
 		<!-- 🔧 DEBUG: Floating Reset Button (TEMPORARY - Remove in production) -->
 		{#if browser && dev}
 			<button
-				onclick={() => {
-					if (confirm('🔧 DEBUG: localStorage + Cookie löschen und neu laden?')) {
+				onclick={async () => {
+					if (
+						await askConfirm({
+							message: '🔧 DEBUG: localStorage + Cookie löschen und neu laden?',
+							danger: true
+						})
+					) {
 						// Clear localStorage (profile)
 						localStorage.removeItem('myiykyk_profile');
 						// Clear auth cookie (logout)
@@ -233,4 +240,7 @@
 			</button>
 		{/if}
 	{/if}
+
+	<!-- Globales Bestätigungs-Sheet (Ersatz für window.confirm) -->
+	<ConfirmSheet />
 </div>

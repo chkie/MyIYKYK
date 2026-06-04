@@ -3,6 +3,7 @@
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
 	import { OptimisticList } from '$lib/utils/optimistic.svelte';
+	import { askConfirm } from '$lib/utils/confirm.svelte.js';
 
 	let { data }: { data: PageData } = $props();
 
@@ -439,12 +440,14 @@
 							<!-- Display Mode with Swipe Actions -->
 							<SwipeActions
 								onEdit={() => startEditItem(item.id, item.label, item.amount, item.splitMode)}
-								onDelete={() => {
-									if (confirm(`'${item.label}' wirklich löschen?`)) {
+								onDelete={async () => {
+									if (
+										await askConfirm({ message: `'${item.label}' wirklich löschen?`, danger: true })
+									) {
 										const form = document.getElementById(
 											`delete-item-${item.id}`
-										) as HTMLFormElement;
-										if (form) form.requestSubmit();
+										) as HTMLFormElement | null;
+										form?.requestSubmit();
 									}
 								}}
 							>
@@ -662,11 +665,18 @@
 				>
 					<input type="hidden" name="categoryId" value={category.id} />
 					<button
-						type="submit"
+						type="button"
 						class="border-danger-200 bg-danger-50 text-danger-700 hover:bg-danger-100 rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all active:scale-95"
-						onclick={(e) => {
-							if (!confirm(`Kategorie '${category.label}' und alle Positionen wirklich löschen?`))
-								e.preventDefault();
+						onclick={async (e) => {
+							const form = e.currentTarget.form;
+							if (
+								await askConfirm({
+									message: `Kategorie '${category.label}' und alle Positionen wirklich löschen?`,
+									danger: true
+								})
+							) {
+								form?.requestSubmit();
+							}
 						}}
 					>
 						<svg

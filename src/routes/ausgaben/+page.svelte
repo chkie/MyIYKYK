@@ -4,6 +4,7 @@
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
 	import { OptimisticList } from '$lib/utils/optimistic.svelte';
+	import { askConfirm } from '$lib/utils/confirm.svelte.js';
 
 	let { data }: { data: PageData } = $props();
 
@@ -429,10 +430,17 @@
 				<!-- Display Mode with Swipe Actions -->
 				<SwipeActions
 					onEdit={() => startEditExpense(expense)}
-					onDelete={() => {
-						if (confirm(`'${expense.description}' wirklich löschen?`)) {
-							const form = document.getElementById(`delete-form-${expense.id}`) as HTMLFormElement;
-							if (form) form.requestSubmit();
+					onDelete={async () => {
+						if (
+							await askConfirm({
+								message: `'${expense.description}' wirklich löschen?`,
+								danger: true
+							})
+						) {
+							const form = document.getElementById(
+								`delete-form-${expense.id}`
+							) as HTMLFormElement | null;
+							form?.requestSubmit();
 						}
 					}}
 				>

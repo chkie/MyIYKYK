@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import type { PageData } from './$types.js';
 	import { t } from '$lib/copy/index.js';
+	import { askConfirm } from '$lib/utils/confirm.svelte.js';
 
 	let { data }: { data: PageData } = $props();
 
@@ -69,14 +70,21 @@
 					<form method="POST" action="?/deleteArchivedMonth" use:enhance>
 						<input type="hidden" name="monthId" value={closedMonth.id} />
 						<button
-							type="submit"
+							type="button"
 							class="border-danger-200 bg-danger-50 text-danger-700 hover:bg-danger-100 rounded-lg border-2 px-4 py-2.5 text-sm font-semibold transition-all active:scale-95"
-							onclick={() =>
-								confirm(
-									t('confirm.deleteMonth', {
-										month: formatMonthYear(closedMonth.year, closedMonth.month)
+							onclick={async (e) => {
+								const form = e.currentTarget.form;
+								if (
+									await askConfirm({
+										message: t('confirm.deleteMonth', {
+											month: formatMonthYear(closedMonth.year, closedMonth.month)
+										}),
+										danger: true
 									})
-								)}
+								) {
+									form?.requestSubmit();
+								}
+							}}
 						>
 							{t('common.delete')}
 						</button>

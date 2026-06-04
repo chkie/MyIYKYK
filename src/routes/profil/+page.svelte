@@ -5,6 +5,7 @@
 	import { t } from '$lib/copy/index.js';
 	import { profileStore } from '$lib/stores/profile.svelte';
 	import { OptimisticList } from '$lib/utils/optimistic.svelte';
+	import { askConfirm } from '$lib/utils/confirm.svelte.js';
 
 	let { data }: { data: PageData } = $props();
 
@@ -91,7 +92,11 @@
 				</div>
 				<button
 					onclick={async () => {
-						if (confirm('Profil wechseln? Du wirst zur Profilauswahl weitergeleitet.')) {
+						if (
+							await askConfirm({
+								message: 'Profil wechseln? Du wirst zur Profilauswahl weitergeleitet.'
+							})
+						) {
 							profileStore.clearProfile();
 							// Use goto with invalidateAll to trigger re-render immediately
 							await goto('/', { invalidateAll: true, replaceState: false });
@@ -475,10 +480,13 @@
 							>
 								<input type="hidden" name="transferId" value={transfer.id} />
 								<button
-									type="submit"
+									type="button"
 									disabled={optimistic.removing.has(transfer.id)}
-									onclick={(e) => {
-										if (!confirm('Zahlung wirklich löschen?')) e.preventDefault();
+									onclick={async (e) => {
+										const form = e.currentTarget.form;
+										if (await askConfirm({ message: 'Zahlung wirklich löschen?', danger: true })) {
+											form?.requestSubmit();
+										}
 									}}
 									class="text-danger-600 hover:bg-danger-50 rounded-lg p-2 transition-colors active:scale-95 disabled:opacity-50"
 									aria-label="Zahlung löschen"
@@ -566,10 +574,15 @@
 				<input type="hidden" name="privateBalanceEnd" value={data.computed.privateBalanceEnd} />
 
 				<button
-					type="submit"
+					type="button"
 					disabled={closingMonth}
-					onclick={(e) => {
-						if (!confirm(t('confirm.closeMonth'))) e.preventDefault();
+					onclick={async (e) => {
+						const form = e.currentTarget.form;
+						if (
+							await askConfirm({ message: t('confirm.closeMonth'), confirmLabel: 'Abschließen' })
+						) {
+							form?.requestSubmit();
+						}
 					}}
 					class="bg-primary-600 hover:bg-primary-700 w-full rounded-xl px-4 py-3 font-bold text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 				>
@@ -616,11 +629,18 @@
 			>
 				<input type="hidden" name="monthId" value={data.month.id} />
 				<button
-					type="submit"
+					type="button"
 					disabled={resettingMonth}
-					onclick={(e) => {
-						if (!confirm('ACHTUNG: Alle Daten dieses Monats werden gelöscht! Fortfahren?'))
-							e.preventDefault();
+					onclick={async (e) => {
+						const form = e.currentTarget.form;
+						if (
+							await askConfirm({
+								message: 'ACHTUNG: Alle Daten dieses Monats werden gelöscht! Fortfahren?',
+								danger: true
+							})
+						) {
+							form?.requestSubmit();
+						}
 					}}
 					class="border-danger-600 bg-danger-600 hover:bg-danger-700 w-full rounded-lg border-2 px-4 py-2 font-bold text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 				>

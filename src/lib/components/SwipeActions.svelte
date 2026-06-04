@@ -155,7 +155,9 @@
 		class="relative z-10 bg-white transition-transform {isSwiping
 			? 'duration-0'
 			: 'duration-300 ease-out'}"
-		style="transform: {transform}"
+		style="transform: {transform}; touch-action: pan-y; will-change: {isSwiping
+			? 'transform'
+			: 'auto'};"
 		ontouchstart={handleTouchStart}
 		ontouchmove={handleTouchMove}
 		ontouchend={handleTouchEnd}
