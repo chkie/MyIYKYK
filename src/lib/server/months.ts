@@ -148,12 +148,13 @@ export async function getOrCreateCurrentMonth() {
 export async function ensureMonthIncomes(monthId: string) {
 	const supabase = getSupabaseServerClient();
 
-	// 1. Get all profiles
-	const { data: profiles, error: profilesError } = await supabase
-		.from('profiles')
-		.select('id, role')
-		.order('role', { ascending: true });
+	// 1+2. Profiles and existing month_incomes are independent → fetch in parallel.
+	const [profilesResult, incomesResult] = await Promise.all([
+		supabase.from('profiles').select('id, role').order('role', { ascending: true }),
+		supabase.from('month_incomes').select('profile_id').eq('month_id', monthId)
+	]);
 
+	const { data: profiles, error: profilesError } = profilesResult;
 	if (profilesError) {
 		throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
 	}
@@ -162,12 +163,7 @@ export async function ensureMonthIncomes(monthId: string) {
 		throw new Error('No profiles found in database');
 	}
 
-	// 2. Get existing month_incomes for this month
-	const { data: existingIncomes, error: incomesError } = await supabase
-		.from('month_incomes')
-		.select('*')
-		.eq('month_id', monthId);
-
+	const { data: existingIncomes, error: incomesError } = incomesResult;
 	if (incomesError) {
 		throw new Error(`Failed to fetch month_incomes: ${incomesError.message}`);
 	}
@@ -240,19 +236,23 @@ export async function updateMonthIncomes(
 		}
 	}
 
-	// Update each income (with rounding to 2 decimals)
-	for (const update of updates) {
-		const roundedIncome = Math.round(update.netIncome * 100) / 100;
+	// Update all incomes in parallel (with rounding to 2 decimals).
+	const results = await Promise.all(
+		updates.map((update) => {
+			const roundedIncome = Math.round(update.netIncome * 100) / 100;
+			return supabase
+				.from('month_incomes')
+				.update({ net_income: roundedIncome })
+				.eq('month_id', monthId)
+				.eq('profile_id', update.profileId)
+				.then((res) => ({ profileId: update.profileId, error: res.error }));
+		})
+	);
 
-		const { error: updateError } = await supabase
-			.from('month_incomes')
-			.update({ net_income: roundedIncome })
-			.eq('month_id', monthId)
-			.eq('profile_id', update.profileId);
-
-		if (updateError) {
+	for (const result of results) {
+		if (result.error) {
 			throw new Error(
-				`Failed to update income for profile ${update.profileId}: ${updateError.message}`
+				`Failed to update income for profile ${result.profileId}: ${result.error.message}`
 			);
 		}
 	}

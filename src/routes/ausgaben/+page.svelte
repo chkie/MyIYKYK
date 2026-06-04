@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { profileStore } from '$lib/stores/profile.svelte';
 	import { enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
 	import { OptimisticList } from '$lib/utils/optimistic.svelte';
@@ -194,7 +195,8 @@
 				};
 				showNewExpenseForm = false;
 				return async ({ result, update }) => {
-					await update({ reset: false });
+					await update({ reset: false, invalidateAll: false });
+					await invalidate('app:month');
 					isSubmitting = false;
 					optimistic.dropPending(tempId);
 					if (result.type !== 'success') {
@@ -336,7 +338,8 @@
 							isSubmittingEdit = true;
 							const scrollY = window.scrollY;
 							return async ({ result, update }) => {
-								await update();
+								await update({ invalidateAll: false });
+								await invalidate('app:month');
 								isSubmittingEdit = false;
 								if (result.type === 'success') {
 									cancelEditExpense();
@@ -487,7 +490,8 @@
 							// Optimistic delete: hide the row instantly, restore on failure.
 							optimistic.markRemoving(expense.id);
 							return async ({ update }) => {
-								await update({ reset: false });
+								await update({ reset: false, invalidateAll: false });
+								await invalidate('app:month');
 								optimistic.unmarkRemoving(expense.id);
 								requestAnimationFrame(() => window.scrollTo(0, scrollY));
 							};

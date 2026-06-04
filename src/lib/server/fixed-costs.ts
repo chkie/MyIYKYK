@@ -54,7 +54,7 @@ export async function listFixedCategoriesWithItems(
 	const categoryIds = categories.map((c) => c.id);
 	const { data: items, error: itemsError } = await supabase
 		.from('fixed_items')
-		.select('*')
+		.select('id, category_id, label, amount, split_mode')
 		.in('category_id', categoryIds)
 		.order('created_at', { ascending: true });
 

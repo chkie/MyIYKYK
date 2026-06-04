@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
 	import { OptimisticList } from '$lib/utils/optimistic.svelte';
@@ -188,7 +189,8 @@
 				isSubmitting = true;
 				const scrollY = window.scrollY;
 				return async ({ result, update }) => {
-					await update();
+					await update({ invalidateAll: false });
+					await invalidate('app:month');
 					isSubmitting = false;
 					if (result.type === 'success') {
 						newCategoryLabel = '';
@@ -338,7 +340,8 @@
 									isSubmittingEditItem = true;
 									const scrollY = window.scrollY;
 									return async ({ result, update }) => {
-										await update();
+										await update({ invalidateAll: false });
+										await invalidate('app:month');
 										isSubmittingEditItem = false;
 										if (result.type === 'success') {
 											cancelEditItem();
@@ -479,7 +482,8 @@
 										// Optimistic delete: hide the item instantly, restore on failure.
 										itemOptimistic.markRemoving(item.id);
 										return async ({ update }) => {
-											await update({ reset: false });
+											await update({ reset: false, invalidateAll: false });
+											await invalidate('app:month');
 											itemOptimistic.unmarkRemoving(item.id);
 											requestAnimationFrame(() => window.scrollTo(0, scrollY));
 										};
@@ -523,7 +527,8 @@
 							isSubmittingItem = { ...isSubmittingItem, [category.id]: true };
 							const scrollY = window.scrollY;
 							return async ({ result, update }) => {
-								await update();
+								await update({ invalidateAll: false });
+								await invalidate('app:month');
 								isSubmittingItem = { ...isSubmittingItem, [category.id]: false };
 								if (result.type === 'success') {
 									newItems = {
@@ -657,7 +662,8 @@
 					use:enhance={() => {
 						const scrollY = window.scrollY;
 						return async ({ update }) => {
-							await update();
+							await update({ invalidateAll: false });
+							await invalidate('app:month');
 							requestAnimationFrame(() => window.scrollTo(0, scrollY));
 						};
 					}}

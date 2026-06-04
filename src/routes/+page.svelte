@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types.js';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
 	import PullToRefresh from '$lib/components/PullToRefresh.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -74,8 +74,8 @@
 
 			if (response.ok) {
 				editingBalanceStart = false;
-				// Re-run load functions in-place instead of a full page reload (no blink)
-				await invalidateAll();
+				// Re-run only the month-scoped page load (not the layout/profiles) — no blink.
+				await invalidate('app:month');
 			} else {
 				const result = await response.json();
 				alert(result?.error || 'Fehler beim Speichern');

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import type { PageData } from './$types.js';
 	import { t } from '$lib/copy/index.js';
 	import { profileStore } from '$lib/stores/profile.svelte';
@@ -187,7 +187,8 @@
 					savingIncomes = true;
 					const scrollY = window.scrollY;
 					return async ({ result, update }) => {
-						await update();
+						await update({ invalidateAll: false });
+						await invalidate('app:month');
 						savingIncomes = false;
 						if (result.type === 'success') {
 							editingIncomes = false;
@@ -354,7 +355,8 @@
 					newTransferAmount = 0;
 					newTransferDescription = '';
 					return async ({ result, update }) => {
-						await update({ reset: false });
+						await update({ reset: false, invalidateAll: false });
+						await invalidate('app:month');
 						addingTransfer = false;
 						optimistic.dropPending(tempId);
 						if (result.type !== 'success') {
@@ -472,7 +474,8 @@
 									optimistic.markRemoving(transfer.id);
 									const scrollY = window.scrollY;
 									return async ({ update }) => {
-										await update({ reset: false });
+										await update({ reset: false, invalidateAll: false });
+										await invalidate('app:month');
 										optimistic.unmarkRemoving(transfer.id);
 										requestAnimationFrame(() => window.scrollTo(0, scrollY));
 									};
@@ -563,9 +566,10 @@
 				use:enhance={() => {
 					closingMonth = true;
 					return async ({ update }) => {
-						// update() re-runs load → der neue offene Monat erscheint in-place,
-						// kein window.location.reload() (das verursachte einen Seiten-Blink).
-						await update();
+						// invalidate('app:month') re-runs the month-scoped load → der neue offene
+						// Monat erscheint in-place, kein Reload/Blink (Layout/Profiles unberührt).
+						await update({ invalidateAll: false });
+						await invalidate('app:month');
 						closingMonth = false;
 					};
 				}}
@@ -620,7 +624,8 @@
 					resettingMonth = true;
 					const scrollY = window.scrollY;
 					return async ({ update }) => {
-						await update();
+						await update({ invalidateAll: false });
+						await invalidate('app:month');
 						resettingMonth = false;
 						// Restore scroll position
 						requestAnimationFrame(() => window.scrollTo(0, scrollY));
