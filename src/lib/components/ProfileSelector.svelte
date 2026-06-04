@@ -44,7 +44,7 @@
 
 		<!-- Profile Cards -->
 		<div class="space-y-3">
-			{#each profiles as profile}
+			{#each profiles as profile (profile.id)}
 				<button
 					onclick={() => selectProfile(profile)}
 					class="group w-full overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all hover:scale-105 hover:shadow-2xl active:scale-100"

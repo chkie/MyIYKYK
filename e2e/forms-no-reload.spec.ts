@@ -20,9 +20,6 @@ test.describe('Forms ohne Page-Reload', () => {
 		const incomeInputs = page.locator('input[type="number"][id^="income_"]');
 		const firstInput = incomeInputs.first();
 
-		// Get initial value
-		const initialValue = await firstInput.inputValue();
-
 		// Change value
 		await firstInput.fill('3500');
 

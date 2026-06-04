@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { hapticSelection } from '../utils/haptics.js';
+	import type { Snippet } from 'svelte';
 
-	let { children }: { children: any } = $props();
+	let { children }: { children: Snippet } = $props();
 
 	let startY = $state(0);
 	let currentY = $state(0);

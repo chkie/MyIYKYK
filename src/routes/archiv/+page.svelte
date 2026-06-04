@@ -37,7 +37,7 @@
 
 {#if data.closedMonths.length > 0}
 	<div class="space-y-3">
-		{#each data.closedMonths as closedMonth}
+		{#each data.closedMonths as closedMonth (closedMonth.id)}
 			<div
 				class="overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-md"
 			>

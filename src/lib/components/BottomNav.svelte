@@ -51,7 +51,7 @@
 >
 	<div class="mx-auto max-w-3xl">
 		<div class="grid grid-cols-4">
-			{#each navItems as item}
+			{#each navItems as item (item.href)}
 				<a
 					href={item.href}
 					class="group flex flex-col items-center gap-1 px-2 py-4 transition-all active:scale-95 {isActive(
@@ -74,6 +74,7 @@
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
+							<!-- eslint-disable-next-line svelte/no-at-html-tags (trusted local SVG icon strings) -->
 							{@html icons[item.icon]}
 						</svg>
 

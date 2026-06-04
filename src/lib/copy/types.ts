@@ -1,7 +1,6 @@
 /**
  * TypeScript Types for Copy System
  */
-import type { DeTranslations } from './de.js';
 
 /**
  * Parameters for template string interpolation

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { hapticImpact, hapticSelection } from '../utils/haptics.js';
+	import type { Snippet } from 'svelte';
 
-	let { children, onDelete }: { children: any; onDelete: () => void } = $props();
+	let { children, onDelete }: { children: Snippet; onDelete: () => void } = $props();
 
 	let startX = $state(0);
 	let currentX = $state(0);

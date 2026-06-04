@@ -51,7 +51,14 @@ export async function getMonthHistory(
 		.eq('month_id', monthId);
 
 	const categoryIds = (categories || []).map((c) => c.id);
-	let items: any[] = [];
+	type FixedItemRow = {
+		id: string;
+		label: string;
+		amount: number;
+		created_at: string;
+		created_by: string | null;
+	};
+	let items: FixedItemRow[] = [];
 
 	if (categoryIds.length > 0) {
 		const { data: itemsData } = await supabase
@@ -59,7 +66,7 @@ export async function getMonthHistory(
 			.select('id, label, amount, created_at, created_by')
 			.in('category_id', categoryIds)
 			.order('created_at', { ascending: false });
-		items = itemsData || [];
+		items = (itemsData as FixedItemRow[] | null) || [];
 	}
 
 	// 4. Fetch transfers with created_by

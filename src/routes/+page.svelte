@@ -396,7 +396,7 @@
 			<!-- History List -->
 			{#if data.history.totalCount > 0}
 				<div class="divide-y divide-neutral-100">
-					{#each data.history.fullMonthList || data.history.last5 as position}
+					{#each data.history.fullMonthList || data.history.last5 as position (position.id)}
 						<div class="flex items-center justify-between px-5 py-3 hover:bg-neutral-50">
 							<!-- Left: Icon + Description + Creator -->
 							<div class="flex min-w-0 flex-1 items-center gap-3">

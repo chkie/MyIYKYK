@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import type { PageData, ActionData } from './$types.js';
+	import type { PageData } from './$types.js';
 	import { t } from '$lib/copy/index.js';
 	import { profileStore } from '$lib/stores/profile.svelte';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	// Currency formatter
 	function formatEuro(amount: number): string {
@@ -17,17 +17,8 @@
 		}).format(amount);
 	}
 
-	// Date formatter
-	function formatMonthYear(year: number, month: number): string {
-		return new Intl.DateTimeFormat('de-DE', {
-			month: 'long',
-			year: 'numeric'
-		}).format(new Date(year, month - 1));
-	}
-
 	// Loading states
 	let savingIncomes = $state(false);
-	let savingPrepayment = $state(false);
 	let closingMonth = $state(false);
 	let resettingMonth = $state(false);
 	let addingTransfer = $state(false);
@@ -35,7 +26,6 @@
 
 	// Edit mode states
 	let editingIncomes = $state(false);
-	let editingPrepayment = $state(false);
 	let showAddTransfer = $state(false);
 
 	// Transfer form state
@@ -43,12 +33,18 @@
 	let newTransferDescription = $state('');
 
 	// Get profiles
-	const meProfile = $derived(data.profiles?.find((p: any) => p.role === 'me'));
-	const partnerProfile = $derived(data.profiles?.find((p: any) => p.role === 'partner'));
+	const meProfile = $derived(
+		data.profiles?.find((p: { role: string; id: string }) => p.role === 'me')
+	);
+	const partnerProfile = $derived(
+		data.profiles?.find((p: { role: string; id: string }) => p.role === 'partner')
+	);
 
-	const meIncome = $derived(data.incomes.find((i: any) => i.profile_id === meProfile?.id));
+	const meIncome = $derived(
+		data.incomes.find((i: { profile_id: string }) => i.profile_id === meProfile?.id)
+	);
 	const partnerIncome = $derived(
-		data.incomes.find((i: any) => i.profile_id === partnerProfile?.id)
+		data.incomes.find((i: { profile_id: string }) => i.profile_id === partnerProfile?.id)
 	);
 </script>
 
@@ -413,7 +409,7 @@
 		{#if data.transfers && data.transfers.length > 0}
 			<div class="space-y-2">
 				<p class="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Überweisungen</p>
-				{#each data.transfers as transfer}
+				{#each data.transfers as transfer (transfer.id)}
 					<div
 						class="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3"
 					>
@@ -439,7 +435,7 @@
 								use:enhance={() => {
 									deletingTransferId = transfer.id;
 									const scrollY = window.scrollY;
-									return async ({ result, update }) => {
+									return async ({ update }) => {
 										await update();
 										deletingTransferId = null;
 										requestAnimationFrame(() => window.scrollTo(0, scrollY));
@@ -577,7 +573,7 @@
 				use:enhance={() => {
 					resettingMonth = true;
 					const scrollY = window.scrollY;
-					return async ({ result, update }) => {
+					return async ({ update }) => {
 						await update();
 						resettingMonth = false;
 						// Restore scroll position

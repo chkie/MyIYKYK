@@ -3,7 +3,6 @@
 // ============================================================================
 
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import type { PageServerLoad } from './$types.js';
 
 // Mock Supabase module
 vi.mock('$lib/server/supabase.js', () => ({
@@ -45,7 +44,6 @@ import * as supabaseModule from '$lib/server/supabase.js';
 import * as monthsModule from '$lib/server/months.js';
 import * as fixedCostsModule from '$lib/server/fixed-costs.js';
 import * as privateExpensesModule from '$lib/server/private-expenses.js';
-import * as transfersModule from '$lib/server/transfers.js';
 import * as historyModule from '$lib/server/history.js';
 
 // ============================================================================

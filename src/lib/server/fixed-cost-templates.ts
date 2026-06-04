@@ -77,7 +77,7 @@ export async function updateTemplateItem(
 ): Promise<void> {
 	const supabase = getSupabaseServerClient();
 
-	const updateData: any = {
+	const updateData: Record<string, unknown> = {
 		updated_at: new Date().toISOString()
 	};
 

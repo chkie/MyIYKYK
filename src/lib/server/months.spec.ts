@@ -3,7 +3,6 @@
 // ============================================================================
 
 import { describe, expect, it } from 'vitest';
-import { updateMonthBalanceStart } from './months.js';
 
 // ============================================================================
 // Tests: Update Month Balance Start
@@ -11,10 +10,6 @@ import { updateMonthBalanceStart } from './months.js';
 
 describe('updateMonthBalanceStart', () => {
 	it('should validate that balance start is a finite number', async () => {
-		// Mock Supabase to avoid actual DB calls
-		const mockUpdate = { eq: () => ({ error: null }) };
-		const mockSupabase = { from: () => ({ update: () => mockUpdate }) };
-
 		// Test with NaN
 		await expect(async () => {
 			// This would fail validation before hitting DB

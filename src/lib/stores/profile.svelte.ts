@@ -5,7 +5,7 @@
 
 let currentProfileId = $state<string | null>(null);
 let currentProfileName = $state<string | null>(null);
-let isInitialized = $state(typeof window !== 'undefined'); // SSR-safe: true on client, false on server
+const isInitialized = $state(typeof window !== 'undefined'); // SSR-safe: true on client, false on server
 
 // Load from localStorage on client
 if (typeof window !== 'undefined') {

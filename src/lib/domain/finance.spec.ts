@@ -10,7 +10,7 @@ import {
 	calculateMyShareForFixedItem,
 	roundMoney
 } from './finance.js';
-import type { FixedCategory, FixedItem, MonthInputs, Person, PrivateExpense } from './types.js';
+import type { FixedCategory, FixedItem, MonthInputs, Person } from './types.js';
 
 // ============================================================================
 // Helper Functions for Test Data

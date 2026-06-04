@@ -7,11 +7,9 @@ import { join } from 'path';
  * We test the source code directly since browser-based tests require Playwright setup.
  */
 describe('Login Page - Apple Keychain/Touch ID Integration (Source Code)', () => {
-	let pageSource: string;
-
 	// Read the +page.svelte source code
 	const pagePath = join(__dirname, '+page.svelte');
-	pageSource = readFileSync(pagePath, 'utf-8');
+	const pageSource = readFileSync(pagePath, 'utf-8');
 
 	it('should have hidden username field with autocomplete="username" for Keychain', () => {
 		// Apple Keychain needs a username field to associate credentials

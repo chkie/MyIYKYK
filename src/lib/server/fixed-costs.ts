@@ -231,7 +231,7 @@ export async function updateFixedItem(
 	const supabase = getSupabaseServerClient();
 
 	// Build update object with validation
-	const updates: Record<string, any> = {};
+	const updates: Record<string, unknown> = {};
 
 	if (patch.label !== undefined) {
 		const trimmedLabel = patch.label.trim();

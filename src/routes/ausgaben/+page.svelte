@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { profileStore } from '$lib/stores/profile.svelte';
 	import { enhance } from '$app/forms';
-	import { preserveScroll } from '$lib/utils/scroll-preserve.js';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
 
@@ -16,10 +15,16 @@
 		amount: ''
 	});
 
-	function startEditExpense(expense: any) {
+	function startEditExpense(expense: {
+		id: string;
+		dateISO?: string;
+		date?: string;
+		description: string;
+		amount: number;
+	}) {
 		editingExpense = expense.id;
 		editExpenseData = {
-			dateISO: expense.dateISO || expense.date,
+			dateISO: expense.dateISO || expense.date || '',
 			description: expense.description,
 			amount: expense.amount.toString()
 		};

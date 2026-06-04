@@ -24,7 +24,7 @@
 			method="POST"
 			class="login-form"
 			use:enhance={() => {
-				return async ({ result, update }) => {
+				return async ({ update }) => {
 					// Invalidate all data to reload layout (profiles, isAuthenticated)
 					await invalidateAll();
 					await update();

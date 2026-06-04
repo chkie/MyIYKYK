@@ -105,7 +105,7 @@
 						required
 						class="focus:border-primary-500 focus:ring-primary-200 w-full rounded-lg border-2 border-neutral-300 bg-white px-4 py-3 text-lg font-semibold focus:ring-2 focus:outline-none"
 					>
-						{#each monthNames as monthName, index}
+						{#each monthNames as monthName, index (monthName)}
 							<option value={index + 1}>{monthName}</option>
 						{/each}
 					</select>

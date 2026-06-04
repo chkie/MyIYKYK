@@ -54,6 +54,7 @@
 	}
 
 	function closeItemForm(categoryId: string) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- transiente Kopie fuer immutable-Update, Reaktivitaet via Reassignment
 		const newSet = new Set(openItemForms);
 		newSet.delete(categoryId);
 		openItemForms = newSet;
@@ -126,6 +127,7 @@
 	let collapsedCategories = $state<Set<string>>(new Set());
 
 	function toggleCategory(categoryId: string) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- transiente Kopie fuer immutable-Update, Reaktivitaet via Reassignment
 		const newSet = new Set(collapsedCategories);
 		if (newSet.has(categoryId)) {
 			newSet.delete(categoryId);
@@ -253,7 +255,7 @@
 </div>
 
 <!-- Categories List -->
-{#each data.fixedCategories as category}
+{#each data.fixedCategories as category (category.id)}
 	<div
 		class="border-primary-200 mb-4 overflow-hidden rounded-2xl border-2 bg-white shadow-lg transition-all hover:shadow-xl"
 	>
@@ -287,7 +289,12 @@
 			<div class="flex shrink-0 items-center gap-3">
 				<span class="truncate text-sm font-semibold text-neutral-600"
 					>{category.items.length > 0
-						? formatEuro(category.items.reduce((sum: number, item: any) => sum + item.amount, 0))
+						? formatEuro(
+								category.items.reduce(
+									(sum: number, item: { amount: number }) => sum + item.amount,
+									0
+								)
+							)
 						: '0,00 €'}</span
 				>
 				<svg
@@ -313,7 +320,7 @@
 		<!-- Items (Collapsible) -->
 		{#if !collapsedCategories.has(category.id)}
 			<div class="divide-y divide-neutral-100">
-				{#each category.items as item}
+				{#each category.items as item (item.id)}
 					<div class="p-4">
 						{#if editingItem === item.id}
 							<!-- Edit Mode -->

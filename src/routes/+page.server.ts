@@ -26,12 +26,7 @@ import {
 	deletePrivateExpense,
 	updateMonthTransfer
 } from '$lib/server/private-expenses.js';
-import {
-	listTransfers,
-	createTransfer,
-	deleteTransfer,
-	getTotalTransfers
-} from '$lib/server/transfers.js';
+import { listTransfers, createTransfer, deleteTransfer } from '$lib/server/transfers.js';
 import { getMonthHistory } from '$lib/server/history.js';
 import { calculateMonth } from '$lib/domain/index.js';
 import type { Actions, PageServerLoad } from './$types.js';
@@ -321,7 +316,7 @@ export const actions: Actions = {
 				return fail(400, { error: 'Item ID is required' });
 			}
 
-			const patch: any = {};
+			const patch: Record<string, unknown> = {};
 
 			// Check for label update
 			const label = formData.get('label')?.toString();

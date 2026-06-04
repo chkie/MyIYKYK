@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { hapticImpact, hapticSelection } from '../utils/haptics.js';
 	import { t } from '$lib/copy/index.js';
+	import type { Snippet } from 'svelte';
 
 	let {
 		children,
 		onEdit,
 		onDelete
 	}: {
-		children: any;
+		children: Snippet;
 		onEdit?: () => void;
 		onDelete?: () => void;
 	} = $props();

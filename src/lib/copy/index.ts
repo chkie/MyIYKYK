@@ -15,7 +15,7 @@ import type { CopyKeys, Params } from './types.js';
 
 // Current locale (default: German)
 // Future: support locale switching via setLocale('en')
-let currentLocale = de;
+const currentLocale = de;
 
 /**
  * Get translated text by key
@@ -62,8 +62,10 @@ export function t(key: CopyKeys, params?: Params): string {
  * @example
  * getNestedValue({ nav: { overview: 'X' } }, 'nav.overview') → 'X'
  */
-function getNestedValue(obj: any, path: string): unknown {
-	return path.split('.').reduce((acc, part) => acc?.[part], obj);
+function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+	return path
+		.split('.')
+		.reduce<unknown>((acc, part) => (acc as Record<string, unknown> | undefined)?.[part], obj);
 }
 
 /**
