@@ -4,8 +4,14 @@
 	import type { PageData } from './$types.js';
 	import { t } from '$lib/copy/index.js';
 	import { profileStore } from '$lib/stores/profile.svelte';
+	import { OptimisticList } from '$lib/utils/optimistic.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Optimistic overlay for instant transfer add/delete (reconciled in enhance callbacks).
+	type TransferRow = PageData['transfers'][number];
+	const optimistic = new OptimisticList<TransferRow & { pending?: boolean }>();
+	const displayedTransfers = $derived(optimistic.merge(data.transfers ?? []));
 
 	// Currency formatter (cached — avoid re-instantiating Intl on every call)
 	const euroFormatter = new Intl.NumberFormat('de-DE', {
@@ -23,7 +29,6 @@
 	let closingMonth = $state(false);
 	let resettingMonth = $state(false);
 	let addingTransfer = $state(false);
-	let deletingTransferId = $state<string | null>(null);
 
 	// Edit mode states
 	let editingIncomes = $state(false);
@@ -323,13 +328,30 @@
 				use:enhance={() => {
 					addingTransfer = true;
 					const scrollY = window.scrollY;
+					// Optimistic insert: show the new transfer instantly, reset + close the form.
+					const snapshot = { amount: newTransferAmount, description: newTransferDescription };
+					const tempId = crypto.randomUUID();
+					optimistic.add({
+						id: tempId,
+						monthId: data.month.id,
+						amount: Number(snapshot.amount) || 0,
+						description: snapshot.description || null,
+						createdAt: new Date().toISOString(),
+						createdBy: meProfile?.id ?? null,
+						pending: true
+					});
+					showAddTransfer = false;
+					newTransferAmount = 0;
+					newTransferDescription = '';
 					return async ({ result, update }) => {
-						await update();
+						await update({ reset: false });
 						addingTransfer = false;
-						if (result.type === 'success') {
-							showAddTransfer = false;
-							newTransferAmount = 0;
-							newTransferDescription = '';
+						optimistic.dropPending(tempId);
+						if (result.type !== 'success') {
+							// Rollback: reopen the form with the entered values.
+							newTransferAmount = snapshot.amount;
+							newTransferDescription = snapshot.description;
+							showAddTransfer = true;
 						}
 						requestAnimationFrame(() => window.scrollTo(0, scrollY));
 					};
@@ -407,12 +429,14 @@
 		{/if}
 
 		<!-- Transfers List -->
-		{#if data.transfers && data.transfers.length > 0}
+		{#if displayedTransfers.length > 0}
 			<div class="space-y-2">
 				<p class="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Überweisungen</p>
-				{#each data.transfers as transfer (transfer.id)}
+				{#each displayedTransfers as transfer (transfer.id)}
 					<div
-						class="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3"
+						class="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 {transfer.pending
+							? 'opacity-60'
+							: ''}"
 					>
 						<div class="flex-1">
 							<p class="text-sm font-medium text-neutral-900">
@@ -434,11 +458,12 @@
 								method="POST"
 								action="?/deleteTransfer"
 								use:enhance={() => {
-									deletingTransferId = transfer.id;
+									// Optimistic delete: hide the row instantly, restore on failure.
+									optimistic.markRemoving(transfer.id);
 									const scrollY = window.scrollY;
 									return async ({ update }) => {
-										await update();
-										deletingTransferId = null;
+										await update({ reset: false });
+										optimistic.unmarkRemoving(transfer.id);
 										requestAnimationFrame(() => window.scrollTo(0, scrollY));
 									};
 								}}
@@ -446,7 +471,7 @@
 								<input type="hidden" name="transferId" value={transfer.id} />
 								<button
 									type="submit"
-									disabled={deletingTransferId === transfer.id}
+									disabled={optimistic.removing.has(transfer.id)}
 									onclick={() => confirm('Zahlung wirklich löschen?')}
 									class="text-danger-600 hover:bg-danger-50 rounded-lg p-2 transition-colors active:scale-95 disabled:opacity-50"
 									aria-label="Zahlung löschen"

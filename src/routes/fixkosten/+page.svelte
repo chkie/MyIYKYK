@@ -2,8 +2,13 @@
 	import { enhance } from '$app/forms';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
+	import { OptimisticList } from '$lib/utils/optimistic.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Optimistic overlay for instant item delete (reconciled in enhance callback).
+	type ItemRow = PageData['fixedCategories'][number]['items'][number];
+	const itemOptimistic = new OptimisticList<ItemRow>();
 
 	// Currency formatter (cached — avoid re-instantiating Intl on every call)
 	const euroFormatter = new Intl.NumberFormat('de-DE', {
@@ -321,7 +326,7 @@
 		<!-- Items (Collapsible) -->
 		{#if !collapsedCategories.has(category.id)}
 			<div class="divide-y divide-neutral-100">
-				{#each category.items as item (item.id)}
+				{#each itemOptimistic.merge(category.items) as item (item.id)}
 					<div class="p-4">
 						{#if editingItem === item.id}
 							<!-- Edit Mode -->
@@ -468,8 +473,11 @@
 									action="?/deleteItem"
 									use:enhance={() => {
 										const scrollY = window.scrollY;
+										// Optimistic delete: hide the item instantly, restore on failure.
+										itemOptimistic.markRemoving(item.id);
 										return async ({ update }) => {
-											await update();
+											await update({ reset: false });
+											itemOptimistic.unmarkRemoving(item.id);
 											requestAnimationFrame(() => window.scrollTo(0, scrollY));
 										};
 									}}

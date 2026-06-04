@@ -3,8 +3,13 @@
 	import { enhance } from '$app/forms';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
+	import { OptimisticList } from '$lib/utils/optimistic.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Optimistic overlay for instant add/delete (reconciled in enhance callbacks).
+	type ExpenseRow = PageData['privateExpenses'][number];
+	const optimistic = new OptimisticList<ExpenseRow & { pending?: boolean }>();
 
 	// Edit state
 	let editingExpense = $state<string | null>(null);
@@ -112,7 +117,7 @@
 
 	// Sort expenses by date (newest first)
 	let sortedExpenses = $derived(
-		[...data.privateExpenses].sort((a, b) => {
+		optimistic.merge(data.privateExpenses).sort((a, b) => {
 			const dateA = new Date(a.date || 0).getTime();
 			const dateB = new Date(b.date || 0).getTime();
 			return dateB - dateA;
@@ -164,16 +169,31 @@
 			use:enhance={() => {
 				isSubmitting = true;
 				const scrollY = window.scrollY;
+				// Optimistic insert: show the new row instantly, reset + close the form.
+				const snapshot = { ...newExpenseData };
+				const tempId = crypto.randomUUID();
+				optimistic.add({
+					id: tempId,
+					monthId: data.month.id,
+					date: snapshot.dateISO,
+					description: snapshot.description,
+					amount: Number(snapshot.amount) || 0,
+					pending: true
+				});
+				newExpenseData = {
+					dateISO: new Date().toISOString().split('T')[0],
+					description: '',
+					amount: ''
+				};
+				showNewExpenseForm = false;
 				return async ({ result, update }) => {
-					await update();
+					await update({ reset: false });
 					isSubmitting = false;
-					if (result.type === 'success') {
-						newExpenseData = {
-							dateISO: new Date().toISOString().split('T')[0],
-							description: '',
-							amount: ''
-						};
-						showNewExpenseForm = false;
+					optimistic.dropPending(tempId);
+					if (result.type !== 'success') {
+						// Rollback: reopen the form with the entered values.
+						newExpenseData = snapshot;
+						showNewExpenseForm = true;
 					}
 					// Restore scroll position
 					requestAnimationFrame(() => window.scrollTo(0, scrollY));
@@ -410,7 +430,11 @@
 						}
 					}}
 				>
-					<div class="overflow-hidden rounded-xl border-2 border-neutral-200 bg-white shadow-sm">
+					<div
+						class="overflow-hidden rounded-xl border-2 border-neutral-200 bg-white shadow-sm {expense.pending
+							? 'opacity-60'
+							: ''}"
+					>
 						<div class="flex items-center justify-between p-4">
 							<div class="min-w-0 flex-1">
 								<h3 class="truncate text-lg font-semibold text-neutral-900">
@@ -446,8 +470,11 @@
 						action="?/deletePrivateExpense"
 						use:enhance={() => {
 							const scrollY = window.scrollY;
+							// Optimistic delete: hide the row instantly, restore on failure.
+							optimistic.markRemoving(expense.id);
 							return async ({ update }) => {
-								await update();
+								await update({ reset: false });
+								optimistic.unmarkRemoving(expense.id);
 								requestAnimationFrame(() => window.scrollTo(0, scrollY));
 							};
 						}}
