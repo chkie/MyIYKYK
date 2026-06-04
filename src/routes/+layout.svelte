@@ -4,24 +4,67 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import ProfileSelector from '$lib/components/ProfileSelector.svelte';
 	import { profileStore } from '$lib/stores/profile.svelte';
-	import { page } from '$app/stores';
+	import { page, navigating } from '$app/stores';
+	import { onNavigate } from '$app/navigation';
 	import { browser, dev } from '$app/environment';
 	import { onMount, type Snippet } from 'svelte';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
+	// Service-Worker-Update-Flow: Toast anzeigen, wenn eine neue Version wartet
+	let updateReady = $state(false);
+	let waitingWorker: ServiceWorker | null = null;
+
+	function applyUpdate() {
+		updateReady = false;
+		// SW übernimmt nach SKIP_WAITING → controllerchange triggert Reload
+		(waitingWorker ?? navigator.serviceWorker.controller)?.postMessage('SKIP_WAITING');
+	}
+
 	// Register Service Worker (only in production)
 	onMount(() => {
 		if (browser && import.meta.env.PROD && 'serviceWorker' in navigator) {
+			let refreshing = false;
+			navigator.serviceWorker.addEventListener('controllerchange', () => {
+				if (refreshing) return;
+				refreshing = true;
+				window.location.reload();
+			});
+
 			navigator.serviceWorker
 				.register('/sw.js')
 				.then((registration) => {
 					console.log('SW registered:', registration.scope);
+					// Falls beim Laden bereits ein neuer SW wartet
+					if (registration.waiting && navigator.serviceWorker.controller) {
+						waitingWorker = registration.waiting;
+						updateReady = true;
+					}
+					registration.addEventListener('updatefound', () => {
+						const nw = registration.installing;
+						nw?.addEventListener('statechange', () => {
+							if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+								waitingWorker = registration.waiting;
+								updateReady = true;
+							}
+						});
+					});
 				})
 				.catch((error) => {
 					console.warn('SW registration failed:', error);
 				});
 		}
+	});
+
+	// Cross-Fade zwischen Seiten via View Transitions (Browser-Support vorausgesetzt)
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
 	});
 
 	// Check if we're on login page - SSR safe
@@ -63,11 +106,15 @@
 </script>
 
 <svelte:head>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 	<meta name="theme-color" content="#4f46e5" />
 </svelte:head>
 
 <div class="flex min-h-screen flex-col bg-neutral-50">
+	<!-- Navigations-Fortschrittsbalken (beseitigt "dead tap"-Gefühl) -->
+	{#if $navigating}
+		<div class="nav-progress" role="status" aria-label="Seite wird geladen"></div>
+	{/if}
+
 	<!-- Profile Selector Overlay (only client-side) -->
 	{#if showProfileSelector && data?.profiles}
 		<ProfileSelector profiles={data.profiles} />
@@ -107,7 +154,7 @@
 								href="/archiv"
 								class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-3 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
 								aria-label="Archiv"
-								data-sveltekit-preload-code="off"
+								data-sveltekit-preload-code="viewport"
 							>
 								<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path
@@ -142,7 +189,7 @@
 		{/if}
 
 		<!-- Main Content with Bottom Padding for Nav -->
-		<main class="flex-1 pb-20">
+		<main class="app-main flex-1">
 			<div class="mx-auto max-w-2xl px-4 py-6">
 				{@render children()}
 			</div>
@@ -151,6 +198,16 @@
 		<!-- Bottom Navigation - Always show except on login -->
 		{#if showNav}
 			<BottomNav />
+		{/if}
+
+		<!-- Service-Worker-Update verfügbar -->
+		{#if updateReady}
+			<div class="sw-update-toast" role="status" aria-live="polite">
+				<span class="sw-update-toast__text">Update verfügbar</span>
+				<button type="button" class="sw-update-toast__btn" onclick={applyUpdate}>
+					Neu laden
+				</button>
+			</div>
 		{/if}
 
 		<!-- 🔧 DEBUG: Floating Reset Button (TEMPORARY - Remove in production) -->

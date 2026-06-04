@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types.js';
+	import { invalidateAll } from '$app/navigation';
 	import PullToRefresh from '$lib/components/PullToRefresh.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -73,8 +74,8 @@
 
 			if (response.ok) {
 				editingBalanceStart = false;
-				// Reload page data
-				window.location.reload();
+				// Re-run load functions in-place instead of a full page reload (no blink)
+				await invalidateAll();
 			} else {
 				const result = await response.json();
 				alert(result?.error || 'Fehler beim Speichern');

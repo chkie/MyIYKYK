@@ -13,11 +13,14 @@
 		/>
 		<meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
 
+		<!-- Bewusst nicht auffindbar (Owner-Direktive 2026-06-04) -->
+		<meta name="robots" content="noindex, nofollow" />
+
 		<!-- PWA Manifest -->
 		<link rel="manifest" href="/manifest.json" />
 
 		<!-- iOS PWA Support -->
-		<link rel="apple-touch-icon" href="/webtool_logo.png" />
+		<link rel="apple-touch-icon" href="/icon-192.png" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-title" content="Kosten" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -227,7 +230,7 @@
 
 				// Minimum duration for boot screen (respect reduced motion)
 				const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-				const MIN_DURATION = prefersReducedMotion ? 0 : 2000; // 2s or instant
+				const MIN_DURATION = prefersReducedMotion ? 0 : 600; // 600ms or instant
 
 				// Track start time
 				const bootStartTime = Date.now();
