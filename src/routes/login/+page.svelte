@@ -36,12 +36,14 @@
 
 			<div class="form-group">
 				<label for="password">{t('login.passwordLabel')}</label>
+				<!-- svelte-ignore a11y_autofocus -->
 				<input
 					type="password"
 					id="password"
 					name="password"
 					enterkeyhint="done"
 					autocomplete="current-password webauthn"
+					autofocus
 					required
 				/>
 			</div>

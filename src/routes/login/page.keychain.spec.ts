@@ -60,6 +60,7 @@ describe('Login Page - Apple Keychain/Touch ID Integration (Source Code)', () =>
 
 	it('should have submit button', () => {
 		expect(pageSource).toContain('type="submit"');
-		expect(pageSource).toContain('Anmelden');
+		// Button-Label kommt aus dem Copy-System (i18n); Literal liegt in copy/de.ts
+		expect(pageSource).toContain("t('login.submitButton')");
 	});
 });

@@ -44,6 +44,7 @@ import * as supabaseModule from '$lib/server/supabase.js';
 import * as monthsModule from '$lib/server/months.js';
 import * as fixedCostsModule from '$lib/server/fixed-costs.js';
 import * as privateExpensesModule from '$lib/server/private-expenses.js';
+import * as transfersModule from '$lib/server/transfers.js';
 import * as historyModule from '$lib/server/history.js';
 
 // ============================================================================
@@ -129,6 +130,7 @@ function setupMocks(overrides: any = {}) {
 	vi.mocked(privateExpensesModule.listPrivateExpenses).mockResolvedValue(
 		fixtures.privateExpenses as any
 	);
+	vi.mocked(transfersModule.listTransfers).mockResolvedValue(fixtures.transfers as any);
 	vi.mocked(historyModule.getMonthHistory).mockResolvedValue(fixtures.history as any);
 }
 
@@ -198,8 +200,18 @@ describe('Integration: Home Page Server Load', () => {
 				month: 1,
 				status: 'open',
 				private_balance_start: 0,
-				total_transfer_this_month: 300 // Vorauszahlung!
-			}
+				total_transfer_this_month: 300 // Legacy-Feld, von load nicht mehr gelesen
+			},
+			transfers: [
+				{
+					id: 't1',
+					month_id: 'month-2026-01',
+					amount: 300, // Vorauszahlung via transfers-Tabelle
+					description: 'Vorauszahlung',
+					created_at: '2026-01-01T00:00:00Z',
+					created_by: 'profile-me-id'
+				}
+			]
 		});
 
 		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
@@ -227,8 +239,18 @@ describe('Integration: Home Page Server Load', () => {
 				month: 1,
 				status: 'open',
 				private_balance_start: 0,
-				total_transfer_this_month: 500 // Zu viel!
-			}
+				total_transfer_this_month: 500 // Legacy-Feld, von load nicht mehr gelesen
+			},
+			transfers: [
+				{
+					id: 't1',
+					month_id: 'month-2026-01',
+					amount: 500, // Vorauszahlung (Overpayment) via transfers-Tabelle
+					description: 'Vorauszahlung',
+					created_at: '2026-01-01T00:00:00Z',
+					created_by: 'profile-me-id'
+				}
+			]
 		});
 
 		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
@@ -340,8 +362,18 @@ describe('Integration: Home Page Server Load', () => {
 				month: 1,
 				status: 'open',
 				private_balance_start: 150, // Altschuld
-				total_transfer_this_month: 250 // Vorauszahlung
-			}
+				total_transfer_this_month: 250 // Legacy-Feld, von load nicht mehr gelesen
+			},
+			transfers: [
+				{
+					id: 't1',
+					month_id: 'month-2026-01',
+					amount: 250, // Vorauszahlung via transfers-Tabelle
+					description: 'Vorauszahlung',
+					created_at: '2026-01-01T00:00:00Z',
+					created_by: 'profile-me-id'
+				}
+			]
 		});
 
 		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
