@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { profileStore } from '$lib/stores/profile.svelte';
 	import { enhance } from '$app/forms';
-	import { preserveScroll } from '$lib/utils/scroll-preserve';
+	import { preserveScroll } from '$lib/utils/scroll-preserve.js';
 	import type { PageData } from './$types.js';
 	import SwipeActions from '$lib/components/SwipeActions.svelte';
 

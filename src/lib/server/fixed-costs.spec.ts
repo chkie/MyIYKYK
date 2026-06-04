@@ -1,29 +1,29 @@
 import { describe, it, expect } from 'vitest';
+import type { createFixedItem } from './fixed-costs.js';
+
+/** Input-Shape des zweiten Parameters von createFixedItem (Signatur-Guard). */
+type CreateFixedItemInput = Parameters<typeof createFixedItem>[1];
 
 describe('createFixedItem - createdBy parameter', () => {
-	it('should accept createdBy parameter in function signature', () => {
-		// Type test: verify createdBy is accepted as optional parameter
-		const validInput = {
+	it('should accept createdBy as part of the input', () => {
+		const validInput: CreateFixedItemInput = {
 			label: 'Miete',
 			amount: 1000,
-			splitMode: 'income' as const,
-			createdBy: 'profile-steffi' // Should be accepted without type error
+			splitMode: 'income',
+			createdBy: 'profile-steffi'
 		};
 
-		// If this compiles, the parameter is correctly defined
 		expect(validInput.createdBy).toBe('profile-steffi');
 	});
 
-	it('should allow createdBy to be undefined', () => {
-		// Type test: verify createdBy is optional
-		const validInput = {
+	it('should allow createdBy to be omitted (optional)', () => {
+		const validInput: CreateFixedItemInput = {
 			label: 'Strom',
 			amount: 50,
-			splitMode: 'half' as const
+			splitMode: 'income'
 			// createdBy is omitted - should be valid
 		};
 
-		// If this compiles, the parameter is optional
 		expect(validInput.createdBy).toBeUndefined();
 	});
 });

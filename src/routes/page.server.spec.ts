@@ -172,7 +172,10 @@ describe('Integration: Home Page Server Load', () => {
 			}
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify computed values
 		expect(result.computed).toBeDefined();
@@ -201,7 +204,10 @@ describe('Integration: Home Page Server Load', () => {
 			}
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify prepayment is applied
 		expect(result.computed.prepaymentThisMonth).toBe(300);
@@ -227,7 +233,10 @@ describe('Integration: Home Page Server Load', () => {
 			}
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify overpayment creates credit (negative balance)
 		expect(result.computed.prepaymentThisMonth).toBe(500);
@@ -256,7 +265,10 @@ describe('Integration: Home Page Server Load', () => {
 			}
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify carryover is included
 		expect(result.computed.privateBalanceStart).toBe(200);
@@ -298,7 +310,10 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Anteil: 3000 / 5000 = 0.6 (60%)
 		expect(result.computed.shareMe).toBeCloseTo(0.6, 5);
@@ -331,7 +346,10 @@ describe('Integration: Home Page Server Load', () => {
 			}
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify complete calculation
 		expect(result.computed.privateBalanceStart).toBe(150);
@@ -359,7 +377,10 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Fallback: 50/50
 		expect(result.computed.shareMe).toBe(0.5);
@@ -392,7 +413,10 @@ describe('Integration: Home Page Server Load', () => {
 			]
 		});
 
-		const result = await load({ url: new URL('http://localhost:5173') } as any);
+		const result = await load({ url: new URL('http://localhost:5173') } as unknown as Parameters<
+			typeof load
+		>[0]);
+		if (!result) throw new Error('load() returned void (unexpected redirect)');
 
 		// Verify Number() conversion works
 		expect(result.computed.shareMe).toBeCloseTo(0.4, 2); // 2000.5 / 5001.25

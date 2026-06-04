@@ -1,5 +1,5 @@
-import { getSupabaseServerClient } from '$lib/server/supabase';
-import type { LayoutServerLoad } from './$types';
+import { getSupabaseServerClient } from '$lib/server/supabase.js';
+import type { LayoutServerLoad } from './$types.js';
 
 export const load: LayoutServerLoad = async ({ cookies }) => {
 	// Check if user is authenticated

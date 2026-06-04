@@ -785,9 +785,9 @@ describe('P0 Test-Matrix: Complete Scenarios', () => {
 			privateExpenses: [
 				{
 					id: 'exp-1',
-					amount: 50,
-					label: 'Private Ausgabe',
-					createdBy: 'me' // 100% für mich
+					dateISO: '2026-01-01',
+					description: 'Private Ausgabe',
+					amount: 50
 				}
 			],
 			privateBalanceStart: 75, // Carryover aus Vormonat

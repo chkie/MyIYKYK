@@ -44,6 +44,8 @@
 
 	// Edit mode for balance start
 	let editingBalanceStart = $state(false);
+	// Intentional: editable field seeded with the initial value, re-synced in startEditBalanceStart()
+	// svelte-ignore state_referenced_locally
 	let balanceStartInput = $state(data.computed.privateBalanceStart);
 	let savingBalanceStart = $state(false);
 
