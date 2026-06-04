@@ -23,7 +23,6 @@
    ============================================================================ */
 
 html {
-	scroll-behavior: smooth;
 	-webkit-tap-highlight-color: transparent;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -150,8 +149,6 @@ body {
 	font-family: var(--font-sans);
 	color: var(--color-text-primary);
 	background-color: var(--color-bg-secondary);
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
 }
 
 /* Headlines use Geist Variable */

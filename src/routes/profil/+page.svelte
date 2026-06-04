@@ -7,14 +7,15 @@
 
 	let { data }: { data: PageData } = $props();
 
-	// Currency formatter
+	// Currency formatter (cached — avoid re-instantiating Intl on every call)
+	const euroFormatter = new Intl.NumberFormat('de-DE', {
+		style: 'currency',
+		currency: 'EUR',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	});
 	function formatEuro(amount: number): string {
-		return new Intl.NumberFormat('de-DE', {
-			style: 'currency',
-			currency: 'EUR',
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		}).format(amount);
+		return euroFormatter.format(amount);
 	}
 
 	// Loading states

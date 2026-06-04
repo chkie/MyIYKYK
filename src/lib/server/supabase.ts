@@ -17,7 +17,7 @@ import { env } from '$env/dynamic/private';
  * @throws {Error} If SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY are not set
  * @returns Supabase client instance
  */
-export function getSupabaseServerClient() {
+function createServerClient() {
 	const supabaseUrl = env.SUPABASE_URL;
 	const supabaseServiceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -30,13 +30,27 @@ export function getSupabaseServerClient() {
 		throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set. Please add it to your .env file.');
 	}
 
-	// Create and return Supabase client with Service Role Key
+	// Create Supabase client with Service Role Key
 	return createClient(supabaseUrl, supabaseServiceRoleKey, {
 		auth: {
 			autoRefreshToken: false,
 			persistSession: false
 		}
 	});
+}
+
+// Cache type is derived from the factory's *inferred* return so the query
+// helper types stay intact (a bare ReturnType<typeof createClient> would
+// resolve to a different overload and collapse results to `never`).
+let _client: ReturnType<typeof createServerClient> | null = null;
+
+export function getSupabaseServerClient() {
+	// Reuse a single module-level client instead of creating 6+ per request.
+	if (!_client) {
+		_client = createServerClient();
+	}
+
+	return _client;
 }
 
 /**
