@@ -12,14 +12,14 @@ describe('History Module', () => {
 				id: 'test-id',
 				type: 'private_expense',
 				description: 'Test expense',
-				amount: 10.50,
+				amount: 10.5,
 				createdAt: '2026-01-31T10:00:00Z',
 				createdBy: 'profile-id',
 				createdByName: 'Christian'
 			};
 
 			expect(position.type).toBe('private_expense');
-			expect(position.amount).toBe(10.50);
+			expect(position.amount).toBe(10.5);
 		});
 
 		it('should accept fixed_item type', () => {

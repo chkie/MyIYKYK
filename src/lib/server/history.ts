@@ -21,39 +21,55 @@ export interface HistoryResult {
 
 export async function getMonthHistory(
 	monthId: string,
+	// year/month are part of the stable signature but currently unused
+	// (history has no month-boundary filter yet — see file header).
 	year: number,
 	month: number,
+	profiles: Array<{ id: string; name: string }>,
 	options: { includeFull?: boolean } = {}
 ): Promise<HistoryResult> {
 	const supabase = getSupabaseServerClient();
 
-	// 1. Fetch all profiles for name mapping
-	const { data: profiles } = await supabase
-		.from('profiles')
-		.select('id, name');
-	
+	// 1. Build name map from profiles passed in by the caller (root load) —
+	//    avoids a redundant profiles fetch per request.
 	const profileMap = new Map<string, string>();
-	(profiles || []).forEach(p => profileMap.set(p.id, p.name));
+	profiles.forEach((p) => profileMap.set(p.id, p.name));
 
-	// 2. Fetch expenses with created_by
-	const { data: expenses, error: expensesError } = await supabase
-		.from('private_expenses')
-		.select('id, description, amount, created_at, created_by')
-		.eq('month_id', monthId)
-		.order('created_at', { ascending: false });
+	// 2-4. Fetch independent sources in parallel (expenses, categories, transfers).
+	const [expensesResult, categoriesResult, transfersResult] = await Promise.all([
+		supabase
+			.from('private_expenses')
+			.select('id, description, amount, created_at, created_by')
+			.eq('month_id', monthId)
+			.order('created_at', { ascending: false }),
+		supabase.from('fixed_categories').select('id').eq('month_id', monthId),
+		supabase
+			.from('transfers')
+			.select('id, amount, description, created_at, created_by')
+			.eq('month_id', monthId)
+			.order('created_at', { ascending: false })
+	]);
 
+	const { data: expenses, error: expensesError } = expensesResult;
 	if (expensesError) {
 		throw new Error(`Failed to fetch expenses: ${expensesError.message}`);
 	}
 
-	// 3. Fetch fixed items with created_by
-	const { data: categories } = await supabase
-		.from('fixed_categories')
-		.select('id')
-		.eq('month_id', monthId);
+	const { data: transfersData, error: transfersError } = transfersResult;
+	if (transfersError) {
+		throw new Error(`Failed to fetch transfers: ${transfersError.message}`);
+	}
 
-	const categoryIds = (categories || []).map((c) => c.id);
-	let items: any[] = [];
+	// Fixed items depend on the category IDs → fetched after the parallel batch.
+	const categoryIds = (categoriesResult.data || []).map((c) => c.id);
+	type FixedItemRow = {
+		id: string;
+		label: string;
+		amount: number;
+		created_at: string;
+		created_by: string | null;
+	};
+	let items: FixedItemRow[] = [];
 
 	if (categoryIds.length > 0) {
 		const { data: itemsData } = await supabase
@@ -61,18 +77,7 @@ export async function getMonthHistory(
 			.select('id, label, amount, created_at, created_by')
 			.in('category_id', categoryIds)
 			.order('created_at', { ascending: false });
-		items = itemsData || [];
-	}
-
-	// 4. Fetch transfers with created_by
-	const { data: transfersData, error: transfersError } = await supabase
-		.from('transfers')
-		.select('id, amount, description, created_at, created_by')
-		.eq('month_id', monthId)
-		.order('created_at', { ascending: false });
-
-	if (transfersError) {
-		throw new Error(`Failed to fetch transfers: ${transfersError.message}`);
+		items = (itemsData as FixedItemRow[] | null) || [];
 	}
 
 	const transfers = transfersData || [];

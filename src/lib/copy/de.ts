@@ -1,6 +1,6 @@
 /**
  * Deutsche UI-Texte (Zentrale Copy-Quelle)
- * 
+ *
  * Regeln:
  * - Keys stabil & sprechend (z.B. expense.add.title)
  * - Strings identisch zum Original (1:1 Migration)
@@ -17,14 +17,14 @@ export const de = {
 		edit: 'Bearbeiten',
 		add: 'Hinzufügen',
 		close: 'Schließen',
-		
+
 		// Loading States
 		saving: 'Speichert...',
 		loading: 'Lädt...',
 		adding: 'Hinzufügt...',
 		closing: 'Schließt ab...',
 		deleting: 'Löscht...',
-		resetting: 'Zurücksetzen...',
+		resetting: 'Zurücksetzen...'
 	},
 
 	// ========================================
@@ -36,7 +36,7 @@ export const de = {
 		expenses: 'Ausgaben',
 		profile: 'Profil',
 		archive: 'Archiv',
-		logout: 'Logout',
+		logout: 'Logout'
 	},
 
 	// ========================================
@@ -49,25 +49,25 @@ export const de = {
 		date: 'Datum',
 		label: 'Bezeichnung',
 		categoryName: 'Kategorie Name',
-		
+
 		// Placeholders
 		amountPlaceholder: '0.00',
 		descriptionPlaceholder: 'z.B. Einkaufen, Restaurant, Tanken...',
 		categoryPlaceholder: 'z.B. Wohnung, Auto, Versicherungen...',
 		itemPlaceholder: 'z.B. Miete, Strom...',
-		
+
 		// Split Modes
 		splitMode: 'Aufteilung',
 		splitModeIncome: 'Einkommen',
 		splitModeHalf: '50/50',
 		splitModeMe: 'Christian',
 		splitModePartner: 'Steffi',
-		
+
 		// Split Mode Labels (mit Emojis)
 		splitModeLabelIncome: '📊 Einkommen',
 		splitModeLabelHalf: '⚖️ 50/50',
 		splitModeLabelMe: '👤 Christian',
-		splitModeLabelPartner: '👤 Steffi',
+		splitModeLabelPartner: '👤 Steffi'
 	},
 
 	// ========================================
@@ -79,7 +79,7 @@ export const de = {
 		expenses: 'Ausgaben - Kosten-Tool',
 		profile: 'Profil - Kosten-Tool',
 		archive: 'Archiv - Kosten-Tool',
-		login: 'Login',
+		login: 'Login'
 	},
 
 	// ========================================
@@ -88,7 +88,7 @@ export const de = {
 	login: {
 		title: 'Login',
 		passwordLabel: 'Passwort',
-		submitButton: 'Anmelden',
+		submitButton: 'Anmelden'
 	},
 
 	// ========================================
@@ -98,13 +98,13 @@ export const de = {
 		currentMonth: 'Aktueller Monat',
 		statusActive: '✓ Aktiv',
 		statusClosed: 'Geschlossen',
-		
+
 		// Hero Status
 		youOwe: 'Christian schuldet Steffi',
 		owesYou: 'Steffi schuldet Christian',
 		allSettled: '✓ Alles ausgeglichen',
 		noDebts: 'Keine offenen Schulden',
-		
+
 		// Summary Cards
 		fixedCostsLabel: 'Fixkosten',
 		prepaymentLabel: 'Vorauszahlung',
@@ -113,21 +113,22 @@ export const de = {
 		startBalance: 'Startsaldo',
 		shareLabel: 'Anteil',
 		expensesCount: 'Ausgaben',
-		
+
 		// Prepayment Status
 		missing: 'fehlt',
 		overpayment: 'mehr',
 		exactMatch: '✓ Passt genau',
-		
+
 		// Recommendation Card
 		nextMonth: 'Nächster Monat',
 		recommendedPrepayment: 'Empfohlene Vorauszahlung:',
-		recommendationHint: 'Christian sollte diesen Betrag an Steffi überweisen, damit Steffi nicht in Vorleistung gehen muss.',
-		
+		recommendationHint:
+			'Christian sollte diesen Betrag an Steffi überweisen, damit Steffi nicht in Vorleistung gehen muss.',
+
 		// Quick Actions
 		newExpense: 'Neue Ausgabe',
 		income: 'Einkommen',
-		
+
 		// History Section
 		historyTitle: 'Monats-Historie',
 		historyEntry: 'Eintrag',
@@ -137,7 +138,7 @@ export const de = {
 		historyEmpty: 'Noch keine Einträge',
 		historyEmptyHint: 'Positionen erscheinen hier nach dem Anlegen',
 		historyPrivate: 'Privat',
-		historyFixed: 'Fix',
+		historyFixed: 'Fix'
 	},
 
 	// ========================================
@@ -147,19 +148,19 @@ export const de = {
 		title: 'Fixkosten',
 		myShare: 'Christians Anteil',
 		total: 'Gesamt',
-		
+
 		// Category
 		newCategory: 'Neue Kategorie',
 		categoryDelete: 'Kategorie löschen',
 		position: 'Position',
 		positions: 'Positionen',
-		
+
 		// Items
 		addItem: 'Position hinzufügen',
-		
+
 		// Empty State
 		noCategoriesTitle: 'Noch keine Fixkosten-Kategorien vorhanden.',
-		noCategoriesHint: 'Füge oben eine neue Kategorie hinzu!',
+		noCategoriesHint: 'Füge oben eine neue Kategorie hinzu!'
 	},
 
 	// ========================================
@@ -173,19 +174,19 @@ export const de = {
 		editExpense: 'Ausgabe bearbeiten',
 		expenseCount: 'Ausgabe',
 		expensesCount: 'Ausgaben',
-		
+
 		// Empty State
 		noExpensesTitle: 'Noch keine Ausgaben vorhanden',
-		noExpensesHint: 'Füge oben eine neue Ausgabe hinzu!',
+		noExpensesHint: 'Füge oben eine neue Ausgabe hinzu!'
 	},
-	
+
 	// ========================================
 	// Profile Selector (ProfileSelector.svelte)
 	// ========================================
 	profileSelector: {
 		welcome: 'Willkommen!',
 		whoIsUsing: 'Wer nutzt die App?',
-		savedOnDevice: 'Diese Einstellung wird auf diesem Gerät gespeichert',
+		savedOnDevice: 'Diese Einstellung wird auf diesem Gerät gespeichert'
 	},
 
 	// ========================================
@@ -193,32 +194,32 @@ export const de = {
 	// ========================================
 	profile: {
 		title: 'Profil & Einstellungen',
-		
+
 		// Income Card
 		incomeTitle: 'Einkommen',
 		youLabel: '(Christian)',
-		
+
 		// Prepayment Card
 		prepaymentTitle: 'Vorauszahlung',
 		recommendation: 'Empfehlung',
 		alreadyTransferred: 'Bereits überwiesen',
-		
+
 		// Close Month Card
 		closeMonthTitle: 'Monat abschließen',
 		closeMonthButton: 'Jetzt abschließen',
 		finalBalanceLabel: 'Endsaldo wird übertragen:',
-		
+
 		// Profile Selection Card
 		profileSelectionTitle: 'Profil-Einstellung',
 		profileSelectionHint: 'Wer nutzt diese App auf diesem Gerät?',
 		currentlyLoggedInAs: 'Aktuell angemeldet als:',
 		switchProfile: 'Profil wechseln',
 		noProfileSelected: 'Kein Profil ausgewählt',
-		
+
 		// Dev Tools
 		devToolsTitle: 'Dev Tools',
 		resetMonthHint: 'Monat zurücksetzen (alle Daten löschen, nur für Entwicklung!)',
-		resetMonthButton: '🗑️ Monat zurücksetzen',
+		resetMonthButton: '🗑️ Monat zurücksetzen'
 	},
 
 	// ========================================
@@ -229,10 +230,20 @@ export const de = {
 		subtitle: 'Alle abgeschlossenen Monate ({count})',
 		finalBalance: 'Endsaldo:',
 		closedAt: 'Abgeschlossen am',
-		
+
 		// Empty State
 		noArchiveTitle: 'Noch keine archivierten Monate',
 		noArchiveHint: 'Abgeschlossene Monate erscheinen hier automatisch',
+
+		// Detail (Accordion)
+		detailFixed: 'Fixkosten',
+		detailPrivate: 'Private Ausgaben',
+		detailTransfers: 'Zahlungen',
+		detailEmpty: 'Keine Einträge in diesem Monat',
+		detailLoading: 'Lade Einträge …',
+		detailError: 'Einträge konnten nicht geladen werden',
+		detailEntry: '1 Eintrag',
+		detailEntries: '{count} Einträge'
 	},
 
 	// ========================================
@@ -244,7 +255,7 @@ export const de = {
 		deleteCategory: "Kategorie '{name}' und alle Positionen wirklich löschen?",
 		deleteMonth: 'Monat {month} wirklich löschen?',
 		closeMonth: 'Monat wirklich abschließen? Dies erstellt den nächsten Monat!',
-		resetMonth: 'ACHTUNG: Alle Daten dieses Monats werden gelöscht! Fortfahren?',
+		resetMonth: 'ACHTUNG: Alle Daten dieses Monats werden gelöscht! Fortfahren?'
 	},
 
 	// ========================================
@@ -257,8 +268,8 @@ export const de = {
 		delete: 'Löschen',
 		archive: 'Archiv',
 		selectSplitMode: 'Aufteilungsmodus wählen',
-		appLogo: 'App Logo',
-	},
+		appLogo: 'App Logo'
+	}
 } as const;
 
 export type DeTranslations = typeof de;

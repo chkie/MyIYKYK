@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { actions } from './+page.server.js';
 
 // Mock the SvelteKit env module
@@ -114,4 +114,3 @@ describe('Login Action - Server-side validation', () => {
 		// The logic is simple and can be verified manually or in E2E tests
 	});
 });
-

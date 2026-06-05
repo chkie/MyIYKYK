@@ -1,21 +1,19 @@
-import { mdsvex } from 'mdsvex';
-import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	// Consult https://svelte.dev/docs/kit/integrations
 	// for more information about preprocessors
-	preprocess: [vitePreprocess(), mdsvex()],
+	preprocess: [vitePreprocess()],
 
 	kit: {
-		// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
-		// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
-		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
-		adapter: adapter()
-	},
-
-	extensions: ['.svelte', '.svx']
+		// App läuft auf Vercel (Owner-bestätigt) — expliziter Adapter statt adapter-auto.
+		// runtime explizit, da lokales Node (v26) sonst nicht auf eine Vercel-Runtime
+		// gemappt wird; nodejs22.x = aktueller Vercel-LTS-Standard.
+		// https://svelte.dev/docs/kit/adapter-vercel
+		adapter: adapter({ runtime: 'nodejs22.x' })
+	}
 };
 
 export default config;

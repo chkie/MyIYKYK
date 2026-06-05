@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types.js';
 
 /**
  * Logout endpoint.
- * 
+ *
  * Deletes the auth cookie and redirects to login.
  * Supports both GET and POST methods.
  */
@@ -18,4 +18,3 @@ export const GET: RequestHandler = async ({ cookies }) => {
 };
 
 export const POST: RequestHandler = GET;
-

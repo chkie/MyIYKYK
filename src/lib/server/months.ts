@@ -35,7 +35,11 @@ export async function getOrCreateCurrentMonth() {
 
 	// If open month exists, return it
 	if (existingOpenMonth) {
-		console.log('✅ Found existing open month:', existingOpenMonth.id, `(${existingOpenMonth.year}-${existingOpenMonth.month})`);
+		console.log(
+			'✅ Found existing open month:',
+			existingOpenMonth.id,
+			`(${existingOpenMonth.year}-${existingOpenMonth.month})`
+		);
 		return existingOpenMonth;
 	}
 
@@ -70,7 +74,14 @@ export async function getOrCreateCurrentMonth() {
 		}
 
 		privateBalanceStart = lastClosedMonth.private_balance_end ?? 0;
-		console.log('📅 Creating next month after', lastClosedMonth.year, lastClosedMonth.month, '→', nextYear, nextMonth);
+		console.log(
+			'📅 Creating next month after',
+			lastClosedMonth.year,
+			lastClosedMonth.month,
+			'→',
+			nextYear,
+			nextMonth
+		);
 	} else {
 		// No closed months exist - create current calendar month
 		const now = new Date();
@@ -137,12 +148,13 @@ export async function getOrCreateCurrentMonth() {
 export async function ensureMonthIncomes(monthId: string) {
 	const supabase = getSupabaseServerClient();
 
-	// 1. Get all profiles
-	const { data: profiles, error: profilesError } = await supabase
-		.from('profiles')
-		.select('id, role')
-		.order('role', { ascending: true });
+	// 1+2. Profiles and existing month_incomes are independent → fetch in parallel.
+	const [profilesResult, incomesResult] = await Promise.all([
+		supabase.from('profiles').select('id, role').order('role', { ascending: true }),
+		supabase.from('month_incomes').select('profile_id').eq('month_id', monthId)
+	]);
 
+	const { data: profiles, error: profilesError } = profilesResult;
 	if (profilesError) {
 		throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
 	}
@@ -151,12 +163,7 @@ export async function ensureMonthIncomes(monthId: string) {
 		throw new Error('No profiles found in database');
 	}
 
-	// 2. Get existing month_incomes for this month
-	const { data: existingIncomes, error: incomesError } = await supabase
-		.from('month_incomes')
-		.select('*')
-		.eq('month_id', monthId);
-
+	const { data: existingIncomes, error: incomesError } = incomesResult;
 	if (incomesError) {
 		throw new Error(`Failed to fetch month_incomes: ${incomesError.message}`);
 	}
@@ -229,19 +236,23 @@ export async function updateMonthIncomes(
 		}
 	}
 
-	// Update each income (with rounding to 2 decimals)
-	for (const update of updates) {
-		const roundedIncome = Math.round(update.netIncome * 100) / 100;
+	// Update all incomes in parallel (with rounding to 2 decimals).
+	const results = await Promise.all(
+		updates.map((update) => {
+			const roundedIncome = Math.round(update.netIncome * 100) / 100;
+			return supabase
+				.from('month_incomes')
+				.update({ net_income: roundedIncome })
+				.eq('month_id', monthId)
+				.eq('profile_id', update.profileId)
+				.then((res) => ({ profileId: update.profileId, error: res.error }));
+		})
+	);
 
-		const { error: updateError } = await supabase
-			.from('month_incomes')
-			.update({ net_income: roundedIncome })
-			.eq('month_id', monthId)
-			.eq('profile_id', update.profileId);
-
-		if (updateError) {
+	for (const result of results) {
+		if (result.error) {
 			throw new Error(
-				`Failed to update income for profile ${update.profileId}: ${updateError.message}`
+				`Failed to update income for profile ${result.profileId}: ${result.error.message}`
 			);
 		}
 	}
@@ -534,10 +545,10 @@ export async function deleteClosedMonth(monthId: string): Promise<void> {
 
 /**
  * Deletes the current open month completely (DEV/TESTING).
- * 
+ *
  * WARNING: This permanently deletes the open month and all associated data!
  * Use this for complete app reset during development.
- * 
+ *
  * @throws {Error} If database operation fails
  */
 export async function deleteOpenMonth(): Promise<void> {
@@ -631,24 +642,22 @@ export async function deleteOpenMonth(): Promise<void> {
 
 /**
  * Deletes ALL months from the system (DEV/TESTING).
- * 
+ *
  * WARNING: This is a FULL RESET! Deletes everything:
  * - All open AND closed months
  * - All fixed categories and items
  * - All private expenses
  * - All month_incomes
- * 
+ *
  * Use this to reset the app to initial state.
- * 
+ *
  * @throws {Error} If database operation fails
  */
 export async function deleteAllMonths(): Promise<void> {
 	const supabase = getSupabaseServerClient();
 
 	// 1. Get ALL months
-	const { data: months, error: monthsError } = await supabase
-		.from('months')
-		.select('id');
+	const { data: months, error: monthsError } = await supabase.from('months').select('id');
 
 	if (monthsError) {
 		throw new Error(`Failed to fetch months: ${monthsError.message}`);
@@ -659,7 +668,7 @@ export async function deleteAllMonths(): Promise<void> {
 		return;
 	}
 
-	const monthIds = months.map(m => m.id);
+	const monthIds = months.map((m) => m.id);
 
 	// 2. Get ALL category IDs for these months
 	const { data: categories, error: categoriesError } = await supabase
@@ -716,10 +725,7 @@ export async function deleteAllMonths(): Promise<void> {
 	}
 
 	// 7. Delete ALL months
-	const { error: deleteMonthsError } = await supabase
-		.from('months')
-		.delete()
-		.in('id', monthIds);
+	const { error: deleteMonthsError } = await supabase.from('months').delete().in('id', monthIds);
 
 	if (deleteMonthsError) {
 		throw new Error(`Failed to delete months: ${deleteMonthsError.message}`);
@@ -730,7 +736,7 @@ export async function deleteAllMonths(): Promise<void> {
 
 /**
  * Creates a specific month (for initial setup or testing).
- * 
+ *
  * @param year - Year (e.g., 2026)
  * @param month - Month (1-12)
  * @returns Created month record

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page, navigating } from '$app/stores';
 	import { hapticSelection } from '../utils/haptics.js';
 	import { t } from '$lib/copy/index.js';
 
@@ -31,9 +31,20 @@
 		}
 	];
 
-	// Check if nav item is active
+	// Check if nav item is active.
+	// A pending navigation target takes precedence over the current page so the
+	// indicator jumps the instant a tab is tapped — before its data finishes
+	// loading. Without this the active state only moves once the (Supabase-backed)
+	// load completes (~2s in dev), which felt like a dead tap and led to repeat taps.
 	function isActive(pattern: RegExp): boolean {
-		return pattern.test($page.url.pathname);
+		const pending = $navigating?.to?.url.pathname;
+		return pattern.test(pending ?? $page.url.pathname);
+	}
+
+	// True only while a navigation TO this item is in flight.
+	function isPending(pattern: RegExp): boolean {
+		const pending = $navigating?.to?.url.pathname;
+		return pending != null && pattern.test(pending);
 	}
 
 	// SVG Icons
@@ -46,16 +57,20 @@
 </script>
 
 <!-- Bottom Navigation - Fixed at bottom with safe area -->
-<nav class="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-primary-200 bg-primary-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<nav
+	class="border-primary-200 bg-primary-50 fixed right-0 bottom-0 left-0 z-50 border-t-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]"
+>
 	<div class="mx-auto max-w-3xl">
 		<div class="grid grid-cols-4">
-			{#each navItems as item}
+			{#each navItems as item (item.href)}
 				<a
 					href={item.href}
-					class="group flex flex-col items-center gap-1 px-2 py-4 transition-all active:scale-95 {isActive(item.activePattern)
+					class="group flex flex-col items-center gap-1 px-2 py-4 transition-all active:scale-95 {isActive(
+						item.activePattern
+					)
 						? 'text-primary-600'
 						: 'text-neutral-600 hover:text-neutral-700'}"
-					data-sveltekit-preload-data="hover"
+					data-sveltekit-preload-data="tap"
 					data-sveltekit-preload-code="viewport"
 					data-sveltekit-noscroll
 					onclick={() => hapticSelection()}
@@ -63,17 +78,26 @@
 					<!-- Icon -->
 					<div class="relative">
 						<svg
-							class="h-6 w-6 transition-transform {isActive(item.activePattern) ? 'scale-110' : 'group-hover:scale-105'}"
+							class="h-6 w-6 transition-transform {isActive(item.activePattern)
+								? 'scale-110'
+								: 'group-hover:scale-105'}"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
+							<!-- eslint-disable-next-line svelte/no-at-html-tags (trusted local SVG icon strings) -->
 							{@html icons[item.icon]}
 						</svg>
-						
-						<!-- Active indicator dot -->
+
+						<!-- Active indicator dot (pulses while its navigation is in flight) -->
 						{#if isActive(item.activePattern)}
-							<div class="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary-600"></div>
+							<div
+								class="bg-primary-600 absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full {isPending(
+									item.activePattern
+								)
+									? 'animate-ping'
+									: ''}"
+							></div>
 						{/if}
 					</div>
 
@@ -93,4 +117,3 @@
 		padding-bottom: max(1rem, env(safe-area-inset-bottom));
 	}
 </style>
-

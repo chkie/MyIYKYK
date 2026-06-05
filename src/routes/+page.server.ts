@@ -26,12 +26,7 @@ import {
 	deletePrivateExpense,
 	updateMonthTransfer
 } from '$lib/server/private-expenses.js';
-import {
-	listTransfers,
-	createTransfer,
-	deleteTransfer,
-	getTotalTransfers
-} from '$lib/server/transfers.js';
+import { listTransfers, createTransfer, deleteTransfer } from '$lib/server/transfers.js';
 import { getMonthHistory } from '$lib/server/history.js';
 import { calculateMonth } from '$lib/domain/index.js';
 import type { Actions, PageServerLoad } from './$types.js';
@@ -41,10 +36,11 @@ import type { Actions, PageServerLoad } from './$types.js';
  *
  * Gets or creates current month and ensures month_incomes exist.
  */
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, parent, depends }) => {
 	try {
-		// Get server-only Supabase client
-		const supabase = getSupabaseServerClient();
+		// Allow targeted re-runs via invalidate('app:month') (mutating actions)
+		// without re-running the layout load (profiles don't change per mutation).
+		depends('app:month');
 
 		// 1. Get or create current month (MUST be first - needed for month.id)
 		const month = await getOrCreateCurrentMonth();
@@ -52,35 +48,31 @@ export const load: PageServerLoad = async ({ url }) => {
 		// 2. Ensure month_incomes exist for all profiles (depends on month.id)
 		const incomes = await ensureMonthIncomes(month.id);
 
+		// Profiles come from the layout load (deduped) — never refetched here.
+		const { profiles } = await parent();
+
 		// Check if full history is requested
 		const showFullHistory = url.searchParams.get('history') === 'full';
 
 		// 3-8. PARALLEL QUERIES (all depend on month.id but not on each other)
-		const [profilesResult, fixedCategories, privateExpenses, transfers, closedMonths, history] = await Promise.all([
-			supabase.from('profiles').select('id, role, name').order('role', { ascending: true }),
+		const [fixedCategories, privateExpenses, transfers, closedMonths, history] = await Promise.all([
 			listFixedCategoriesWithItems(month.id),
 			listPrivateExpenses(month.id),
 			listTransfers(month.id),
 			listClosedMonths(12),
-			getMonthHistory(month.id, month.year, month.month, { includeFull: showFullHistory })
+			getMonthHistory(month.id, month.year, month.month, profiles, {
+				includeFull: showFullHistory
+			})
 		]);
 
-		// Handle profiles error
-		if (profilesResult.error) {
-			console.error('Supabase error:', profilesResult.error);
-			throw error(500, `Database error: ${profilesResult.error.message}`);
-		}
-
-		const profiles = profilesResult.data;
-		
 		// DEBUG: Log what we got
 		console.log('🔍 DEBUG - Fixed Categories loaded:', {
 			monthId: month.id,
 			categoriesCount: fixedCategories.length,
-			categories: fixedCategories.map(c => ({
+			categories: fixedCategories.map((c) => ({
 				label: c.label,
 				itemsCount: c.items.length,
-				items: c.items.map(i => i.label)
+				items: c.items.map((i) => i.label)
 			}))
 		});
 
@@ -117,7 +109,10 @@ export const load: PageServerLoad = async ({ url }) => {
 					label: item.label,
 					amount: Number(item.amount),
 					// Legacy: convert 'half' to 'income' (half mode was removed)
-					splitMode: (item.splitMode === 'half' ? 'income' : item.splitMode) as 'income' | 'me' | 'partner'
+					splitMode: (item.splitMode === 'half' ? 'income' : item.splitMode) as
+						| 'income'
+						| 'me'
+						| 'partner'
 				}))
 			})),
 			privateExpenses: privateExpenses.map((exp) => ({
@@ -317,7 +312,7 @@ export const actions: Actions = {
 				return fail(400, { error: 'Item ID is required' });
 			}
 
-			const patch: any = {};
+			const patch: Record<string, unknown> = {};
 
 			// Check for label update
 			const label = formData.get('label')?.toString();
@@ -393,9 +388,9 @@ export const actions: Actions = {
 				return fail(400, { error: 'Invalid amount' });
 			}
 
-			await createPrivateExpense(monthId, { 
-				dateISO, 
-				description, 
+			await createPrivateExpense(monthId, {
+				dateISO,
+				description,
 				amount,
 				createdBy // ← ADD: Pass createdBy to function
 			});
@@ -595,15 +590,15 @@ export const actions: Actions = {
 				return fail(400, { error: 'Invalid balance end value' });
 			}
 
-		await closeMonth(monthId, privateBalanceEnd);
-		// Return success - user can manually reload to see next month
-		return { success: true, monthClosed: true };
-	} catch (err) {
-		console.error('Error closing month:', err);
-		return fail(500, {
-			error: err instanceof Error ? err.message : 'Failed to close month'
-		});
-	}
+			await closeMonth(monthId, privateBalanceEnd);
+			// Return success - user can manually reload to see next month
+			return { success: true, monthClosed: true };
+		} catch (err) {
+			console.error('Error closing month:', err);
+			return fail(500, {
+				error: err instanceof Error ? err.message : 'Failed to close month'
+			});
+		}
 	},
 
 	/**

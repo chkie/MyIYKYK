@@ -2,18 +2,41 @@
 @plugin '@tailwindcss/forms';
 
 /* ============================================================================
-   Variable Fonts (Self-Hosted) - Optimized for Performance
-   Note: fontsource includes font-display: swap by default
-   unicode-range automatically loads only used character sets (latin for DE)
+   Variable Fonts (Self-Hosted) — latin-Subset only
+   DE braucht nur latin: Umlaute/ß (U+00E4 etc.) liegen in U+0000-00FF,
+   €/typograf. Quotes in den latin unicode-range-Blöcken. latin-ext/cyrillic/
+   greek/vietnamese werden bewusst NICHT geladen (spart 8 von 10 woff2).
+   font-display: swap = fontsource-Default beibehalten.
    ============================================================================ */
-@import '@fontsource-variable/inter/wght.css'; /* weight-only, no italic */
-@import '@fontsource-variable/geist/wght.css'; /* weight-only, no italic */
+@font-face {
+	font-family: 'Inter Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 100 900;
+	src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
+		format('woff2-variations');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: 'Geist Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 100 900;
+	src: url('@fontsource-variable/geist/files/geist-latin-wght-normal.woff2')
+		format('woff2-variations');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 /* ============================================================================
    Tailwind v4 Theme Variables - Typography
    ============================================================================ */
 @theme {
-	--font-sans: 'Inter Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	--font-sans:
+		'Inter Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	--font-display: 'Geist Variable', 'Inter Variable', system-ui, sans-serif;
 }
 
@@ -22,7 +45,6 @@
    ============================================================================ */
 
 html {
-	scroll-behavior: smooth;
 	-webkit-tap-highlight-color: transparent;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -149,12 +171,15 @@ body {
 	font-family: var(--font-sans);
 	color: var(--color-text-primary);
 	background-color: var(--color-bg-secondary);
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
 }
 
 /* Headlines use Geist Variable */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
 	font-family: var(--font-display);
 }
 
@@ -328,4 +353,121 @@ h1, h2, h3, h4, h5, h6 {
    5.5rem accounts for py-4 (2rem) + icon (1.5rem) + text (1rem) + gap (0.25rem) + border */
 .app-main {
 	padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+/* ============================================================================
+   Service-Worker-Update-Toast
+   ============================================================================ */
+.sw-update-toast {
+	position: fixed;
+	left: 50%;
+	bottom: calc(6rem + env(safe-area-inset-bottom));
+	z-index: 60;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	max-width: calc(100vw - 2rem);
+	padding: 0.625rem 0.75rem 0.625rem 1rem;
+	border-radius: 9999px;
+	background: var(--color-text-primary, #1e1b2e);
+	color: #fff;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+	font-size: 0.875rem;
+	animation: swToastIn 200ms ease-out;
+}
+
+.sw-update-toast__text {
+	font-weight: 500;
+}
+
+.sw-update-toast__btn {
+	flex-shrink: 0;
+	padding: 0.375rem 0.875rem;
+	border-radius: 9999px;
+	background: #fff;
+	color: var(--color-primary-600, #4f46e5);
+	font-weight: 600;
+	font-size: 0.8125rem;
+	cursor: pointer;
+	transition: transform 0.1s ease;
+}
+
+.sw-update-toast__btn:active {
+	transform: scale(0.95);
+}
+
+@keyframes swToastIn {
+	from {
+		opacity: 0;
+		transform: translate(-50%, 0.5rem);
+	}
+	to {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sw-update-toast {
+		animation: none;
+	}
+}
+
+/* ============================================================================
+   Navigations-Fortschrittsbalken ($navigating)
+   ============================================================================ */
+.nav-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 70;
+	height: 3px;
+	width: 100%;
+	background: linear-gradient(
+		90deg,
+		var(--color-primary-400, #818cf8),
+		var(--color-primary-600, #4f46e5)
+	);
+	transform-origin: 0 50%;
+	animation: navProgress 1.2s ease-in-out infinite;
+}
+
+@keyframes navProgress {
+	0% {
+		transform: scaleX(0);
+		opacity: 1;
+	}
+	50% {
+		transform: scaleX(0.7);
+		opacity: 1;
+	}
+	100% {
+		transform: scaleX(1);
+		opacity: 0.4;
+	}
+}
+
+/* ============================================================================
+   View Transitions (Cross-Fade pro Navigation)
+   ============================================================================ */
+@view-transition {
+	navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 180ms;
+	animation-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nav-progress {
+		animation: none;
+	}
+
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation: none;
+	}
 }

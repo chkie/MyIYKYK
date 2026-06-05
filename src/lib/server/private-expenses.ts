@@ -10,7 +10,7 @@ const DATE_ISO_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * Lists all private expenses for a given month.
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @returns Array of private expenses, sorted by date (desc) then created_at (desc)
  * @throws {Error} If database operation fails
@@ -20,7 +20,7 @@ export async function listPrivateExpenses(monthId: string) {
 
 	const { data: expenses, error } = await supabase
 		.from('private_expenses')
-		.select('*')
+		.select('id, month_id, date, description, amount')
 		.eq('month_id', monthId)
 		.order('date', { ascending: false })
 		.order('created_at', { ascending: false });
@@ -41,7 +41,7 @@ export async function listPrivateExpenses(monthId: string) {
 
 /**
  * Creates a new private expense.
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @param input - Expense data (dateISO, description, amount, optional createdBy)
  * @returns Created expense row
@@ -73,7 +73,7 @@ export async function createPrivateExpense(
 	}
 
 	// Determine created_by: use provided value or fallback to 'me' profile
-	const createdBy = input.createdBy || await getProfileIdByRole('me');
+	const createdBy = input.createdBy || (await getProfileIdByRole('me'));
 
 	// Create expense
 	const { data: newExpense, error: createError } = await supabase
@@ -103,7 +103,7 @@ export async function createPrivateExpense(
 
 /**
  * Deletes a private expense.
- * 
+ *
  * @param expenseId - The expense ID (UUID)
  * @throws {Error} If database operation fails
  */
@@ -119,15 +119,12 @@ export async function deletePrivateExpense(expenseId: string): Promise<void> {
 
 /**
  * Updates the total transfer amount for a month.
- * 
+ *
  * @param monthId - The month ID (UUID)
  * @param totalTransfer - The total transfer amount
  * @throws {Error} If validation fails or database operation fails
  */
-export async function updateMonthTransfer(
-	monthId: string,
-	totalTransfer: number
-): Promise<void> {
+export async function updateMonthTransfer(monthId: string, totalTransfer: number): Promise<void> {
 	const supabase = getSupabaseServerClient();
 
 	// Validation

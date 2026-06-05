@@ -1,8 +1,8 @@
 // Service Worker for Kosten-Tool PWA
 // Strategy: Conservative, Auth-Safe, Network-First for Dynamic Content
 
-const CACHE_NAME = 'kosten-tool-v3'; // BUMPED: Robust update behavior
-const CACHE_VERSION = 3;
+const CACHE_NAME = 'kosten-tool-v4'; // BUMPED: offline fallback + icon pre-cache
+const CACHE_VERSION = 4;
 
 // ============================================================================
 // WHITELIST: Safe to cache (Static Assets ONLY)
@@ -12,7 +12,9 @@ const PWA_ASSETS = [
 	'/manifest.json',
 	'/favicon.svg',
 	'/webtool_logo.webp',
-	'/webtool_logo.png'
+	'/webtool_logo.png',
+	'/icon-192.png',
+	'/offline.html'
 ];
 
 // ============================================================================
@@ -123,13 +125,12 @@ self.addEventListener('fetch', (event) => {
 	// CRITICAL: NEVER CACHE (Network-Only)
 	// ============================================================================
 
-	// 1. HTML/SSR ROUTES: Always network, never cache
-	if (
-		method === 'GET' &&
-		request.headers.get('Accept')?.includes('text/html')
-	) {
-		console.log('[SW] HTML - Network-only (NO CACHE):', pathname);
-		return; // Let browser handle - no caching
+	// 1. HTML/SSR ROUTES: Always network, fall back to offline page when offline.
+	//    Never cached as success — only the pre-cached /offline.html is served on failure.
+	if (method === 'GET' && request.headers.get('Accept')?.includes('text/html')) {
+		console.log('[SW] HTML - Network-first w/ offline fallback:', pathname);
+		event.respondWith(fetch(request).catch(() => caches.match('/offline.html')));
+		return;
 	}
 
 	// 2. AUTH & SSR ROUTES: /login, /logout, /, /fixkosten, etc.
@@ -169,7 +170,7 @@ self.addEventListener('fetch', (event) => {
 					});
 					return response;
 				})
-				.catch((error) => {
+				.catch(() => {
 					console.log('[SW] VERSION CHECK - Failed (offline)');
 					// Return minimal JSON on failure
 					return new Response(
