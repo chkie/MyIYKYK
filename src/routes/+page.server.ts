@@ -55,17 +55,15 @@ export const load: PageServerLoad = async ({ url, parent, depends }) => {
 		const showFullHistory = url.searchParams.get('history') === 'full';
 
 		// 3-8. PARALLEL QUERIES (all depend on month.id but not on each other)
-		const [fixedCategories, privateExpenses, transfers, closedMonths, history] = await Promise.all(
-			[
-				listFixedCategoriesWithItems(month.id),
-				listPrivateExpenses(month.id),
-				listTransfers(month.id),
-				listClosedMonths(12),
-				getMonthHistory(month.id, month.year, month.month, profiles, {
-					includeFull: showFullHistory
-				})
-			]
-		);
+		const [fixedCategories, privateExpenses, transfers, closedMonths, history] = await Promise.all([
+			listFixedCategoriesWithItems(month.id),
+			listPrivateExpenses(month.id),
+			listTransfers(month.id),
+			listClosedMonths(12),
+			getMonthHistory(month.id, month.year, month.month, profiles, {
+				includeFull: showFullHistory
+			})
+		]);
 
 		// DEBUG: Log what we got
 		console.log('🔍 DEBUG - Fixed Categories loaded:', {
