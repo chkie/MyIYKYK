@@ -101,7 +101,6 @@
 						class="flex flex-1 items-center justify-between gap-3 p-5 text-left transition-colors active:bg-neutral-50"
 						aria-expanded={isOpen}
 						aria-controls="archive-panel-{closedMonth.id}"
-						aria-label={t('aria.expandMonth')}
 						onclick={() => toggle(closedMonth.id)}
 					>
 						<div class="flex-1">

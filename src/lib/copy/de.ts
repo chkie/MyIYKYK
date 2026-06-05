@@ -267,7 +267,6 @@ export const de = {
 		edit: 'Bearbeiten',
 		delete: 'Löschen',
 		archive: 'Archiv',
-		expandMonth: 'Monat auf-/zuklappen',
 		selectSplitMode: 'Aufteilungsmodus wählen',
 		appLogo: 'App Logo'
 	}

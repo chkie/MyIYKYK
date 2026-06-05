@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { navigating } from '$app/stores';
+	import { page, navigating } from '$app/stores';
 	import { hapticSelection } from '../utils/haptics.js';
 	import { t } from '$lib/copy/index.js';
 
