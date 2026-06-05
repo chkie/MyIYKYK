@@ -233,7 +233,17 @@ export const de = {
 
 		// Empty State
 		noArchiveTitle: 'Noch keine archivierten Monate',
-		noArchiveHint: 'Abgeschlossene Monate erscheinen hier automatisch'
+		noArchiveHint: 'Abgeschlossene Monate erscheinen hier automatisch',
+
+		// Detail (Accordion)
+		detailFixed: 'Fixkosten',
+		detailPrivate: 'Private Ausgaben',
+		detailTransfers: 'Zahlungen',
+		detailEmpty: 'Keine Einträge in diesem Monat',
+		detailLoading: 'Lade Einträge …',
+		detailError: 'Einträge konnten nicht geladen werden',
+		detailEntry: '1 Eintrag',
+		detailEntries: '{count} Einträge'
 	},
 
 	// ========================================
